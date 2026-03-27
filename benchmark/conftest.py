@@ -16,11 +16,12 @@ from psycopg.rows import dict_row  # type: ignore[import-not-found]
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
-def rest_app() -> TestClient:
+def rest_app() -> Generator[TestClient, None, None]:
     """REST API FastAPI TestClient."""
     from benchmark.rest_api.app import app  # type: ignore[import-not-found]
 
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ---------------------------------------------------------------------------
@@ -28,11 +29,12 @@ def rest_app() -> TestClient:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
-def mesh_app() -> TestClient:
+def mesh_app() -> Generator[TestClient, None, None]:
     """CogniMesh FastAPI TestClient."""
     from benchmark.cognimesh_app.app import app  # type: ignore[import-not-found]
 
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ---------------------------------------------------------------------------

@@ -75,7 +75,7 @@ class Gateway:
             uc, confidence = self.capability_index.match_question(question)
 
         # T0: exact match with Gold view
-        if uc and confidence > 0.3 and uc.gold_view:
+        if uc and confidence > 0.6 and uc.gold_view:
             result = self._serve_t0(uc, params)
             self._log_audit(uc.id, "T0", question, result, start, agent_id)
             return result
