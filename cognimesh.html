@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CogniMesh — Design Document</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f12;
+  --bg2: #13161b;
+  --bg3: #1a1e26;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8e6df;
+  --muted: #7a7870;
+  --dim: #3a3a38;
+  --purple: #8b7cf8;
+  --purple-dim: rgba(139,124,248,0.12);
+  --teal: #2dd4bf;
+  --teal-dim: rgba(45,212,191,0.1);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.1);
+  --coral: #f87171;
+  --coral-dim: rgba(248,113,113,0.1);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.1);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; }
+.page { max-width: 1100px; margin: 0 auto; padding: 60px 40px; }
+
+.doc-header { border-bottom: 1px solid var(--border2); padding-bottom: 40px; margin-bottom: 60px; }
+.doc-title { font-family: 'DM Serif Display', serif; font-size: 48px; font-weight: 400; line-height: 1.05; color: var(--text); letter-spacing: -.5px; }
+.doc-title span { color: var(--purple); }
+.doc-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 10px; letter-spacing: .04em; }
+.doc-meta { margin-top: 20px; display: flex; gap: 24px; flex-wrap: wrap; }
+.meta-item { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+.meta-item strong { color: var(--text); }
+.doc-tagline { margin-top: 20px; font-size: 17px; color: var(--muted); max-width: 700px; line-height: 1.6; font-weight: 300; }
+.doc-tagline strong { color: var(--text); }
+
+.badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+.pill { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 20px; border: 1px solid; }
+.pill-green  { color: var(--green);  border-color: rgba(74,222,128,0.3);  background: var(--green-dim); }
+.pill-purple { color: var(--purple); border-color: rgba(139,124,248,0.3); background: var(--purple-dim); }
+.pill-teal   { color: var(--teal);   border-color: rgba(45,212,191,0.3);  background: var(--teal-dim); }
+.pill-amber  { color: var(--amber);  border-color: rgba(245,158,11,0.3);  background: var(--amber-dim); }
+
+.toc { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 60px; }
+.toc-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.toc-list { list-style: none; columns: 2; gap: 40px; }
+.toc-list li { margin-bottom: 6px; break-inside: avoid; }
+.toc-list a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .15s; }
+.toc-list a:hover { color: var(--purple); }
+.toc-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--purple); margin-right: 8px; }
+
+.section { margin-bottom: 72px; }
+.section-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+.section-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--purple); }
+.section-title { font-family: 'DM Serif Display', serif; font-size: 26px; font-weight: 400; }
+.subsection { margin-bottom: 36px; }
+.subsection-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; }
+p { color: var(--muted); margin-bottom: 12px; font-weight: 300; }
+p strong { color: var(--text); font-weight: 500; }
+
+.diagram-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; overflow-x: auto; }
+.diagram-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 20px 0; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.card-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+.card-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+.card p { font-size: 13px; margin-bottom: 0; }
+.c-purple { border-color: rgba(139,124,248,0.25); background: rgba(139,124,248,0.06); }
+.c-purple .card-label { color: var(--purple); }
+.c-teal   { border-color: rgba(45,212,191,0.2);  background: rgba(45,212,191,0.05); }
+.c-teal .card-label   { color: var(--teal); }
+.c-amber  { border-color: rgba(245,158,11,0.2);  background: rgba(245,158,11,0.05); }
+.c-amber .card-label  { color: var(--amber); }
+.c-coral  { border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.05); }
+.c-coral .card-label  { color: var(--coral); }
+.c-green  { border-color: rgba(74,222,128,0.2);  background: rgba(74,222,128,0.05); }
+.c-green .card-label  { color: var(--green); }
+.c-blue   { border-color: rgba(96,165,250,0.2);  background: rgba(96,165,250,0.05); }
+.c-blue .card-label   { color: var(--blue); }
+
+.code { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.9; overflow-x: auto; margin: 16px 0; }
+.code .k { color: var(--purple); }
+.code .s { color: var(--teal); }
+.code .c { color: var(--muted); font-style: italic; }
+.code .n { color: var(--amber); }
+
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.data-table th { background: var(--bg3); color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border2); font-weight: 400; }
+.data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+.data-table td strong { color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--bg3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+.badge { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+.badge-purple { background: var(--purple-dim); color: var(--purple); }
+.badge-teal   { background: var(--teal-dim);   color: var(--teal); }
+.badge-amber  { background: var(--amber-dim);  color: var(--amber); }
+.badge-coral  { background: var(--coral-dim);  color: var(--coral); }
+.badge-green  { background: var(--green-dim);  color: var(--green); }
+
+.tier { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; display: flex; }
+.tier-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; padding: 14px 16px; min-width: 76px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tier-body { padding: 12px 16px; flex: 1; }
+.tier-title { font-weight: 500; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+.tier-desc { font-size: 12px; color: var(--muted); }
+.tier-perf { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 12px 16px; display: flex; align-items: center; flex-shrink: 0; text-align: right; line-height: 1.6; }
+
+.monitor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.monitor-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.mi-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.mi-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.mi-desc { font-size: 12px; color: var(--muted); }
+
+.callout { border-left: 2px solid var(--purple); background: var(--purple-dim); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; font-size: 13px; color: var(--muted); }
+.callout strong { color: var(--text); }
+.callout-coral { border-left-color: var(--coral); background: var(--coral-dim); }
+
+.stack-list { list-style: none; margin: 12px 0; }
+.stack-list li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+.stack-list li:last-child { border-bottom: none; }
+.sl-name { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text); min-width: 130px; padding-top: 2px; }
+.sl-role { flex: 1; }
+.sl-alt { color: var(--dim); font-size: 11px; white-space: nowrap; padding-top: 2px; }
+
+.footer { border-top: 1px solid var(--border); margin-top: 60px; padding-top: 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="doc-header">
+  <div class="doc-title"><span>CogniMesh</span></div>
+  <div class="doc-subtitle">The intelligent data mesh for AI agents</div>
+  <div class="doc-meta">
+    <div class="meta-item"><strong>Version</strong> 0.1 — Draft</div>
+    <div class="meta-item"><strong>Date</strong> March 2026</div>
+    <div class="meta-item"><strong>License</strong> Apache 2.0 — Open Source</div>
+  </div>
+  <div class="doc-tagline">
+    CogniMesh is an open source framework that allows AI agents to <strong>discover, navigate, and consume structured data</strong> efficiently — with minimal human maintenance, controlled cost, and full explainability. It works on top of any medallion-style data platform.
+  </div>
+  <div class="badge-row">
+    <span class="pill pill-green">open source</span>
+    <span class="pill pill-purple">vendor neutral</span>
+    <span class="pill pill-teal">MCP native</span>
+    <span class="pill pill-amber">self-improving</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a href="#s1"><span class="toc-num">01</span> Problem Statement</a></li>
+    <li><a href="#s1b"><span class="toc-num">01b</span> Comparison — API vs GraphQL vs CogniMesh</a></li>
+    <li><a href="#s1c"><span class="toc-num">01c</span> Same Data, Two Approaches — Day One</a></li>
+    <li><a href="#s2"><span class="toc-num">02</span> Full Architecture</a></li>
+    <li><a href="#s3"><span class="toc-num">03</span> Data Layers</a></li>
+    <li><a href="#s4"><span class="toc-num">04</span> Use Case Registry</a></li>
+    <li><a href="#s5"><span class="toc-num">05</span> SQL Mesh Layer</a></li>
+    <li><a href="#s6"><span class="toc-num">06</span> Agent Gateway — MCP Server</a></li>
+    <li><a href="#s7"><span class="toc-num">07</span> Fallback Tiers</a></li>
+    <li><a href="#s8"><span class="toc-num">08</span> Observability & Monitoring</a></li>
+    <li><a href="#s9"><span class="toc-num">09</span> Explainability</a></li>
+    <li><a href="#s10"><span class="toc-num">10</span> UC Freshness</a></li>
+    <li><a href="#s11"><span class="toc-num">11</span> Design Decisions</a></li>
+    <li><a href="#s12"><span class="toc-num">12</span> Product Phases</a></li>
+  </ul>
+</div>
+
+<!-- S1: PROBLEM -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Problem Statement</span>
+  </div>
+  <p>Today, no production system relies on AI agents doing self-directed data discovery. When agents need to consume structured data, engineering teams build the access layer manually — dedicated REST APIs over a pre-defined Gold layer, or a GraphQL schema that agents query against. These are proven, performant approaches. They work well at small scale.</p>
+  <p>The problem is <strong>what happens as the number of agents and use cases grows</strong>. Every new agent question that isn't covered by an existing endpoint requires a new engineering cycle: schema design, API implementation, documentation, versioning, deployment. The data team becomes a bottleneck. Gold tables proliferate without a coherent lifecycle. Stale endpoints accumulate. Freshness policies are set once and never revisited.</p>
+  <p>CogniMesh is a new approach — the first framework designed specifically for agentic data consumption. Instead of manually engineering each access path, teams register use cases declaratively. CogniMesh derives the Gold layer automatically, exposes it as an MCP server, observes usage patterns, and continuously consolidates and optimizes the serving layer without human intervention. <strong>The data platform learns from its own usage.</strong></p>
+  <div class="cards">
+    <div class="card c-coral">
+      <div class="card-label">The real problem</div>
+      <div class="card-title">Manual access layer doesn't scale</div>
+      <p>Each new agent UC requires a new API endpoint or GraphQL resolver. As agent count grows from 2 to 20, the engineering cost grows linearly. Teams can't keep up.</p>
+    </div>
+    <div class="card c-coral">
+      <div class="card-label">The real problem</div>
+      <div class="card-title">Gold layer designed, never evolved</div>
+      <p>Pre-defined Gold tables are designed for known queries. When consumption patterns shift, the Gold layer doesn't follow. Expensive joins reappear. Stale views accumulate.</p>
+    </div>
+    <div class="card c-coral">
+      <div class="card-label">The real problem</div>
+      <div class="card-title">No cost visibility at the agent layer</div>
+      <p>Current solutions expose data but don't track who asked what, which query patterns are expensive, or which Gold views are never used. No signal to optimize from.</p>
+    </div>
+    <div class="card c-coral">
+      <div class="card-label">The real problem</div>
+      <div class="card-title">No explainability</div>
+      <p>Dedicated APIs return values with no lineage. Agents can answer questions but cannot explain where a value came from, which model produced it, or how fresh it is.</p>
+    </div>
+  </div>
+</div>
+
+<!-- S1b: COMPARISON -->
+<div class="section" id="s1b">
+  <div class="section-header">
+    <span class="section-num">01b</span>
+    <span class="section-title">Comparison — Approaches to Agent Data Access</span>
+  </div>
+  <p>Three approaches exist for giving AI agents access to structured data. The table below evaluates them across the dimensions that matter most for agentic systems at scale.</p>
+
+  <div style="overflow-x:auto; margin: 24px 0;">
+  <table class="data-table" style="min-width:800px;">
+    <tr>
+      <th style="min-width:140px;">Dimension</th>
+      <th style="min-width:200px;">Dedicated REST API<br><span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0;">hand-built endpoints over Gold</span></th>
+      <th style="min-width:200px;">GraphQL<br><span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0;">schema over Gold / Silver</span></th>
+      <th style="min-width:200px; background: rgba(139,124,248,0.06);">CogniMesh<br><span style="color:var(--purple);font-weight:400;text-transform:none;letter-spacing:0;">UC-derived, self-improving</span></th>
+    </tr>
+    <tr>
+      <td><strong>Query performance</strong></td>
+      <td><span class="badge badge-green">Excellent</span><br><span style="font-size:12px;">Hand-optimized, single call, pre-joined Gold</span></td>
+      <td><span class="badge badge-teal">Good</span><br><span style="font-size:12px;">Flexible queries but can over-fetch without careful resolver design</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Excellent at T0</span><br><span style="font-size:12px;">Pre-joined, partitioned per access pattern. Equivalent to dedicated API after materialization.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Query cost</strong></td>
+      <td><span class="badge badge-green">Low</span><br><span style="font-size:12px;">Pre-built Gold views, minimal compute at query time</span></td>
+      <td><span class="badge badge-amber">Medium</span><br><span style="font-size:12px;">Risk of full-table resolvers if queries are not constrained</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Low + controlled</span><br><span style="font-size:12px;">T0 = zero joins. T2 Silver fallback has hard guardrails. Cost visibility built in.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Token cost</strong><br><span style="font-size:11px;color:var(--muted);">LLM context consumed</span></td>
+      <td><span class="badge badge-green">Minimal</span><br><span style="font-size:12px;">Agent calls a known endpoint. No discovery needed.</span></td>
+      <td><span class="badge badge-teal">Low</span><br><span style="font-size:12px;">Agent constructs a query against a known schema. Schema must be in context.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Minimal</span><br><span style="font-size:12px;">Capability index is small (~200 tokens). Embedded agent handles routing internally.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Initial investment</strong></td>
+      <td><span class="badge badge-coral">High</span><br><span style="font-size:12px;">Design + implement + document each endpoint. Gold tables must be designed upfront.</span></td>
+      <td><span class="badge badge-amber">Medium</span><br><span style="font-size:12px;">Schema design + resolver implementation. Self-describing reduces documentation burden.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-amber">Medium</span><br><span style="font-size:12px;">Setup of CogniMesh + UC registry + SQL Mesh integration. Upfront tooling investment.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Maintainability</strong><br><span style="font-size:11px;color:var(--muted);">per new agent UC</span></td>
+      <td><span class="badge badge-coral">High cost</span><br><span style="font-size:12px;">Every new UC = new endpoint. Engineering cycle required. Data team is the bottleneck.</span></td>
+      <td><span class="badge badge-teal">Low–medium</span><br><span style="font-size:12px;">New field in schema → new resolver. Less than REST but still manual per change.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Near zero</span><br><span style="font-size:12px;">Register UC declaratively. SQL Mesh derives the Gold view. No endpoint to build.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Scales with agent count</strong></td>
+      <td><span class="badge badge-coral">Poorly</span><br><span style="font-size:12px;">Linear engineering cost per new agent type. Breaks down beyond ~5 agents.</span></td>
+      <td><span class="badge badge-teal">Reasonably</span><br><span style="font-size:12px;">Same schema shared across agents. New agents reuse existing resolvers.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Well</span><br><span style="font-size:12px;">New agents discover UCs via MCP. Gold views shared and reused across agents automatically.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Unsupported UCs</strong></td>
+      <td><span class="badge badge-coral">Fails</span><br><span style="font-size:12px;">No endpoint → agent cannot answer. Manual engineering required before the agent can proceed.</span></td>
+      <td><span class="badge badge-amber">Partial</span><br><span style="font-size:12px;">Agent can compose a query from existing schema fields. Quality depends on resolver design.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-teal">Tiered fallback</span><br><span style="font-size:12px;">T1 composition → T2 Silver fallback with guardrails → T3 reject with ETA. Never a hard failure.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Cost observability</strong></td>
+      <td><span class="badge badge-amber">Addable</span><br><span style="font-size:12px;">Not included by default. Can be added with OpenTelemetry + a log store. Requires separate engineering effort.</span></td>
+      <td><span class="badge badge-amber">Addable</span><br><span style="font-size:12px;">Query logs exist. Agent-layer correlation requires custom instrumentation on top.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Built in</span><br><span style="font-size:12px;">Agent × UC × tier × cost tracked out of the box. Heatmaps, promote/deprecate signals, freshness compliance — no extra tooling.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Explainability</strong></td>
+      <td><span class="badge badge-amber">Addable</span><br><span style="font-size:12px;">Not included by default. dbt lineage or custom column tracking can be added. Requires deliberate engineering investment.</span></td>
+      <td><span class="badge badge-amber">Addable</span><br><span style="font-size:12px;">dbt or SQLMesh lineage can be bolted on. Not inherent to GraphQL itself.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Built in</span><br><span style="font-size:12px;">Column lineage registered at materialization time as part of the SQL Mesh step. No additional tooling required.</span></td>
+    </tr>
+    <tr>
+      <td><strong>Gold lifecycle mgmt</strong></td>
+      <td><span class="badge badge-coral">Manual</span><br><span style="font-size:12px;">Views accumulate. Stale tables remain. No signal to deprecate.</span></td>
+      <td><span class="badge badge-amber">Partial</span><br><span style="font-size:12px;">Schema versioning exists. Unused resolvers still require manual cleanup.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Automated</span><br><span style="font-size:12px;">Promote hot patterns. Deprecate zero-access views. Gold evolves from actual usage.</span></td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="callout">
+    <strong>When to choose each approach:</strong> Dedicated REST API is the right choice when UC count is small, stable, and team capacity is not a constraint. GraphQL is right when agents need flexible composition over a well-defined schema. CogniMesh is right when <strong>the number of agents and use cases is growing and you want the serving layer to derive itself from usage rather than be maintained by hand</strong>. Observability and explainability are included in CogniMesh but are addable to any solution — they are a convenience advantage, not an exclusive one.
+  </div>
+</div>
+
+<!-- S1c: SAME DATA, TWO APPROACHES -->
+<div class="section" id="s1c">
+  <div class="section-header">
+    <span class="section-num">01c</span>
+    <span class="section-title">Same Data, Two Approaches — Day One</span>
+  </div>
+
+  <p>Both approaches start from the same Silver data and serve the same questions. The difference is not in the answer — it is in everything around the answer. Below, we take identical Bronze/Silver data, define three use cases, and walk through what each approach actually requires — from first line of code to production-ready system.</p>
+
+  <!-- The Scenario -->
+  <div class="subsection">
+    <div class="subsection-title">The Scenario</div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">BENCHMARK DATASET — DUCKDB</div>
+      <div class="code">
+Bronze                          Silver<br>
+─────                           ──────<br>
+bronze.orders                   silver.orders_enriched<br>
+&nbsp;&nbsp;order_id, customer_id,          + customer region<br>
+&nbsp;&nbsp;product_id, amount,             + product category<br>
+&nbsp;&nbsp;status, created_at              + amount in USD<br>
+<br>
+bronze.customers                silver.customer_profiles<br>
+&nbsp;&nbsp;customer_id, name,              + total_orders, total_spend<br>
+&nbsp;&nbsp;email, signup_date,             + days_since_last_order<br>
+&nbsp;&nbsp;region                          + ltv_segment (ML output)<br>
+<br>
+bronze.products                 silver.product_metrics<br>
+&nbsp;&nbsp;product_id, name,               + units_sold_30d, revenue_30d<br>
+&nbsp;&nbsp;category, price,                + return_rate, stock_status<br>
+&nbsp;&nbsp;supplier_id
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card c-purple">
+        <div class="card-label">UC-01</div>
+        <div class="card-title">Customer Health Check</div>
+        <p>What is the current health status of customer X? Individual lookup · 4h freshness</p>
+      </div>
+      <div class="card c-teal">
+        <div class="card-label">UC-02</div>
+        <div class="card-title">Top Products by Category</div>
+        <p>What are the best-selling products in category Y? Bulk query · 24h freshness</p>
+      </div>
+      <div class="card c-amber">
+        <div class="card-label">UC-03</div>
+        <div class="card-title">At-Risk Customers</div>
+        <p>Which customers are at risk of churning? Bulk query · 4h freshness</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side by Side -->
+  <div class="subsection">
+    <div class="subsection-title">Side by Side — What Each Approach Requires</div>
+
+    <div class="cards">
+      <div class="card c-coral">
+        <div class="card-label">APPROACH A</div>
+        <div class="card-title">Traditional REST API</div>
+        <ol style="margin:10px 0 10px 16px;font-size:12px;color:var(--muted)">
+          <li style="margin-bottom:6px">Design 3 Gold tables manually (2-4 hrs)</li>
+          <li style="margin-bottom:6px">Build 3 REST endpoints — handler, validation, serialization, error handling (4-8 hrs each, 12-24 hrs total)</li>
+          <li style="margin-bottom:6px">Write tests + API docs per endpoint (3-6 hrs)</li>
+          <li style="margin-bottom:6px">Set up monitoring — OTel + log store + Grafana (2-4 days, often deferred)</li>
+          <li style="margin-bottom:6px">Schema drift? Endpoints break silently. Fix: update Gold SQL + endpoint code + redeploy</li>
+          <li style="margin-bottom:6px">Unanticipated question? HTTP 404. File ticket, build new endpoint (days-weeks)</li>
+        </ol>
+        <p><strong>Total: 3-5 developer-days</strong> for endpoints alone. No lineage. No audit trail. No freshness tracking.</p>
+      </div>
+      <div class="card c-green">
+        <div class="card-label">APPROACH B</div>
+        <div class="card-title">CogniMesh</div>
+        <ol style="margin:10px 0 10px 16px;font-size:12px;color:var(--muted)">
+          <li style="margin-bottom:6px">Install + configure CogniMesh (2-4 hrs, one-time)</li>
+          <li style="margin-bottom:6px">Register 3 UCs as JSON — SQL Mesh derives Gold views, human approves (30-45 min total)</li>
+          <li style="margin-bottom:6px">Consolidation check: UC-03 overlaps UC-01 — surfaces suggestion to human</li>
+          <li style="margin-bottom:6px">Monitoring — already running from first query. Zero additional engineering</li>
+          <li style="margin-bottom:6px">Schema drift? Gold view isolates agents. SQL Mesh detects + surfaces fix. Zero downtime</li>
+          <li style="margin-bottom:6px">Unanticipated question? Tiered fallback: T1 compose → T2 Silver query → T3 structured rejection. Pattern auto-registered as UC candidate</li>
+        </ol>
+        <p><strong>Total: 3-5 hours</strong> including setup. Monitoring, lineage, audit trail, freshness — all included.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eight-Dimension Scorecard -->
+  <div class="subsection">
+    <div class="subsection-title">Eight-Dimension Scorecard</div>
+
+    <table class="data-table">
+      <tr>
+        <th>Dimension</th>
+        <th>UC = 1</th>
+        <th>UC = 3</th>
+        <th>UC = 10</th>
+      </tr>
+      <tr>
+        <td><strong>T0 Query Latency</strong></td>
+        <td><span class="badge badge-coral">REST</span> ~2-5ms faster</td>
+        <td><span class="badge badge-coral">REST</span></td>
+        <td><span class="badge badge-coral">REST</span></td>
+      </tr>
+      <tr>
+        <td><strong>Setup Simplicity</strong></td>
+        <td><span class="badge badge-coral">REST</span> (fewer parts)</td>
+        <td><span class="badge badge-amber">Tie</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Compute Footprint</strong></td>
+        <td><span class="badge badge-coral">REST</span> (thinner)</td>
+        <td><span class="badge badge-coral">REST</span></td>
+        <td><span class="badge badge-amber">Comparable</span></td>
+      </tr>
+      <tr>
+        <td><strong>Discovery</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Unsupported Query Handling</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Schema Drift Tolerance</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Lineage</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Observability</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Audit Trail</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Freshness Management</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Change Governance</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Cost Attribution</strong></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Marginal UC Cost</strong></td>
+        <td>—</td>
+        <td><span class="badge badge-green">CogniMesh</span> (15 min vs 8 hrs)</td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+      <tr>
+        <td><strong>Gold Consolidation</strong></td>
+        <td>—</td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+        <td><span class="badge badge-green">CogniMesh</span></td>
+      </tr>
+    </table>
+
+    <p>At UC = 1, REST wins on <strong>3 dimensions</strong> (all about being leaner/faster for the narrow case). CogniMesh wins on <strong>11 dimensions</strong> (all about being a better system). The gap only widens.</p>
+  </div>
+
+  <!-- Where REST Wins -->
+  <div class="subsection">
+    <div class="subsection-title">Where REST Wins — Honest Assessment</div>
+
+    <div class="callout callout-coral">
+      <strong>Where REST wins — and we won't pretend otherwise:</strong> Raw T0 latency is 2-5ms faster per query — MCP protocol + embedded agent routing is not free, and never will be. Setup simplicity for a truly static, single-UC system is real — if you need one endpoint, will never add another, and don't need lineage or monitoring, REST is the right tool. Compute footprint is thinner — no embedded agent, no capability index, no OTel instrumentation. And team familiarity: every developer knows REST. CogniMesh is new.
+    </div>
+  </div>
+
+  <!-- Developer Hours -->
+  <div class="subsection">
+    <div class="subsection-title">Developer Hours — The Real Crossover</div>
+
+    <table class="data-table">
+      <tr>
+        <th>UC Count</th>
+        <th>REST (cumulative)</th>
+        <th style="background: rgba(74,222,128,0.06)">CogniMesh (cumulative)</th>
+        <th>Delta</th>
+      </tr>
+      <tr>
+        <td><strong>0 (setup only)</strong></td>
+        <td>0 h</td>
+        <td style="background: rgba(74,222,128,0.06)">3 h</td>
+        <td>REST ahead by 3 h</td>
+      </tr>
+      <tr>
+        <td><strong>1</strong></td>
+        <td>8 h</td>
+        <td style="background: rgba(74,222,128,0.06)">3.5 h</td>
+        <td><span class="badge badge-green">CogniMesh ahead by 4.5 h</span></td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td>16 h</td>
+        <td style="background: rgba(74,222,128,0.06)">4 h</td>
+        <td><span class="badge badge-green">CogniMesh ahead by 12 h</span></td>
+      </tr>
+      <tr>
+        <td><strong>3</strong></td>
+        <td>24 h</td>
+        <td style="background: rgba(74,222,128,0.06)">4.5 h</td>
+        <td><span class="badge badge-green">CogniMesh ahead by 19.5 h</span></td>
+      </tr>
+      <tr>
+        <td><strong>10</strong></td>
+        <td>80 h</td>
+        <td style="background: rgba(74,222,128,0.06)">7 h</td>
+        <td><span class="badge badge-green">CogniMesh ahead by 73 h</span></td>
+      </tr>
+    </table>
+
+    <p>The crossover on developer hours happens at <strong>UC = 1</strong>. CogniMesh's one-time setup cost (3 hours) is less than building a single REST endpoint with its Gold table, tests, and docs (8 hours). There is no 'wait until UC = 5 for CogniMesh to pay off.' It pays off immediately.</p>
+  </div>
+
+  <!-- System Completeness Gap -->
+  <div class="subsection">
+    <div class="subsection-title">System Completeness Gap</div>
+
+    <table class="data-table">
+      <tr>
+        <th>Capability</th>
+        <th>REST at UC = 1</th>
+        <th style="background: rgba(74,222,128,0.06)">CogniMesh at UC = 1</th>
+        <th>Cost to add to REST</th>
+      </tr>
+      <tr>
+        <td><strong>Query serving</strong></td>
+        <td>Yes</td>
+        <td style="background: rgba(74,222,128,0.06)">Yes</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Agent discovery</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>2-4 hours</td>
+      </tr>
+      <tr>
+        <td><strong>Unsupported query handling</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>Architectural change</td>
+      </tr>
+      <tr>
+        <td><strong>Lineage per response</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>1-2 days</td>
+      </tr>
+      <tr>
+        <td><strong>Freshness monitoring</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>1-2 days</td>
+      </tr>
+      <tr>
+        <td><strong>Per-UC cost attribution</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>1-2 days</td>
+      </tr>
+      <tr>
+        <td><strong>Audit trail</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>1 day</td>
+      </tr>
+      <tr>
+        <td><strong>Schema drift isolation</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>Cannot retrofit</td>
+      </tr>
+      <tr>
+        <td><strong>Change approval workflow</strong></td>
+        <td>No</td>
+        <td style="background: rgba(74,222,128,0.06)"><span class="badge badge-green">Yes</span></td>
+        <td>Cannot retrofit</td>
+      </tr>
+    </table>
+
+    <p>To bring REST to parity with CogniMesh's day-one capabilities requires <strong>7-12 additional developer-days</strong> on top of endpoint work. Most teams never do it — endpoints run without monitoring, without lineage, without freshness tracking, and with no graceful handling of unexpected questions.</p>
+  </div>
+
+  <!-- Closing Insight -->
+  <div class="callout">
+    <strong>The question is not 'is CogniMesh faster than REST?'</strong> It is not, by 2-5ms on a direct hit. The question is: would you rather have a fast pipe, or a governed, observable, self-documenting data serving layer that is 2-5ms slower on a direct hit and infinitely more capable at everything else? Most teams choose REST because the first UC is where the decision is made, and REST looks simpler at UC = 1. But REST at UC = 1 gives you an endpoint. CogniMesh at UC = 1 gives you a platform. The 2-5ms is the price of the platform. The platform is what makes UC = 2 through UC = 100 possible without linear engineering cost.
+  </div>
+</div>
+
+<!-- S2: FULL ARCHITECTURE -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Full Architecture</span>
+  </div>
+  <p>CogniMesh sits as a layer between consuming agents and the underlying data platform. It exposes an MCP server upward and speaks to any medallion-compatible data store downward.</p>
+  <div class="diagram-wrap">
+    <div class="diagram-label">CogniMesh — full system diagram</div>
+    <svg width="100%" viewBox="0 0 1020 790" style="min-width:700px">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <!-- Consuming agents -->
+    <rect x="20" y="20" width="190" height="52" rx="8" fill="#1a1e26" stroke="#8b7cf8" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="115" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8b7cf8">Agent A</text>
+    <text x="115" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7a7870">any LLM / framework</text>
+
+    <rect x="225" y="20" width="190" height="52" rx="8" fill="#1a1e26" stroke="#8b7cf8" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="320" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8b7cf8">Agent B</text>
+    <text x="320" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7a7870">any LLM / framework</text>
+
+    <rect x="430" y="20" width="190" height="52" rx="8" fill="#1a1e26" stroke="#8b7cf8" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="525" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8b7cf8">Agent C</text>
+    <text x="525" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7a7870">any LLM / framework</text>
+
+    <rect x="640" y="20" width="370" height="52" rx="8" fill="#1a1e26" stroke="#3a3a38" stroke-width="0.8"/>
+    <text x="825" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#7a7870">Future agents</text>
+    <text x="825" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#3a3a38">any agent · any framework</text>
+
+    <!-- MCP labels + arrows -->
+    <text x="115" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
+    <text x="320" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
+    <text x="525" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
+    <text x="825" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">MCP</text>
+    <line x1="115" y1="72" x2="115" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
+    <line x1="320" y1="72" x2="320" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
+    <line x1="525" y1="72" x2="525" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
+    <line x1="825" y1="72" x2="825" y2="116" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".4"/>
+
+    <!-- Gateway outer box -->
+    <rect x="10" y="118" width="1000" height="214" rx="12" fill="rgba(139,124,248,0.04)" stroke="#8b7cf8" stroke-width="0.8" stroke-opacity=".4"/>
+    <text x="510" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8b7cf8" font-weight="500">COGNIMESH — AGENT GATEWAY (MCP SERVER)</text>
+
+    <!-- Capability index -->
+    <rect x="26" y="152" width="215" height="166" rx="8" fill="#13161b" stroke="#60a5fa" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="133" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#60a5fa">CAPABILITY INDEX</text>
+    <text x="133" y="190" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">UC registry → serving view map</text>
+    <text x="44" y="212" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· registered use cases</text>
+    <text x="44" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· MCP tool definitions</text>
+    <text x="44" y="244" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· UC → Gold view mapping</text>
+    <text x="44" y="260" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· freshness TTL per UC</text>
+    <text x="44" y="280" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">+ auto-registered on materialize</text>
+    <text x="44" y="298" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">LLM generates entry at ingest</text>
+
+    <!-- Embedded agent -->
+    <rect x="258" y="152" width="215" height="166" rx="8" fill="#13161b" stroke="#2dd4bf" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="365" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#2dd4bf">EMBEDDED AGENT</text>
+    <text x="365" y="190" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">routes · serves · explains</text>
+    <text x="275" y="212" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· reads capability index</text>
+    <text x="275" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· maps question → UC → view</text>
+    <text x="275" y="244" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· calls serving layer API</text>
+    <text x="275" y="260" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· composes multi-UC answers</text>
+    <text x="275" y="276" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· triggers fallback tiers</text>
+    <text x="275" y="292" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· appends lineage to response</text>
+
+    <!-- Materialization engine -->
+    <rect x="490" y="152" width="215" height="166" rx="8" fill="#13161b" stroke="#f59e0b" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="597" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#f59e0b">MATERIALIZATION ENGINE</text>
+    <text x="597" y="190" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">promotes hot patterns to Gold</text>
+    <text x="507" y="212" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· detects repeated Silver fallbacks</text>
+    <text x="507" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· triggers transformation job</text>
+    <text x="507" y="244" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· LLM generates SQL model</text>
+    <text x="507" y="260" font-family="IBM Plex Mono" font-size="9" fill="#f59e0b">· updates capability index ←</text>
+    <text x="507" y="276" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· sets freshness TTL</text>
+    <text x="507" y="292" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· registers lineage</text>
+
+    <!-- Observability -->
+    <rect x="722" y="152" width="278" height="166" rx="8" fill="#13161b" stroke="#4ade80" stroke-width="0.8" stroke-opacity=".5"/>
+    <text x="861" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4ade80">OBSERVABILITY ENGINE</text>
+    <text x="861" y="190" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">OpenTelemetry · ClickHouse · Grafana</text>
+    <text x="739" y="212" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· UC calls · tier hits · token cost</text>
+    <text x="739" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· scan size · latency · compute cost</text>
+    <text x="739" y="244" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· table × agent × time heatmap</text>
+    <text x="739" y="260" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· freshness compliance per UC</text>
+    <text x="739" y="278" font-family="IBM Plex Mono" font-size="9" fill="#4ade80">→ manager dashboard</text>
+    <text x="739" y="294" font-family="IBM Plex Mono" font-size="9" fill="#4ade80">→ agentic health monitor</text>
+
+    <!-- Internal arrows -->
+    <line x1="241" y1="235" x2="256" y2="235" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)"/>
+    <line x1="473" y1="235" x2="488" y2="235" stroke="#f59e0b" stroke-width="0.8" marker-end="url(#arr)" stroke-dasharray="4 2"/>
+    <text x="479" y="227" font-family="IBM Plex Mono" font-size="8" fill="#f59e0b">auto-register</text>
+    <line x1="705" y1="235" x2="720" y2="235" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <!-- Arrow down to SQL Mesh -->
+    <line x1="510" y1="332" x2="510" y2="366" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <!-- SQL Mesh -->
+    <rect x="10" y="368" width="1000" height="136" rx="12" fill="rgba(245,158,11,0.04)" stroke="#f59e0b" stroke-width="0.8" stroke-opacity=".4"/>
+    <text x="510" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#f59e0b" font-weight="500">SQL MESH LAYER</text>
+    <text x="510" y="406" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">derives Gold from registered use cases · consolidates before creating · version-controlled SQL models</text>
+
+    <rect x="26" y="416" width="220" height="76" rx="6" fill="#13161b" stroke="#3a3a38" stroke-width="0.5"/>
+    <text x="136" y="434" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">Consolidation check</text>
+    <text x="136" y="452" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">existing Gold covers this UC?</text>
+    <text x="136" y="468" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">extend vs create new view</text>
+    <text x="136" y="484" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">deprecate zero-access views</text>
+
+    <rect x="264" y="416" width="220" height="76" rx="6" fill="#13161b" stroke="#3a3a38" stroke-width="0.5"/>
+    <text x="374" y="434" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">SQL model generator</text>
+    <text x="374" y="452" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">LLM derives SELECT + JOIN</text>
+    <text x="374" y="468" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">from source schema + UC fields</text>
+    <text x="374" y="484" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">version-controlled model file</text>
+
+    <rect x="502" y="416" width="220" height="76" rx="6" fill="#13161b" stroke="#3a3a38" stroke-width="0.5"/>
+    <text x="612" y="434" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">Partition optimizer</text>
+    <text x="612" y="452" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">access pattern → partition key</text>
+    <text x="612" y="468" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">individual lookup vs bulk query</text>
+    <text x="612" y="484" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">zero full-scans at query time</text>
+
+    <rect x="740" y="416" width="260" height="76" rx="6" fill="#13161b" stroke="#3a3a38" stroke-width="0.5"/>
+    <text x="870" y="434" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">Lineage tracker</text>
+    <text x="870" y="452" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">Gold col → source col → event</text>
+    <text x="870" y="468" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">model version + run timestamp</text>
+    <text x="870" y="484" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#4ade80">feeds explainability layer</text>
+
+    <!-- Arrow down to Gold -->
+    <line x1="510" y1="504" x2="510" y2="534" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <!-- Gold layer -->
+    <rect x="10" y="536" width="1000" height="106" rx="12" fill="rgba(248,113,113,0.04)" stroke="#f87171" stroke-width="0.8" stroke-opacity=".4"/>
+    <text x="510" y="556" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#f87171" font-weight="500">GOLD LAYER — DERIVED, NOT DESIGNED</text>
+    <text x="510" y="572" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">pre-aggregated · pre-joined · partitioned per UC · API-served · full lineage</text>
+    <rect x="26" y="582" width="220" height="46" rx="6" fill="#13161b" stroke="#f87171" stroke-width="0.5" stroke-opacity=".4"/>
+    <text x="136" y="609" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#f87171">serving_view_A</text>
+    <rect x="264" y="582" width="220" height="46" rx="6" fill="#13161b" stroke="#f87171" stroke-width="0.5" stroke-opacity=".4"/>
+    <text x="374" y="609" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#f87171">serving_view_B</text>
+    <rect x="502" y="582" width="220" height="46" rx="6" fill="#13161b" stroke="#f87171" stroke-width="0.5" stroke-opacity=".4"/>
+    <text x="612" y="609" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#f87171">serving_view_C</text>
+    <rect x="740" y="582" width="260" height="46" rx="6" fill="#13161b" stroke="#3a3a38" stroke-width="0.5" stroke-dasharray="4 2"/>
+    <text x="870" y="609" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">+ on-demand materialized views</text>
+
+    <!-- Arrow down to Silver -->
+    <line x1="510" y1="642" x2="510" y2="670" stroke="#3a3a38" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <!-- Silver/Bronze -->
+    <rect x="10" y="672" width="1000" height="56" rx="10" fill="#13161b" stroke="#3a3a38" stroke-width="0.8"/>
+    <text x="510" y="694" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#7a7870" font-weight="500">SILVER · BRONZE — any medallion-compatible platform</text>
+    <text x="510" y="714" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">Spark · Flink · dbt · SQLMesh · Delta Lake · Iceberg · Hudi · PostgreSQL · BigQuery · Snowflake · DuckDB</text>
+
+    <!-- Feedback: observability → SQL Mesh -->
+    <path d="M 1010 240 Q 1030 240 1030 504 Q 1030 516 1012 516" fill="none" stroke="#4ade80" stroke-width="0.8" stroke-dasharray="5 3" marker-end="url(#arr)" stroke-opacity=".6"/>
+    <text x="1028" y="378" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#4ade80" transform="rotate(90,1028,378)">triggers consolidation</text>
+
+    <!-- UC Registry note -->
+    <rect x="770" y="358" width="240" height="22" rx="4" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="0.5" stroke-opacity=".4"/>
+    <text x="890" y="372" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#f59e0b">USE CASE REGISTRY feeds SQL Mesh</text>
+
+    </svg>
+  </div>
+</div>
+
+<!-- S3: DATA LAYERS -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Data Layers</span>
+  </div>
+  <p>CogniMesh works on top of any medallion-style data platform. It does not depend on a specific storage format, compute engine, or cloud provider.</p>
+  <table class="data-table">
+    <tr><th>Layer</th><th>Content</th><th>Who reads it</th><th>Designed by</th></tr>
+    <tr>
+      <td><span class="badge badge-purple">Bronze</span></td>
+      <td>Raw ingested data, immutable</td>
+      <td>Transformation jobs only</td>
+      <td>Data engineers</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-teal">Silver</span></td>
+      <td>Enriched, normalized, feature-enriched data</td>
+      <td>SQL Mesh · fallback queries (Tier 2)</td>
+      <td>Data engineers</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-coral">Gold</span></td>
+      <td>Pre-joined, pre-aggregated, UC-optimized serving views</td>
+      <td>CogniMesh gateway only — never accessed directly by agents</td>
+      <td><strong>SQL Mesh — derived from registered UCs, not hand-designed</strong></td>
+    </tr>
+  </table>
+  <div class="callout">
+    <strong>Core principle:</strong> Gold is not designed upfront. It is derived from registered use cases by the SQL Mesh layer. The same Silver data produces different Gold shapes for different agent consumption patterns.
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Compatible platforms</div>
+    <ul class="stack-list">
+      <li><span class="sl-name">Storage formats</span><span class="sl-role">Delta Lake, Apache Iceberg, Apache Hudi, Parquet</span></li>
+      <li><span class="sl-name">Compute engines</span><span class="sl-role">Apache Spark, Apache Flink, DuckDB, Trino, Starburst</span></li>
+      <li><span class="sl-name">Transformation</span><span class="sl-role">SQLMesh (preferred), dbt</span></li>
+      <li><span class="sl-name">Cloud warehouses</span><span class="sl-role">BigQuery, Snowflake, Redshift, Databricks (optional)</span></li>
+      <li><span class="sl-name">On-premise / OSS</span><span class="sl-role">PostgreSQL, ClickHouse, Apache Hive</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- S4: USE CASE REGISTRY -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Use Case Registry</span>
+  </div>
+  <p>The authoring unit in CogniMesh is a <strong>question</strong>, not a table. A Use Case (UC) defines what question needs answering, what data fields are required, which agent consumes it, and how fresh the answer must be.</p>
+  <div class="code">
+<span class="c">// Example UC definition</span><br>
+{<br>
+&nbsp;&nbsp;<span class="k">"id"</span>: <span class="s">"UC-01"</span>,<br>
+&nbsp;&nbsp;<span class="k">"question"</span>: <span class="s">"Natural language description of what this UC answers"</span>,<br>
+&nbsp;&nbsp;<span class="k">"consuming_agent"</span>: <span class="s">"agent_id"</span>,<br>
+&nbsp;&nbsp;<span class="k">"required_fields"</span>: [<span class="s">"field_a"</span>, <span class="s">"field_b"</span>, <span class="s">"field_c"</span>],<br>
+&nbsp;&nbsp;<span class="k">"access_pattern"</span>: <span class="s">"individual_lookup"</span>, &nbsp;<span class="c">// individual_lookup | bulk_query | aggregation</span><br>
+&nbsp;&nbsp;<span class="k">"freshness_ttl"</span>: <span class="s">"1h"</span>, &nbsp;<span class="c">// how often the Gold view is recalculated</span><br>
+&nbsp;&nbsp;<span class="k">"freshness_rationale"</span>: <span class="s">"why this TTL — links to upstream model cadence"</span>,<br>
+&nbsp;&nbsp;<span class="k">"phase"</span>: <span class="s">"1"</span>, &nbsp;<span class="c">// 1 = human authored · 2 = auto-detected from usage</span><br>
+&nbsp;&nbsp;<span class="k">"gold_view"</span>: <span class="s">"assigned by SQL Mesh after derivation"</span><br>
+}
+  </div>
+  <div class="cards">
+    <div class="card c-blue">
+      <div class="card-label">Phase 1</div>
+      <div class="card-title">Human-authored UCs</div>
+      <p>Team registers known use cases manually as structured records. SQL Mesh derives Gold views from them. Low maintenance — UCs only change when business logic changes.</p>
+    </div>
+    <div class="card c-purple">
+      <div class="card-label">Phase 2</div>
+      <div class="card-title">Auto-detected from usage</div>
+      <p>Gateway observes repeated field combination patterns in Tier 1/2 fallbacks. When frequency exceeds threshold, the pattern becomes a UC candidate and enters the registry pending review.</p>
+    </div>
+  </div>
+</div>
+
+<!-- S5: SQL MESH -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">SQL Mesh Layer</span>
+  </div>
+  <p>For each registered UC, the SQL Mesh layer runs four steps in sequence before creating anything new in Gold.</p>
+  <div class="cards">
+    <div class="card c-amber">
+      <div class="card-label">Step 1</div>
+      <div class="card-title">Consolidation check</div>
+      <p>Does an existing Gold view already serve this UC fully or partially? Extend before creating. Prevents Gold table sprawl and duplicate compute.</p>
+    </div>
+    <div class="card c-teal">
+      <div class="card-label">Step 2</div>
+      <div class="card-title">SQL model generation</div>
+      <p>LLM derives optimal SELECT + JOIN + WHERE from source schema and UC field requirements. Output is a declarative, version-controlled SQL model file.</p>
+    </div>
+    <div class="card c-blue">
+      <div class="card-label">Step 3</div>
+      <div class="card-title">Partition optimization</div>
+      <p>Access pattern determines partition key. Individual lookups partition by entity key. Bulk queries partition by segment or category. Ensures zero full-scans at query time.</p>
+    </div>
+    <div class="card c-green">
+      <div class="card-label">Step 4</div>
+      <div class="card-title">Lineage registration</div>
+      <p>Every output column traced to its source column and originating event. Stored in lineage tracker. Powers explainability at query time with zero extra cost.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Gold is fully explainable by construction.</strong> Every table traces back to one or more registered UCs. Every column has a source. No orphan tables. No undocumented views. The SQL Mesh layer is the single source of truth for what Gold contains and why.
+  </div>
+</div>
+
+<!-- S6: GATEWAY -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">Agent Gateway — MCP Server</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Why MCP</div>
+    <p>The gateway exposes an <strong>MCP server</strong>. Consuming agents discover tools at runtime — they do not hardcode endpoint names, column names, or join keys. Any agent on any LLM framework that speaks MCP can consume data through CogniMesh without schema knowledge.</p>
+    <p>MCP is the right interface because: tool discovery is built-in, inputs and outputs are typed, the agent gets structured data back (not a string to parse), and new tools auto-appear in the registry when a UC is materialized.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">How the embedded agent routes to the right Gold view</div>
+    <p>The consuming agent sends a natural language question via MCP. The embedded gateway agent resolves it in three steps — the consuming agent never sees table names or column names:</p>
+    <ol style="margin:12px 0 12px 20px; font-size:13px; color:var(--muted); line-height:2.2;">
+      <li>Read capability index → match question to registered UCs by semantic similarity</li>
+      <li>Map matched UCs → Gold views (stored in index, zero schema inspection needed)</li>
+      <li>Call Gold serving layer, merge if multi-view, return typed structured response with lineage</li>
+    </ol>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Example API surface</div>
+    <div class="code">
+<span class="c"># consuming agent usage — no schema knowledge required</span><br>
+<span class="k">from</span> cognimesh <span class="k">import</span> CogniMesh<br>
+<br>
+mesh = CogniMesh(<span class="n">config</span>=<span class="s">"cognimesh.yaml"</span>)<br>
+<br>
+<span class="c"># discover — what can I ask?</span><br>
+mesh.discover()  <span class="c"># → list of UCs + what they answer</span><br>
+<br>
+<span class="c"># query — natural language, returns structured data + lineage</span><br>
+result = mesh.query(<span class="s">"is entity_X at risk and carrying outstanding balance?"</span>)<br>
+<br>
+<span class="c"># explain — where did this value come from?</span><br>
+mesh.explain(<span class="s">"risk_score"</span>)  <span class="c"># → source col · model version · materialized at</span><br>
+<br>
+<span class="c"># register — request a new use case</span><br>
+mesh.register_uc(<br>
+&nbsp;&nbsp;<span class="n">question</span>=<span class="s">"..."</span>,<br>
+&nbsp;&nbsp;<span class="n">fields</span>=[<span class="s">"field_a"</span>, <span class="s">"field_b"</span>],<br>
+&nbsp;&nbsp;<span class="n">freshness_ttl</span>=<span class="s">"4h"</span><br>
+)
+    </div>
+  </div>
+</div>
+
+<!-- S7: FALLBACK TIERS -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">Fallback Tiers</span>
+  </div>
+  <p>When a question doesn't match an existing UC, the gateway does not reject. It falls through a cost-aware tier hierarchy, serves the best available answer, and auto-registers the pattern for future materialization.</p>
+
+  <div class="tier" style="border-color: rgba(74,222,128,0.3);">
+    <div class="tier-tag" style="background: var(--green-dim); color: var(--green);">T0</div>
+    <div class="tier-body">
+      <div class="tier-title">Full hit — UC in registry, Gold view ready</div>
+      <div class="tier-desc">Single serving layer call to pre-built Gold view. Zero joins at query time. Lineage appended automatically.</div>
+    </div>
+    <div class="tier-perf" style="color: var(--green);">~10ms<br>zero joins</div>
+  </div>
+
+  <div class="tier" style="border-color: rgba(96,165,250,0.3);">
+    <div class="tier-tag" style="background: var(--blue-dim); color: var(--blue);">T1</div>
+    <div class="tier-body">
+      <div class="tier-title">Partial hit — fields exist across multiple Gold views</div>
+      <div class="tier-desc">Gateway composes 2–3 API calls, merges result in memory. No Silver touch. Pattern auto-registered as UC candidate in registry.</div>
+    </div>
+    <div class="tier-perf" style="color: var(--blue);">~50ms<br>no Silver</div>
+  </div>
+
+  <div class="tier" style="border-color: rgba(245,158,11,0.3);">
+    <div class="tier-tag" style="background: var(--amber-dim); color: var(--amber);">T2</div>
+    <div class="tier-body">
+      <div class="tier-title">Silver fallback — UC not coverable from Gold</div>
+      <div class="tier-desc">Gateway generates SQL, runs against Silver with hard cost guardrails: max rows scanned, max compute units, query timeout. Pattern auto-registered as new UC, triggers SQL Mesh materialization job.</div>
+    </div>
+    <div class="tier-perf" style="color: var(--amber);">seconds<br>guardrailed</div>
+  </div>
+
+  <div class="tier" style="border-color: rgba(248,113,113,0.3);">
+    <div class="tier-tag" style="background: var(--coral-dim); color: var(--coral);">T3</div>
+    <div class="tier-body">
+      <div class="tier-title">Reject with explanation and ETA</div>
+      <div class="tier-desc">Query would exceed cost guardrail. Consuming agent receives a structured rejection: why it was rejected, estimated time when Gold view will be ready after materialization completes.</div>
+    </div>
+    <div class="tier-perf" style="color: var(--coral);">0ms<br>no data</div>
+  </div>
+</div>
+
+<!-- S8: OBSERVABILITY -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-title">Observability & Monitoring</span>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Open source stack — no vendor lock-in</div>
+    <ul class="stack-list">
+      <li><span class="sl-name">OpenTelemetry</span><span class="sl-role">Instrumentation — traces every gateway call, tier decision, cost event. Vendor-neutral by design.</span><span class="sl-alt">standard</span></li>
+      <li><span class="sl-name">ClickHouse</span><span class="sl-role">Storage for query logs, usage events, cost metrics. Fast columnar, open source, self-hosted.</span><span class="sl-alt">alt: DuckDB</span></li>
+      <li><span class="sl-name">Grafana</span><span class="sl-role">Dashboards — manager view and agentic health monitor. Open source, self-hosted.</span><span class="sl-alt">alt: Apache Superset</span></li>
+      <li><span class="sl-name">SQLMesh / dbt</span><span class="sl-role">Transforms raw telemetry into aggregated monitoring models. Same toolchain as SQL Mesh layer.</span><span class="sl-alt">SQLMesh preferred</span></li>
+      <li><span class="sl-name">Prometheus</span><span class="sl-role">Real-time metrics — gateway latency, tier hit rates, active UC count, freshness compliance.</span><span class="sl-alt">optional</span></li>
+    </ul>
+    <div class="callout">
+      Platform-native query history tools (e.g. Databricks Query History, BigQuery Job History) can be integrated as an additional data source for compute cost metrics, but are never required. CogniMesh observability is fully self-contained.
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">What is monitored</div>
+    <div class="monitor-grid">
+      <div class="monitor-item">
+        <div class="mi-label">Cost & Usage</div>
+        <div class="mi-title">Total cost + usage</div>
+        <div class="mi-desc">Compute spend + token cost per period. Broken down by agent, UC, and Gold view. Tracked against budget.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">Cost & Usage</div>
+        <div class="mi-title">Cost per table / UC</div>
+        <div class="mi-desc">Which Gold views are expensive to maintain. Which UCs drive the most compute. Storage cost per view.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">Patterns</div>
+        <div class="mi-title">Access heatmap</div>
+        <div class="mi-desc">Table × agent × time. Reveals heavy users, hot tables, and time-of-day consumption patterns.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">Patterns</div>
+        <div class="mi-title">Tier hit rate</div>
+        <div class="mi-desc">% of queries at each tier. High T2 rate = materialization backlog. Tracks gateway efficiency over time.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">UC Lifecycle</div>
+        <div class="mi-title">UCs to promote</div>
+        <div class="mi-desc">T1/T2 patterns with high frequency + high cost → Gold materialization candidates. Ranked by ROI.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">UC Lifecycle</div>
+        <div class="mi-title">UCs to deprecate</div>
+        <div class="mi-desc">Gold views with zero agent calls + zero data reads for N days. Flagged for removal.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">Freshness</div>
+        <div class="mi-title">Freshness compliance</div>
+        <div class="mi-desc">Is each UC's Gold view being recalculated within its TTL? How often is it stale at query time?</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">Freshness</div>
+        <div class="mi-title">Freshness vs cost review</div>
+        <div class="mi-desc">If source data changes less frequently than the TTL requires, the TTL is over-aggressive. System flags for review — data-driven TTL adjustment.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Combined signal → automated consolidation trigger</div>
+    <div class="callout">
+      <strong>Promote:</strong> High T2 fallback rate + high compute cost + repeated UC candidate pattern → trigger SQL Mesh materialization job automatically.
+    </div>
+    <div class="callout callout-coral">
+      <strong>Deprecate:</strong> Gold view with zero agent calls + zero data reads for 30 days → merge or drop. Gold does not accumulate dead weight over time.
+    </div>
+    <p>The combined signal feeds two consumers: a <strong>manager dashboard</strong> for human oversight, and an <strong>agentic health monitor</strong> that autonomously triggers consolidation, TTL adjustments, and deprecation recommendations.</p>
+  </div>
+</div>
+
+<!-- S9: EXPLAINABILITY -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <span class="section-title">Explainability</span>
+  </div>
+  <p>Every answer CogniMesh returns is traceable to its source. Explainability is built in at construction time — not computed at query time.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">How a Gold view is constructed — model card</div>
+    <p>Each Gold view has a machine-readable model card stored alongside its SQL model in version control:</p>
+    <div class="code">
+<span class="c">// serving_view_A — model card</span><br>
+{<br>
+&nbsp;&nbsp;<span class="k">"view"</span>: <span class="s">"gold.serving_view_A"</span>,<br>
+&nbsp;&nbsp;<span class="k">"derived_from_ucs"</span>: [<span class="s">"UC-01"</span>, <span class="s">"UC-04"</span>],<br>
+&nbsp;&nbsp;<span class="k">"sql_model_path"</span>: <span class="s">"models/gold/serving_view_A.sql"</span>,<br>
+&nbsp;&nbsp;<span class="k">"sql_model_version"</span>: <span class="s">"v3.1.0"</span>,<br>
+&nbsp;&nbsp;<span class="k">"source_tables"</span>: [<span class="s">"silver.table_X"</span>, <span class="s">"silver.table_Y"</span>],<br>
+&nbsp;&nbsp;<span class="k">"last_materialized"</span>: <span class="s">"2026-03-27T10:00:00Z"</span>,<br>
+&nbsp;&nbsp;<span class="k">"freshness_ttl"</span>: <span class="s">"1h"</span>,<br>
+&nbsp;&nbsp;<span class="k">"partition_key"</span>: <span class="s">"entity_id"</span><br>
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Source of a value in Gold — column-level lineage</div>
+    <p>Every Gold column traces back to its Silver source, transformation logic, and model version:</p>
+    <table class="data-table">
+      <tr><th>Gold column</th><th>Silver source</th><th>Transformation</th><th>Model version</th></tr>
+      <tr><td><code>risk_score</code></td><td>silver.enriched.ml_risk_v4</td><td>passthrough — ML model output</td><td>risk-model-v4.2</td></tr>
+      <tr><td><code>outstanding_balance</code></td><td>silver.transactions.amount</td><td>SUM where status=UNPAID</td><td>v3.1.0</td></tr>
+      <tr><td><code>latency_p90</code></td><td>silver.events.response_ms</td><td>PERCENTILE(90) OVER 7d window</td><td>v2.0.1</td></tr>
+      <tr><td><code>value_segment</code></td><td>silver.enriched.ml_ltv_segment</td><td>passthrough — ML model output</td><td>ltv-model-v2.0</td></tr>
+    </table>
+    <div class="callout">
+      When a consuming agent returns an answer, CogniMesh can append: <strong>source: silver.enriched via risk-model-v4.2 · materialized 2026-03-27T10:00Z · freshness TTL 1h.</strong> Full audit trail at zero extra query cost.
+    </div>
+  </div>
+</div>
+
+<!-- S10: FRESHNESS -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-title">UC Freshness</span>
+  </div>
+  <p>Freshness is a <strong>first-class property of each UC</strong>. It defines how often the Gold view is recalculated — and is both a cost driver and a data quality signal that must be monitored and continuously evaluated.</p>
+  <table class="data-table">
+    <tr><th>Access pattern</th><th>Typical TTL</th><th>Rationale</th><th>Review trigger</th></tr>
+    <tr><td>Real-time signals (events, latency)</td><td><span class="badge badge-amber">15m – 1h</span></td><td>Source updates continuously</td><td>If signal variance &lt; N% between runs → relax TTL</td></tr>
+    <tr><td>ML model scores</td><td><span class="badge badge-amber">1h – 4h</span></td><td>Tied to model inference cadence</td><td>If model not retrained → no benefit in recalculating</td></tr>
+    <tr><td>Aggregated segments</td><td><span class="badge badge-green">4h – 24h</span></td><td>Segments are slow-moving</td><td>If zero queries during off-hours → pause overnight</td></tr>
+    <tr><td>Historical / reference</td><td><span class="badge badge-green">Daily</span></td><td>Source is append-only</td><td>Incremental refresh only — no full recalculation</td></tr>
+  </table>
+  <p>The observability layer monitors both <strong>freshness compliance</strong> (was the view recalculated within TTL?) and <strong>freshness necessity</strong> (did the data actually change between recalculations?). Over-aggressive TTLs are flagged automatically — a view recalculated hourly that only changes meaningfully every 4 hours is a 4× unnecessary compute cost.</p>
+</div>
+
+<!-- S11: DESIGN DECISIONS -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <span class="section-title">Design Decisions</span>
+  </div>
+  <p>Decisions made during the design process, with rationale.</p>
+
+  <table class="data-table">
+    <tr><th style="min-width:180px;">Decision</th><th>Resolution</th><th>Rationale</th></tr>
+    <tr>
+      <td><strong>Tier 2 cost guardrails</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Environment parameter</td>
+      <td>Thresholds (max rows scanned, max compute units, timeout) are configuration values set per deployment environment. Not hardcoded in the library. Each team sets limits appropriate to their platform and budget.</td>
+    </tr>
+    <tr>
+      <td><strong>Auto-promotion threshold</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Reported metric — Phase 2</td>
+      <td>In Phase 1, T2 hit frequency is a reported metric only — surfaced in the monitoring dashboard for human review. In Phase 2, a configurable threshold can trigger automatic UC candidate creation. Frequency threshold is itself an environment parameter.</td>
+    </tr>
+    <tr>
+      <td><strong>Agentic health monitor autonomy</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Human-in-loop — Phase 1</td>
+      <td>All Gold layer changes (promote, deprecate, TTL adjustment) require human approval in Phase 1. This is an important governance gate. The monitor surfaces suggestions with full context; a human approves. Phase 2 may introduce rule-based auto-approval for low-risk actions.</td>
+    </tr>
+    <tr>
+      <td><strong>Multi-tenancy</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Per-model, optional per-tenant</td>
+      <td>The capability index is scoped per model (data domain). Per-tenant isolation of UCs is supported as an option for teams that need it but is not required. Most deployments share a single capability index per domain.</td>
+    </tr>
+    <tr>
+      <td><strong>SQL Mesh tooling</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Pluggable — native integrations planned</td>
+      <td>SQLMesh is the preferred default — Python-native, state-aware incremental runs, no separate server. However, CogniMesh will support integration with platform-native materialization tools (Snowflake Dynamic Tables, Databricks Materialized Views, dbt) via an adapter interface. Teams can use whichever tool is already in their stack.</td>
+    </tr>
+    <tr>
+      <td><strong>Embedded agent LLM</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Pluggable + A/B evaluation</td>
+      <td>The embedded gateway agent is LLM-agnostic. Any provider can be configured. A two-layer evaluation framework is planned — an LLM for routing and an LLM-as-judge for answer quality evaluation, similar to DeepEval's ConversationSimulator pattern. This enables A/B testing of routing models and continuous quality measurement.</td>
+    </tr>
+    <tr>
+      <td><strong>UC conflict resolution</strong></td>
+      <td><span class="badge badge-green">Resolved</span><br>Suggest + human approval — Phase 1</td>
+      <td>In Phase 1, when a new UC overlaps with an existing Gold view, CogniMesh surfaces a structured suggestion to the human operator: extend the existing view, create a new one, or merge UCs. The conflict and tradeoffs are expressed clearly in the suggestion. The human decides. Phase 2 will introduce threshold-based auto-resolution rules for common conflict patterns (e.g. field addition to an existing view is auto-approved; new partition key always requires human review).</td>
+    </tr>
+  </table>
+</div>
+
+<!-- S12: PRODUCT PHASES -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <span class="section-title">Product Phases</span>
+  </div>
+  <p>CogniMesh is designed to evolve incrementally. Phase 1 establishes the foundation with full human oversight. Later phases progressively automate decisions that have been validated as safe to automate.</p>
+
+  <div style="display:flex; flex-direction:column; gap:14px; margin:20px 0;">
+
+    <div style="border:1px solid rgba(96,165,250,0.3); border-radius:10px; overflow:hidden;">
+      <div style="background:rgba(96,165,250,0.08); padding:12px 18px; display:flex; align-items:baseline; gap:12px; border-bottom:1px solid rgba(96,165,250,0.2);">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue); min-width:70px;">Phase 1</span>
+        <span style="font-weight:500; color:var(--text);">Foundation — human-in-loop, declarative UCs</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); margin-left:auto;">current target</span>
+      </div>
+      <div style="padding:14px 18px; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; color:var(--muted);">
+        <div>· Human authors UCs as structured records</div>
+        <div>· SQL Mesh derives Gold views with human approval</div>
+        <div>· UC conflicts surfaced as suggestions — human decides</div>
+        <div>· All Gold layer changes require human approval</div>
+        <div>· T2 hit frequency reported — human promotes manually</div>
+        <div>· LLM-as-judge evaluation framework wired in</div>
+        <div>· Full observability and lineage built in</div>
+        <div>· MCP interface for any consuming agent</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid rgba(139,124,248,0.3); border-radius:10px; overflow:hidden;">
+      <div style="background:rgba(139,124,248,0.06); padding:12px 18px; display:flex; align-items:baseline; gap:12px; border-bottom:1px solid rgba(139,124,248,0.2);">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--purple); min-width:70px;">Phase 2</span>
+        <span style="font-weight:500; color:var(--text);">Auto-detection — usage-driven UC candidates</span>
+      </div>
+      <div style="padding:14px 18px; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; color:var(--muted);">
+        <div>· T2 patterns auto-promoted to UC candidates</div>
+        <div>· Threshold-based auto-approval for low-risk changes</div>
+        <div>· Auto-resolution of common UC conflict patterns</div>
+        <div>· TTL auto-adjustment based on data change frequency</div>
+        <div>· A/B testing of routing LLMs via LLM-as-judge</div>
+        <div>· Platform-native materialization adapters (Snowflake, Databricks)</div>
+        <div>· Deprecation recommendations with confidence scores</div>
+        <div>· UC freshness optimization from usage patterns</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid rgba(45,212,191,0.2); border-radius:10px; overflow:hidden;">
+      <div style="background:rgba(45,212,191,0.04); padding:12px 18px; display:flex; align-items:baseline; gap:12px; border-bottom:1px solid rgba(45,212,191,0.15);">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--teal); min-width:70px;">Phase 3</span>
+        <span style="font-weight:500; color:var(--text);">Fully agentic — self-managing data mesh</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); margin-left:auto;">future</span>
+      </div>
+      <div style="padding:14px 18px; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; color:var(--muted);">
+        <div>· Agentic health monitor autonomously manages Gold lifecycle</div>
+        <div>· Full UC conflict auto-resolution with audit trail</div>
+        <div>· Cross-domain UC discovery and reuse</div>
+        <div>· Predictive pre-materialization before demand spikes</div>
+        <div>· Self-tuning partition strategy from access telemetry</div>
+        <div>· Human oversight retained for cost and policy gates only</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <strong>Governing principle across all phases:</strong> automation is introduced only after the manual version of a decision has been validated in production. Phase 1 builds the observability and human feedback loop that Phase 2 automates. Phase 2 builds the rule corpus that Phase 3 generalizes. No phase skips the one before it.
+  </div>
+</div>
+
+<div class="footer">
+  <span>CogniMesh · Design Document v0.2 · Apache 2.0</span>
+  <span>github.com/cognimesh/cognimesh</span>
+</div>
+
+</div>
+</body>
+</html>
