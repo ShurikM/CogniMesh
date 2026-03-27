@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "timestamp": "2026-03-27T19:55:42.620488+00:00",
+    "project": "CogniMesh Benchmark"
+  },
+  "effort": {
+    "rest": {
+      "files": 9,
+      "sloc": 286,
+      "by_type": {
+        ".py": {
+          "files": 8,
+          "loc": 289,
+          "sloc": 227
+        },
+        ".sql": {
+          "files": 1,
+          "loc": 62,
+          "sloc": 59
+        },
+        ".json": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        }
+      }
+    },
+    "cognimesh_core": {
+      "files": 11,
+      "sloc": 1658,
+      "by_type": {
+        ".py": {
+          "files": 11,
+          "loc": 1955,
+          "sloc": 1658
+        },
+        ".sql": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        },
+        ".json": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        }
+      }
+    },
+    "cognimesh_app": {
+      "files": 6,
+      "sloc": 294,
+      "by_type": {
+        ".py": {
+          "files": 3,
+          "loc": 298,
+          "sloc": 261
+        },
+        ".sql": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        },
+        ".json": {
+          "files": 3,
+          "loc": 33,
+          "sloc": 33
+        }
+      }
+    }
+  },
+  "marginal_cost": {
+    "rest": {
+      "files": 4,
+      "sloc": 78,
+      "by_type": {
+        ".py": {
+          "files": 3,
+          "loc": 70,
+          "sloc": 53
+        },
+        ".sql": {
+          "files": 1,
+          "loc": 27,
+          "sloc": 25
+        },
+        ".json": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        }
+      }
+    },
+    "cognimesh": {
+      "files": 1,
+      "sloc": 12,
+      "by_type": {
+        ".py": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        },
+        ".sql": {
+          "files": 0,
+          "loc": 0,
+          "sloc": 0
+        },
+        ".json": {
+          "files": 1,
+          "loc": 12,
+          "sloc": 12
+        }
+      }
+    },
+    "ratio": 0.15384615384615385
+  }
+}
