@@ -1,0 +1,11 @@
+{
+    "id": "UC-01",
+    "question": "What is the current health status of customer X?",
+    "consuming_agent": "customer_success_agent",
+    "required_fields": ["customer_id", "name", "region", "total_orders", "total_spend", "days_since_last_order", "ltv_segment", "health_status"],
+    "access_pattern": "individual_lookup",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_health",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "INSERT INTO gold_cognimesh.customer_health (customer_id, name, region, total_orders, total_spend, days_since_last_order, ltv_segment, health_status) SELECT customer_id, name, region, total_orders, total_spend, days_since_last_order, ltv_segment, CASE WHEN days_since_last_order < 30 AND ltv_segment IN ('high', 'medium') THEN 'healthy' WHEN days_since_last_order < 90 THEN 'warning' ELSE 'critical' END FROM silver.customer_profiles"
+}

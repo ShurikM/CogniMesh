@@ -1,0 +1,11 @@
+{
+    "id": "UC-02",
+    "question": "What are the best-selling products in category Y?",
+    "consuming_agent": "product_analytics_agent",
+    "required_fields": ["product_id", "category", "name", "price", "units_sold_30d", "revenue_30d", "return_rate", "rank_in_category"],
+    "access_pattern": "bulk_query",
+    "freshness_ttl_seconds": 86400,
+    "gold_view": "gold_cognimesh.top_products",
+    "source_tables": ["silver.product_metrics"],
+    "derivation_sql": "INSERT INTO gold_cognimesh.top_products (product_id, category, name, price, units_sold_30d, revenue_30d, return_rate, rank_in_category) SELECT product_id, category, name, price, units_sold_30d, revenue_30d, return_rate, ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue_30d DESC) FROM silver.product_metrics"
+}

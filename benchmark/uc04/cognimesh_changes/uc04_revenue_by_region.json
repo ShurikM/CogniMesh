@@ -1,0 +1,12 @@
+{
+    "id": "UC-04",
+    "question": "What is the total revenue by region for the last 30 days?",
+    "consuming_agent": "finance_agent",
+    "required_fields": ["region", "total_revenue", "order_count", "avg_order_value"],
+    "access_pattern": "aggregation",
+    "freshness_ttl_seconds": 3600,
+    "gold_view": "gold_cognimesh.revenue_by_region",
+    "gold_schema": "gold_cognimesh",
+    "source_tables": ["silver.orders_enriched"],
+    "derivation_sql": "INSERT INTO gold_cognimesh.revenue_by_region (region, total_revenue, order_count, avg_order_value) SELECT customer_region, SUM(amount_usd), COUNT(*), AVG(amount_usd) FROM silver.orders_enriched WHERE created_at > now() - INTERVAL '30 days' AND status = 'completed' GROUP BY customer_region"
+}
