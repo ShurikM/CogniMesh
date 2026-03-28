@@ -37,6 +37,14 @@ CogniMesh separates **transformation storage** from **serving storage**:
 
 SQLMesh manages transformations across all layers. CogniMesh materializes Gold into the serving DB and serves agents from there.
 
+### Engine configurations
+
+**Single-engine** — All layers on one database (Postgres, StarRocks, DuckDB). SQLMesh manages Bronze→Silver→Gold in the same engine. Simple setup, ideal for small/medium teams or getting started.
+
+**Multi-engine** — Silver on a lakehouse (Spark + Iceberg/Delta), Gold on a serving database (Postgres, StarRocks, ClickHouse). SQLMesh manages transformations on each engine natively. CogniMesh orchestrates cross-engine materialization — reads Silver from the lakehouse, materializes Gold into the serving DB. This is the enterprise configuration for teams with existing lakehouse infrastructure.
+
+Both configurations get the same CogniMesh capabilities: UC registry, lineage, observability, smart refresh, dependency intelligence, security.
+
 **Five pillars across both modes:**
 - **Explainability** — Every response traces back to source data. Full lineage in Mode 2, Gold→Silver lineage in Mode 1.
 - **Observability** — Every query logged: who asked, what it cost, how fresh the data is.

@@ -88,6 +88,7 @@ Consuming agents (any LLM / framework)
 | UC conflict resolution | Phase 1: surfaces structured suggestions with conflict detail — human decides. Phase 2: threshold-based auto-resolution rules |
 | Security model | Foundation implemented (agent_id in audit, UC scoping, approval queue), full model Phase 2 |
 | Gold storage | Gold MUST be a serving DB — OLTP (Postgres/DuckDB/MongoDB) or OLAP (StarRocks/ClickHouse/Druid). Not open table formats on S3 (too slow for agent lookups). CogniMesh is backend-agnostic — serving DB is pluggable. Silver/Bronze can be on lakehouse (Iceberg/Delta). CogniMesh separates transformation storage from serving storage |
+| Engine configuration | Single-engine: all layers on one DB (Postgres/StarRocks). Multi-engine: Silver on lakehouse (Spark+Iceberg/Delta), Gold on serving DB. SQLMesh manages each engine, CogniMesh orchestrates cross-engine materialization |
 
 ---
 
@@ -351,6 +352,20 @@ Without knowing what's in Bronze, CogniMesh can't:
 - Optimize the full Bronze→Silver→Gold refresh pipeline
 
 Mode 2 is the target state. Mode 1 is how you get there without disruption.
+
+### Engine Configurations
+
+**Single-engine:** All layers on one database. SQLMesh project targets one engine. Simple.
+- Example: Postgres for everything, or StarRocks for everything
+- Best for: small/medium teams, getting started, dev/testing
+
+**Multi-engine:** Lakehouse for Silver, serving DB for Gold. Two SQLMesh configurations.
+- Example: Spark+Iceberg for Silver transformations, Postgres for Gold serving
+- CogniMesh orchestrates: reads Silver metadata from lakehouse, materializes Gold into serving DB
+- Best for: enterprise teams with existing lakehouse infrastructure
+- Requires: CogniMesh cross-engine materialization layer (Phase 2)
+
+Both get identical CogniMesh capabilities. The engine choice affects only storage and query performance, not governance or observability.
 
 ---
 
