@@ -16,15 +16,12 @@ Teams register Use Cases (business questions agents need answered). CogniMesh de
   <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="700">
 </p>
 
-**CogniMesh is a complete data serving platform:**
+CogniMesh is an intelligent serving layer between AI agents and data platforms. Agents ask questions — CogniMesh makes sure those questions are answered with four guarantees:
 
-- **UC Registry** — Use cases registered as JSON definitions. Each defines a question, required fields, freshness TTL, and access pattern. The system derives everything else.
-- **Query path** — Agents query through a gateway. T0: instant from Gold. T2: composed from Silver metadata. T3: rejected with explanation. Every response includes lineage and freshness.
-- **Gold derivation & consolidation** — Gold views are created automatically from UC definitions. Overlapping UCs share consolidated views (20 UCs -> 7 views, measured).
-- **Smart refresh** — Silver changes detected via Postgres LISTEN/NOTIFY. Only affected Gold views refresh. TTL-based staleness tracking per view.
-- **Dependency intelligence** — Full Silver -> Gold -> UC graph. Impact analysis, provenance, and what-if queries via API.
-- **Self-improving loop** — T2 query patterns auto-detected and promoted to Gold UCs after human approval. *(Phase 2)*
-- **Observability** — Lineage per response, audit trail, cost attribution per UC and agent, freshness monitoring.
+- **Explainability** — Every response traces back to source data. Column-level lineage, dependency graph, impact analysis, and provenance — all queryable via API.
+- **Observability** — Every query logged with who asked, what it cost, how fresh the data is. Cost attribution per use case and per agent.
+- **Self-service** — Register a use case with a 12-line JSON file. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when data changes.
+- **Flexibility** — Unknown questions get composed answers from Silver metadata (T2), not 404s. T2 patterns are auto-detected and promoted to Gold after human approval. Schema changes don't break agents.
 
 ---
 
