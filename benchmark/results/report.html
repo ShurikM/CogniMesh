@@ -1127,24 +1127,24 @@ Agent -> HTTP POST -> Gateway<br>
 
   <div class="monitor-grid">
     <div class="monitor-item">
-      <div class="mi-label">Gold Tables / Views</div>
-      <div class="mi-title">REST: 10 &rarr; CogniMesh: 5</div>
-      <div class="mi-desc">50% fewer</div>
+      <div class="mi-label">Gold Tables / Views (measured, 20 UCs)</div>
+      <div class="mi-title">REST: 20 &rarr; CogniMesh: 7</div>
+      <div class="mi-desc">65% fewer &mdash; consolidation ratio 0.35</div>
     </div>
     <div class="monitor-item">
-      <div class="mi-label">Stored Rows</div>
-      <div class="mi-title">REST: ~45,000 &rarr; CogniMesh: ~20,500</div>
-      <div class="mi-desc">55% less</div>
+      <div class="mi-label">Storage (measured, 20 UCs)</div>
+      <div class="mi-title">REST: 12 MB &rarr; CogniMesh: 6.3 MB</div>
+      <div class="mi-desc">CogniMesh uses 49% of REST storage</div>
     </div>
     <div class="monitor-item">
-      <div class="mi-label">Refresh Cycles</div>
-      <div class="mi-title">REST: 10 &rarr; CogniMesh: 5</div>
-      <div class="mi-desc">50% less</div>
+      <div class="mi-label">Stored Rows (measured, 20 UCs)</div>
+      <div class="mi-title">REST: ~84,000 &rarr; CogniMesh: ~34,000</div>
+      <div class="mi-desc">60% less row duplication</div>
     </div>
     <div class="monitor-item">
-      <div class="mi-label">Overlapping Columns</div>
-      <div class="mi-title">REST: 45 &rarr; CogniMesh: 0</div>
-      <div class="mi-desc">Eliminated</div>
+      <div class="mi-label">Refresh Cycles (measured, 20 UCs)</div>
+      <div class="mi-title">REST: 20 &rarr; CogniMesh: 7</div>
+      <div class="mi-desc">~65% fewer refresh cycles</div>
     </div>
   </div>
 
@@ -1182,6 +1182,14 @@ Agent -> HTTP POST -> Gateway<br>
         <td>0.50</td>
         <td>1,200</td>
         <td>600</td>
+      </tr>
+      <tr style="background: rgba(74,222,128,0.08);">
+        <td><strong>20 (measured)</strong></td>
+        <td>20</td>
+        <td>7</td>
+        <td>0.35</td>
+        <td>2,400</td>
+        <td>840</td>
       </tr>
       <tr>
         <td><strong>25</strong></td>
@@ -1321,13 +1329,13 @@ Agent -> HTTP POST -> Gateway<br>
       </tr>
       <tr>
         <td><strong>Query latency (T0)</strong></td>
-        <td><span class="badge badge-amber">UC = 22-25 (projected)</span></td>
-        <td>Buffer pool consolidation overcomes per-query overhead</td>
+        <td><span class="badge badge-coral">Not reached at UC=20 (measured)</span></td>
+        <td>REST stayed flat at ~2.3ms; CogniMesh overhead constant at ~5.5ms. Buffer pool model was too aggressive at benchmark scale.</td>
       </tr>
       <tr>
-        <td><strong>ALL dimensions simultaneously</strong></td>
-        <td><span class="badge badge-purple">UC = 25</span></td>
-        <td>At this point CogniMesh wins on every axis including raw speed</td>
+        <td><strong>ALL dimensions except latency</strong></td>
+        <td><span class="badge badge-purple">UC = 5</span></td>
+        <td>CogniMesh wins storage, table count, refresh, dev hours, governance &mdash; but not raw query speed at benchmark scale</td>
       </tr>
     </table>
   </div>
@@ -1345,8 +1353,8 @@ Agent -> HTTP POST -> Gateway<br>
         <text x="115" y="145" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">Refresh time</text>
         <text x="115" y="173" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">Storage</text>
         <text x="115" y="201" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">SLOC</text>
-        <text x="115" y="229" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">Latency</text>
-        <text x="115" y="257" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">ALL</text>
+        <text x="115" y="229" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">Latency *</text>
+        <text x="115" y="257" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="10" text-anchor="end">ALL (excl. latency)</text>
         <!-- X axis labels -->
         <text x="120" y="288" fill="#7a7870" font-family="IBM Plex Mono, monospace" font-size="9" text-anchor="middle">1</text>
         <text x="174" y="288" fill="#7a7870" font-family="IBM Plex Mono, monospace" font-size="9" text-anchor="middle">5</text>
@@ -1372,69 +1380,51 @@ Agent -> HTTP POST -> Gateway<br>
         <!-- Row 7: SLOC - coral UC=1-21, green UC=22-50 -->
         <rect x="120" y="189" width="231" height="20" rx="4" fill="#f87171" opacity="0.35"/>
         <rect x="351" y="189" width="309" height="20" rx="4" fill="#4ade80" opacity="0.35"/>
-        <!-- Row 8: Latency - coral UC=1-24, green UC=25-50 -->
-        <rect x="120" y="217" width="265" height="20" rx="4" fill="#f87171" opacity="0.35"/>
-        <rect x="385" y="217" width="275" height="20" rx="4" fill="#4ade80" opacity="0.35"/>
-        <!-- Row 9: ALL - coral UC=1-24, green UC=25-50 -->
-        <rect x="120" y="245" width="265" height="20" rx="4" fill="#f87171" opacity="0.35"/>
-        <rect x="385" y="245" width="275" height="20" rx="4" fill="#4ade80" opacity="0.35"/>
-        <!-- Vertical dashed line at UC=25 -->
-        <line x1="385" y1="10" x2="385" y2="270" stroke="#8b7cf8" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7"/>
-        <text x="387" y="8" fill="#8b7cf8" font-family="IBM Plex Mono, monospace" font-size="8" text-anchor="start">FULL CROSSOVER &mdash; CogniMesh wins every dimension</text>
+        <!-- Row 8: Latency - coral all the way (not crossed over at benchmark scale) -->
+        <rect x="120" y="217" width="540" height="20" rx="4" fill="#f87171" opacity="0.35"/>
+        <text x="440" y="232" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="7" opacity="0.7">not reached at benchmark scale</text>
+        <!-- Row 9: ALL except latency - coral UC=1-4, green UC=5-50 -->
+        <rect x="120" y="245" width="44" height="20" rx="4" fill="#f87171" opacity="0.35"/>
+        <rect x="164" y="245" width="496" height="20" rx="4" fill="#4ade80" opacity="0.35"/>
+        <!-- Vertical dashed line at UC=5 (infrastructure crossover) -->
+        <line x1="174" y1="10" x2="174" y2="270" stroke="#8b7cf8" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7"/>
+        <text x="176" y="8" fill="#8b7cf8" font-family="IBM Plex Mono, monospace" font-size="8" text-anchor="start">INFRA CROSSOVER &mdash; CogniMesh wins storage, tables, refresh, governance</text>
       </svg>
     </div>
   </div>
 
   <div class="callout">
-    <strong>The performance crossover at UC 22-25 is projected from Postgres buffer pool modeling:</strong> REST's 25 separate Gold tables compete for <code>shared_buffers</code>, causing cache eviction. CogniMesh's 8 consolidated views maintain better cache hit rates. At UC=25, REST latency rises to ~4.8ms while CogniMesh stays at ~4.4ms. The exact crossover depends on hardware configuration and data volume.
+    <strong>Honest result: the latency crossover has NOT happened at UC=20.</strong> REST stayed flat at ~2.3ms avg while CogniMesh measured ~5.5ms avg. The buffer pool model projected REST degradation starting around UC=20, but at benchmark scale (~200K orders total), 20 Gold tables fit comfortably in Postgres <code>shared_buffers</code>. The crossover would require: (1) larger datasets (millions of rows per table), (2) more concurrent queries competing for buffer pool, or (3) production-scale refresh cycles running alongside queries. <strong>What CogniMesh DOES win on at UC=20 (all measured):</strong> 49% less storage (12 MB &rarr; 6.3 MB), 65% fewer tables (20 &rarr; 7), ~65% fewer refresh cycles, 8/8 system properties vs 0/8, and marginal cost of 1 JSON file vs 4 code files per new UC.
   </div>
 
   <div class="subsection">
-    <div class="subsection-title">Projected Latency at Scale</div>
+    <div class="subsection-title">Measured Latency at Scale</div>
     <table class="data-table">
       <tr>
         <th>UC Count</th>
         <th>REST T0 Latency</th>
         <th>CogniMesh T0 Latency</th>
-        <th>Gap</th>
+        <th>Source</th>
         <th>Winner</th>
       </tr>
       <tr>
         <td><strong>3 (measured)</strong></td>
         <td>2.57 ms</td>
         <td>4.22 ms</td>
-        <td>+1.65 ms</td>
+        <td>Benchmark run 1</td>
         <td><span class="badge badge-coral">REST</span></td>
       </tr>
-      <tr>
-        <td><strong>10 (projected)</strong></td>
-        <td>3.1 ms</td>
-        <td>4.3 ms</td>
-        <td>+1.2 ms</td>
-        <td><span class="badge badge-coral">REST (gap closing)</span></td>
-      </tr>
-      <tr>
-        <td><strong>20 (projected)</strong></td>
-        <td>4.0 ms</td>
-        <td>4.4 ms</td>
-        <td>+0.4 ms</td>
-        <td><span class="badge badge-amber">Nearly even</span></td>
-      </tr>
-      <tr>
-        <td><strong>25 (projected)</strong></td>
-        <td>4.8 ms</td>
-        <td>4.4 ms</td>
-        <td>-0.4 ms</td>
-        <td><span class="badge badge-green">CogniMesh</span></td>
-      </tr>
-      <tr>
-        <td><strong>50 (projected)</strong></td>
-        <td>7.2 ms</td>
-        <td>4.5 ms</td>
-        <td>-2.7 ms</td>
-        <td><span class="badge badge-green">CogniMesh</span></td>
+      <tr style="background: rgba(74,222,128,0.08);">
+        <td><strong>20 (measured)</strong></td>
+        <td>2.26 ms avg</td>
+        <td>5.52 ms avg</td>
+        <td>Scale benchmark</td>
+        <td><span class="badge badge-coral">REST</span></td>
       </tr>
     </table>
+    <p style="color: var(--muted); font-size: 12px; margin-top: 8px;">
+      <strong>Note:</strong> REST latency actually <em>stayed flat</em> from UC=3 to UC=20 (did not degrade as the buffer pool model projected). At benchmark scale (~200K total rows), 20 Gold tables fit easily in Postgres cache. CogniMesh overhead is constant per query (audit + lineage + freshness checks). The advantage is not in query speed &mdash; it is in infrastructure: 49% less storage, 65% fewer tables, ~65% fewer refresh cycles.
+    </p>
   </div>
 </div>
 
