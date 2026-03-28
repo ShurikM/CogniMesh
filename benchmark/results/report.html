@@ -186,8 +186,9 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <li><a href="#s12"><span class="toc-num">12</span> Gold Layer Consolidation at Scale</a></li>
     <li><a href="#s13"><span class="toc-num">13</span> When CogniMesh Wins -- Crossover Points</a></li>
     <li><a href="#s14"><span class="toc-num">14</span> Self-Improving Data Layer</a></li>
-    <li><a href="#s15"><span class="toc-num">15</span> Where REST Wins -- Honest Assessment</a></li>
-    <li><a href="#s16"><span class="toc-num">16</span> Conclusion</a></li>
+    <li><a href="#s15"><span class="toc-num">15</span> Dependency Intelligence & Smart Refresh</a></li>
+    <li><a href="#s16"><span class="toc-num">16</span> Where REST Wins -- Honest Assessment</a></li>
+    <li><a href="#s17"><span class="toc-num">17</span> Conclusion</a></li>
   </ul>
 </div>
 
@@ -201,7 +202,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-green">
       <div class="card-label">WHAT YOU GET</div>
       <div class="card-title">Every query is governed</div>
-      <p>Every response includes: where the data came from (lineage), how fresh it is, who asked and what it cost. Every unsupported question gets an answer, not a 404. Schema changes don't break your agents. REST gives you none of this.</p>
+      <p>Every response includes: where the data came from (lineage), how fresh it is, who asked and what it cost. Every unsupported question gets an answer, not a 404. Schema changes don't break your agents. REST gives you none of this. Plus: full dependency graph, impact analysis ('what breaks if I change this?'), and smart refresh that only updates what's affected.</p>
     </div>
     <div class="card c-teal">
       <div class="card-label">INFRASTRUCTURE</div>
@@ -712,6 +713,30 @@ Agent -> HTTP POST -> Gateway<br>
       <td><span class="badge badge-green">Isolated</span></td>
       <td>Rename column, query both systems</td>
     </tr>
+      <tr>
+        <td><strong>9</strong></td>
+        <td><strong>Impact Analysis</strong></td>
+        <td>Ask "what breaks if I change this Silver table?" and get an instant answer with affected Gold views and UCs</td>
+        <td><span class="badge badge-coral">NO</span></td>
+        <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
+        <td>GET /dependencies/impact</td>
+      </tr>
+      <tr>
+        <td><strong>10</strong></td>
+        <td><strong>Provenance</strong></td>
+        <td>Trace any Gold column back to its Silver source table, column, and transformation</td>
+        <td><span class="badge badge-coral">NO</span></td>
+        <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
+        <td>GET /dependencies/provenance</td>
+      </tr>
+      <tr>
+        <td><strong>11</strong></td>
+        <td><strong>Smart Refresh</strong></td>
+        <td>Only refresh Gold views whose Silver source actually changed — not all of them</td>
+        <td><span class="badge badge-coral">NO</span></td>
+        <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
+        <td>POST /refresh/check</td>
+      </tr>
   </table>
   </div>
 
@@ -719,14 +744,14 @@ Agent -> HTTP POST -> Gateway<br>
     <div class="monitor-item" style="border-color: rgba(248,113,113,0.3); text-align: center;">
       <div class="mi-label">REST API Score</div>
       <div class="score-box">
-        <div class="score-num" style="color: var(--coral);">0 / 8</div>
+        <div class="score-num" style="color: var(--coral);">0 / 11</div>
         <div class="score-label">No system properties</div>
       </div>
     </div>
     <div class="monitor-item" style="border-color: rgba(74,222,128,0.3); text-align: center;">
       <div class="mi-label">CogniMesh Score</div>
       <div class="score-box">
-        <div class="score-num" style="color: var(--green);">8 / 8</div>
+        <div class="score-num" style="color: var(--green);">11 / 11</div>
         <div class="score-label">Full observability</div>
       </div>
     </div>
@@ -1302,7 +1327,7 @@ Agent -> HTTP POST -> Gateway<br>
       <tr>
         <td><strong>Governance &amp; observability</strong></td>
         <td><span class="badge badge-green">UC = 1 (always)</span></td>
-        <td>8/8 properties built-in: discovery, lineage, audit, cost, governance, freshness, fallback, drift</td>
+        <td>11/11 properties built-in: discovery, lineage, audit, cost, governance, freshness, fallback, drift, impact analysis, provenance, smart refresh</td>
       </tr>
       <tr>
         <td><strong>Unsupported question handling</strong></td>
@@ -1470,10 +1495,106 @@ Agent -> HTTP POST -> Gateway<br>
   </div>
 </div>
 
-<!-- SECTION 15: WHERE REST WINS -->
+<!-- S15: DEPENDENCY INTELLIGENCE -->
 <div class="section" id="s15">
   <div class="section-header">
     <span class="section-num">15</span>
+    <span class="section-title">Dependency Intelligence & Smart Refresh</span>
+  </div>
+
+  <p>CogniMesh knows the <strong>full dependency graph</strong> — which Silver tables feed which Gold views, which Gold views serve which UCs. REST has no awareness of dependencies. This enables four capabilities that REST cannot replicate.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">Impact Analysis — "What breaks if I change this?"</div>
+    <p>Before changing a Silver table, ask CogniMesh what would be affected:</p>
+    <div class="code">
+<span class="k">GET</span> <span class="s">/dependencies/impact?table=silver.customer_profiles</span>
+
+<span class="c">Response (measured):</span>
+<span class="n">Affected Gold views:</span> 3 (customer_360, at_risk_customers, customer_health)
+<span class="n">Affected UCs:</span> 10 (UC-01, UC-03, UC-05, UC-06, UC-07, UC-09, UC-11, UC-13, UC-15, UC-20)
+<span class="n">NOT affected:</span> product_catalog, order_analytics (different Silver source)
+    </div>
+    <p>REST equivalent: <strong>nobody knows.</strong> A developer has to manually trace which Gold tables reference which Silver columns. If they miss one, it breaks silently.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Provenance — "Where does this number come from?"</div>
+    <p>Trace any Gold column back to its source:</p>
+    <div class="code">
+<span class="k">GET</span> <span class="s">/dependencies/provenance?view=gold_cognimesh.customer_360&column=health_status</span>
+
+<span class="c">Response:</span>
+<span class="n">source_table:</span> silver.customer_profiles
+<span class="n">source_column:</span> days_since_last_order
+<span class="n">transformation:</span> computed (CASE WHEN days < 30 AND ltv IN ('high','medium') → 'healthy' ...)
+    </div>
+    <p>REST equivalent: <strong>read the SQL source code.</strong> No API, no metadata, no runtime query.</p>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Smart Refresh — Only refresh what's affected</div>
+    <div class="cards">
+      <div class="card c-coral">
+        <div class="card-label">REST APPROACH</div>
+        <div class="card-title">Cron job refreshes everything</div>
+        <p>A scheduled job runs all 20 Gold table refresh queries, whether the underlying data changed or not. If Silver hasn't changed, you wasted compute. If only customer data changed, you still refreshed product tables.</p>
+      </div>
+      <div class="card c-green">
+        <div class="card-label">COGNIMESH APPROACH</div>
+        <div class="card-title">Refresh only what changed</div>
+        <p>Postgres LISTEN/NOTIFY detects Silver changes. CogniMesh checks the dependency graph: <code>silver.customer_profiles</code> changed → refresh <code>customer_360</code> (1 view serving 10 UCs). Leave <code>product_catalog</code> and <code>order_analytics</code> alone. Result: 1 refresh instead of 20.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Full Dependency Graph — measured at 20 UCs</div>
+    <table class="data-table">
+      <tr><th>Layer</th><th>Count</th><th>Details</th></tr>
+      <tr><td><strong>Silver tables</strong></td><td>3</td><td>customer_profiles, product_metrics, orders_enriched</td></tr>
+      <tr><td><strong>Gold views (CogniMesh)</strong></td><td>7</td><td>Consolidated from 20 UCs (ratio: 0.35)</td></tr>
+      <tr><td><strong>Gold tables (REST)</strong></td><td>20</td><td>One per UC, no consolidation</td></tr>
+      <tr><td><strong>Use Cases</strong></td><td>20</td><td>All served through the same gateway</td></tr>
+    </table>
+    <p>When <code>silver.customer_profiles</code> changes:</p>
+    <div class="monitor-grid">
+      <div class="monitor-item">
+        <div class="mi-label">REST</div>
+        <div class="mi-title">Refresh 20 tables</div>
+        <div class="mi-desc">No way to know which tables are affected. Refresh everything or risk stale data.</div>
+      </div>
+      <div class="monitor-item">
+        <div class="mi-label">COGNIMESH</div>
+        <div class="mi-title">Refresh 3 views</div>
+        <div class="mi-desc">Dependency graph identifies exactly which views source from customer_profiles. The other 4 views are untouched.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">API Endpoints — all measured, all working</div>
+    <table class="data-table">
+      <tr><th>Endpoint</th><th>What It Does</th><th>REST Equivalent</th></tr>
+      <tr><td><code>GET /dependencies</code></td><td>Full Silver → Gold → UC graph with consolidation ratio</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>GET /dependencies/impact</code></td><td>What breaks if this Silver table changes?</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>GET /dependencies/provenance</code></td><td>Where does this Gold column come from?</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>GET /dependencies/what-if</code></td><td>Change impact estimation with affected UCs</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>GET /refresh/status</code></td><td>Freshness of all Gold views with served UC count</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>POST /refresh/check</code></td><td>Auto-refresh only stale views</td><td><span class="badge badge-coral">NONE</span></td></tr>
+      <tr><td><code>GET /refresh/plan</code></td><td>Preview what would be refreshed</td><td><span class="badge badge-coral">NONE</span></td></tr>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>This is what "platform" means.</strong> REST is a collection of endpoints that serve data. CogniMesh is a system that <strong>understands its own data</strong> — where it comes from, how fresh it is, what depends on what, and what to do when things change. You can ask it questions about itself, and it answers.
+  </div>
+</div>
+
+<!-- SECTION 16: WHERE REST WINS -->
+<div class="section" id="s16">
+  <div class="section-header">
+    <span class="section-num">16</span>
     <span class="section-title">Where REST Wins -- Honest Assessment</span>
   </div>
 
@@ -1505,10 +1626,10 @@ Agent -> HTTP POST -> Gateway<br>
   </div>
 </div>
 
-<!-- SECTION 16: CONCLUSION -->
-<div class="section" id="s16">
+<!-- SECTION 17: CONCLUSION -->
+<div class="section" id="s17">
   <div class="section-header">
-    <span class="section-num">16</span>
+    <span class="section-num">17</span>
     <span class="section-title">Conclusion</span>
   </div>
 
@@ -1526,7 +1647,7 @@ Agent -> HTTP POST -> Gateway<br>
     <tr>
       <td><strong>System properties</strong></td>
       <td><span class="badge badge-green">CogniMesh</span></td>
-      <td>8/8 vs 0/8</td>
+      <td>11/11 vs 0/11</td>
     </tr>
     <tr>
       <td><strong>Schema drift</strong></td>
@@ -1573,6 +1694,11 @@ Agent -> HTTP POST -> Gateway<br>
       <td><span class="badge badge-green">CogniMesh</span></td>
       <td>T2 patterns auto-promote; REST needs manual endpoint work</td>
     </tr>
+      <tr>
+        <td><strong>Dependency intelligence</strong></td>
+        <td><strong>CogniMesh</strong></td>
+        <td>Impact analysis, provenance, smart refresh — REST has none</td>
+      </tr>
   </table>
 
   <div class="callout callout-green">
