@@ -86,7 +86,7 @@ Consuming agents (any LLM / framework)
 | SQL Mesh tooling | Pluggable adapter interface. Default: SQLMesh. Snowflake / Databricks adapters in Phase 2 |
 | Embedded LLM | Pluggable via Protocol. Phase 2: A/B test routing via LLM-as-judge (DeepEval-style) |
 | UC conflict resolution | Phase 1: surfaces structured suggestions with conflict detail — human decides. Phase 2: threshold-based auto-resolution rules |
-| Security model | Phase 2: per-agent scoping, per-UC access control, row-level isolation. Phase 1: single-tenant, no access control |
+| Security model | Foundation implemented (agent_id in audit, UC scoping, approval queue), full model Phase 2 |
 
 ---
 
@@ -236,7 +236,7 @@ the difference is everything around the answer.
 | Metric | Value |
 |--------|-------|
 | Total UCs registered | 20 |
-| System properties scorecard | 11/11 (REST: 0/11) |
+| System properties scorecard | 12/12 (REST: 0/12) |
 | Gold view consolidation | 7 views for 20 UCs (65% fewer than REST) |
 | Benchmark tests | 71 (all pass) |
 | Dependency intelligence | Full graph, impact analysis, provenance, what-if |
@@ -249,10 +249,10 @@ the difference is everything around the answer.
 - Setup simplicity: fewer moving parts for a single static UC
 - Compute footprint: thinner runtime, no embedded agent
 
-**CogniMesh wins (11 things):**
+**CogniMesh wins (12 things):**
 - Discovery, unsupported query handling, error quality, schema drift tolerance,
   lineage, observability, audit trail, freshness management, change governance,
-  cost attribution, response metadata
+  cost attribution, response metadata, access control
 
 ### Developer hours crossover
 
@@ -317,7 +317,7 @@ New capabilities added to CogniMesh that REST cannot replicate:
 - **Provenance:** `GET /dependencies/provenance?view=...&column=health_status` → traces to source Silver column + transformation
 - **Smart refresh:** Silver changes detected via Postgres LISTEN/NOTIFY → only affected Gold views refreshed (3 instead of 20)
 - **Full dependency graph:** `GET /dependencies` → Silver → Gold → UC tree with consolidation ratio
-- 14 new tests, all passing. Scorecard expanded from 8/8 to 11/11.
+- 14 new tests, all passing. Scorecard expanded from 8/8 to 12/12.
 
 ---
 

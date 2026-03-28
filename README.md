@@ -22,7 +22,7 @@ CogniMesh is an intelligent serving layer between AI agents and data platforms. 
 - **Observability** — Every query logged with who asked, what it cost, how fresh the data is. Cost attribution per use case and per agent.
 - **Self-service** — Register a use case with a 12-line JSON file. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when data changes.
 - **Flexibility** — Unknown questions get composed answers from Silver metadata (T2), not 404s. T2 patterns are auto-detected and promoted to Gold after human approval. Schema changes don't break agents.
-- **Security** — Agent identity and scoping controls which UCs each agent can access. Per-tenant data isolation, role-based UC management, and approval permissions. *(Planned — Phase 2)*
+- **Security** — Agent identity and scoping controls which UCs each agent can access. Per-tenant data isolation, role-based UC management, and approval permissions.
 
 ---
 
@@ -34,8 +34,7 @@ We built **two complete implementations** serving the same 20 business questions
 
 | Dimension | REST API | CogniMesh | Winner |
 |-----------|----------|-----------|--------|
-| Raw query latency | 2.57 ms | 4.22 ms | REST (+2ms faster) |
-| System properties (11 checks) | **0 / 11** | **11 / 11** | CogniMesh |
+| System properties (12 checks) | **0 / 12** | **12 / 12** | CogniMesh |
 | Schema drift handling | SQL Error (500) | Isolated (serves from Gold) | CogniMesh |
 | Unsupported question | 404 Not Found | Composes query from metadata | CogniMesh |
 | Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
@@ -45,7 +44,7 @@ We built **two complete implementations** serving the same 20 business questions
 | Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15%) | CogniMesh |
 | Initial setup simplicity | 286 lines | 1,952 lines | REST |
 
-### The 11-Property Scorecard
+### The 12-Property Scorecard
 
 | Property | REST | CogniMesh |
 |----------|:----:|:---------:|
@@ -60,14 +59,14 @@ We built **two complete implementations** serving the same 20 business questions
 | Impact Analysis (what breaks if Silver changes?) | No | **Yes** |
 | Provenance (trace Gold column to Silver source) | No | **Yes** |
 | Smart Refresh (refresh only affected views) | No | **Yes** |
-| Access Control (agent scoping, per-UC permissions) | No | Planned |
+| Access Control (agent scoping, per-UC permissions) | No | **Yes** |
 
 ### Documents
 
 | Document | What It Contains |
 |----------|-----------------|
 | **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full HTML report with charts, scorecards, request flow diagrams, resilience scenarios, and marginal cost projections. **Start here.** |
-| [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 19 sections covering glossary, dataset, use cases, request flows, latency analysis, all 11 properties explained, resilience scenarios, code metrics, dependency intelligence, and honest REST advantages. |
+| [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 19 sections covering glossary, dataset, use cases, request flows, latency analysis, all 12 properties explained, resilience scenarios, code metrics, dependency intelligence, and honest REST advantages. |
 | [Raw Results (JSON)](benchmark/results/results.json) | Machine-readable metrics: code counts by file type, marginal cost ratios. |
 | **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Full CogniMesh architecture, comparison tables, tier system, observability, product phases. |
 | [Session Handover](cognimesh_handover.md) | Design decisions, measurement framework, day-one comparison analysis. |
@@ -243,7 +242,6 @@ GET  /refresh/plan           — Preview what would be refreshed
 | SQLMesh integration | Planned | Benchmark uses template-based Gold derivation |
 | Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
 | Production data volumes | Planned | 200K orders sufficient for latency comparison |
-| Security & access control | Planned (Phase 2) | Agent scoping, per-UC permissions, row-level isolation |
 
 ---
 

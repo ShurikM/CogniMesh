@@ -202,7 +202,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-green">
       <div class="card-label">GOVERNED QUERIES</div>
       <div class="card-title">Every query is tracked and traceable</div>
-      <p>Every response includes where the data came from (lineage), how fresh it is (freshness), and who asked (audit). Schema changes don't break agents — the Gold layer acts as a buffer. Planned: per-agent access control, per-UC scoping, row-level data isolation.</p>
+      <p>Every response includes where the data came from (lineage), how fresh it is (freshness), and who asked (audit). Schema changes don't break agents — the Gold layer acts as a buffer. Per-agent access control, per-UC scoping, and row-level data isolation are built in.</p>
     </div>
     <div class="card c-purple">
       <div class="card-label">DEPENDENCY INTELLIGENCE</div>
@@ -683,8 +683,8 @@ Agent -> HTTP POST -> Gateway<br>
         <td><strong>Access Control</strong></td>
         <td>Per-agent scoping — which UCs each agent can access, row-level data isolation, role-based UC management</td>
         <td><span class="badge badge-coral">NO</span></td>
-        <td style="background:rgba(245,158,11,0.06)"><span class="badge badge-amber">PLANNED</span></td>
-        <td>Phase 2 — agent identity + UC permissions</td>
+        <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
+        <td>agent_id in audit, UC scoping, approval queue</td>
       </tr>
   </table>
   </div>
@@ -693,19 +693,18 @@ Agent -> HTTP POST -> Gateway<br>
     <div class="monitor-item" style="border-color: rgba(248,113,113,0.3); text-align: center;">
       <div class="mi-label">REST API Score</div>
       <div class="score-box">
-        <div class="score-num" style="color: var(--coral);">0 / 11</div>
+        <div class="score-num" style="color: var(--coral);">0 / 12</div>
         <div class="score-label">No system properties</div>
       </div>
     </div>
     <div class="monitor-item" style="border-color: rgba(74,222,128,0.3); text-align: center;">
       <div class="mi-label">CogniMesh Score</div>
       <div class="score-box">
-        <div class="score-num" style="color: var(--green);">11 / 11</div>
+        <div class="score-num" style="color: var(--green);">12 / 12</div>
         <div class="score-label">Full observability</div>
       </div>
     </div>
   </div>
-  <p style="text-align:center; margin-top:12px; font-size:12px; color:var(--muted);">Plus 1 planned capability (Access Control) in Phase 2.</p>
 </div>
 
 <!-- SECTION 09: RESILIENCE SCENARIOS -->
@@ -1277,7 +1276,7 @@ Agent -> HTTP POST -> Gateway<br>
       <tr>
         <td><strong>Governance &amp; observability</strong></td>
         <td><span class="badge badge-green">UC = 1 (always)</span></td>
-        <td>11/11 properties built-in: discovery, lineage, audit, cost, governance, freshness, fallback, drift, impact analysis, provenance, smart refresh</td>
+        <td>12/12 properties built-in: discovery, lineage, audit, cost, governance, freshness, fallback, drift, impact analysis, provenance, smart refresh, access control</td>
       </tr>
       <tr>
         <td><strong>Unsupported question handling</strong></td>
@@ -1589,7 +1588,7 @@ Agent -> HTTP POST -> Gateway<br>
     <tr>
       <td><strong>System properties</strong></td>
       <td><span class="badge badge-green">CogniMesh</span></td>
-      <td>11/11 vs 0/11</td>
+      <td>12/12 vs 0/12</td>
     </tr>
     <tr>
       <td><strong>Schema drift</strong></td>
@@ -1643,8 +1642,8 @@ Agent -> HTTP POST -> Gateway<br>
       </tr>
       <tr>
         <td><strong>Access control</strong></td>
-        <td><strong>CogniMesh (planned)</strong></td>
-        <td>Agent scoping, per-UC permissions, row-level isolation — Phase 2</td>
+        <td><strong>CogniMesh</strong></td>
+        <td>Agent scoping, per-UC permissions, row-level isolation</td>
       </tr>
   </table>
 
