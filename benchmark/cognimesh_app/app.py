@@ -12,9 +12,11 @@ from cognimesh_core.audit import AuditLog
 from cognimesh_core.capability_index import CapabilityIndex
 from cognimesh_core.config import CogniMeshConfig
 from cognimesh_core.db import close_pool
+from cognimesh_core.dependency import DependencyReporter
 from cognimesh_core.gateway import Gateway
 from cognimesh_core.gold_manager import GoldManager
 from cognimesh_core.lineage import LineageTracker
+from cognimesh_core.refresh_manager import RefreshManager
 from cognimesh_core.registry import UCRegistry
 
 
@@ -51,8 +53,13 @@ async def lifespan(application: FastAPI):
         audit_log=audit_log,
     )
 
+    dep_reporter = DependencyReporter(config, lineage_tracker, registry)
+    refresh_mgr = RefreshManager(config, gold_manager, registry)
+
     application.state.gateway = gateway
     application.state.capability_index = capability_index
+    application.state.dep_reporter = dep_reporter
+    application.state.refresh_mgr = refresh_mgr
 
     yield
 
@@ -89,3 +96,53 @@ def discover() -> list[dict[str, Any]]:
 def health() -> dict[str, str]:
     """Health check."""
     return {"status": "ok"}
+
+
+# ------------------------------------------------------------------
+# Dependency endpoints
+# ------------------------------------------------------------------
+
+@app.get("/dependencies")
+def get_full_graph():
+    """Full dependency graph: Silver -> Gold -> UCs."""
+    return app.state.dep_reporter.full_graph()
+
+
+@app.get("/dependencies/impact")
+def get_impact(table: str, column: str | None = None):
+    """What Gold views/UCs are affected by a change to this Silver table?"""
+    return app.state.dep_reporter.impact_analysis(table, column)
+
+
+@app.get("/dependencies/provenance")
+def get_provenance(view: str, column: str | None = None):
+    """Where does this Gold column come from?"""
+    return app.state.dep_reporter.provenance(view, column)
+
+
+@app.get("/dependencies/what-if")
+def get_what_if(table: str):
+    """What would happen if this Silver table changes?"""
+    return app.state.dep_reporter.what_if(table)
+
+
+# ------------------------------------------------------------------
+# Refresh endpoints
+# ------------------------------------------------------------------
+
+@app.get("/refresh/status")
+def get_refresh_status():
+    """Current freshness status of all Gold views."""
+    return app.state.refresh_mgr.get_refresh_status()
+
+
+@app.post("/refresh/check")
+def check_and_refresh():
+    """Check and refresh stale Gold views. Returns what was refreshed."""
+    return app.state.refresh_mgr.check_and_refresh_stale()
+
+
+@app.get("/refresh/plan")
+def get_refresh_plan():
+    """Preview what would be refreshed without doing it."""
+    return app.state.refresh_mgr.get_refresh_plan()
