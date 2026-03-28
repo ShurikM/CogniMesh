@@ -323,6 +323,10 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
   <div class="callout">
     <strong>Both approaches create identical Gold tables.</strong> The difference: REST requires a developer to hand-write the SQL. CogniMesh derives it from the UC definition automatically.
   </div>
+
+  <div class="callout">
+    <strong>Why Gold is on Postgres, not Iceberg:</strong> Agents do individual lookups — "health of customer X." That needs sub-10ms. Open table formats on object storage (Iceberg/Delta on S3) take 100-1000ms per lookup. CogniMesh keeps Gold on a serving database (Postgres, DuckDB, MongoDB) for instant agent responses. Silver and Bronze can live anywhere — lakehouse, warehouse, or database.
+  </div>
 </div>
 
 <!-- SECTION 04: THE THREE USE CASES -->

@@ -27,6 +27,16 @@ CogniMesh + SQLMesh manages the entire Bronze→Silver→Gold pipeline. Full lin
 ### Migration path
 Start with Mode 1 — zero disruption. Migrate Silver tables into SQLMesh models one at a time. Each migrated table gains full Bronze→Silver→Gold lineage. Eventually, CogniMesh has complete observation of all layers needed to support current and future UCs.
 
+### Why Gold must be a serving database
+
+Agents do individual lookups — "health of customer X", "orders for product Y." That needs sub-10ms latency. Open table formats (Iceberg/Delta) on object storage take 100-1000ms per lookup.
+
+CogniMesh separates **transformation storage** from **serving storage**:
+- **Bronze/Silver**: can live on a lakehouse (Iceberg, Delta, Spark) — cheap, batch-optimized
+- **Gold**: must be a serving database (Postgres, DuckDB, MongoDB) — fast, agent-optimized
+
+SQLMesh manages transformations across all layers. CogniMesh materializes Gold into the serving DB and serves agents from there.
+
 **Five pillars across both modes:**
 - **Explainability** — Every response traces back to source data. Full lineage in Mode 2, Gold→Silver lineage in Mode 1.
 - **Observability** — Every query logged: who asked, what it cost, how fresh the data is.
@@ -261,7 +271,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 |-----------|-----------|
 | Data models | Pydantic v2 |
 | API framework | FastAPI |
-| Database | Postgres 15 (Docker) |
+| Database | Gold: Postgres / DuckDB / MongoDB (serving DB) · Silver/Bronze: any (Iceberg, Delta, Spark, Snowflake) |
 | DB driver | psycopg 3 + connection pool |
 | Test framework | pytest + pytest-benchmark |
 | Package manager | uv |
