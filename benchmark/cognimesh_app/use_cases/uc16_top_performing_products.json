@@ -1,8 +1,8 @@
 {
-    "id": "UC-02",
-    "question": "What are the best-selling products in category Y?",
+    "id": "UC-16",
+    "question": "What are the top N performing products overall?",
     "consuming_agent": "product_analytics_agent",
-    "required_fields": ["product_id", "category", "name", "price", "units_sold_30d", "revenue_30d", "return_rate", "rank_in_category"],
+    "required_fields": ["product_id", "name", "category", "price", "revenue_30d", "units_sold_30d", "return_rate", "performance_score", "rank_in_category"],
     "access_pattern": "bulk_query",
     "freshness_ttl_seconds": 86400,
     "gold_view": "gold_cognimesh.product_catalog",

@@ -1,0 +1,11 @@
+{
+    "id": "UC-08",
+    "question": "What are the details and performance metrics for product X?",
+    "consuming_agent": "product_analytics_agent",
+    "required_fields": ["product_id", "name", "category", "price", "units_sold_30d", "revenue_30d", "return_rate", "performance_score"],
+    "access_pattern": "individual_lookup",
+    "freshness_ttl_seconds": 86400,
+    "gold_view": "gold_cognimesh.product_catalog",
+    "source_tables": ["silver.product_metrics"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

@@ -1,0 +1,11 @@
+{
+    "id": "UC-15",
+    "question": "What is the customer distribution and spend by region and month?",
+    "consuming_agent": "analytics_agent",
+    "required_fields": ["region", "signup_date", "total_spend", "total_orders", "ltv_segment"],
+    "access_pattern": "aggregation",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_360",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

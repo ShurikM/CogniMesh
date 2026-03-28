@@ -1,0 +1,11 @@
+{
+    "id": "UC-18",
+    "question": "Which products are frequently bought together?",
+    "consuming_agent": "marketing_agent",
+    "required_fields": ["dimension_type", "dimension_value", "total_revenue", "order_count", "avg_order_value"],
+    "access_pattern": "bulk_query",
+    "freshness_ttl_seconds": 3600,
+    "gold_view": "gold_cognimesh.order_analytics",
+    "source_tables": ["silver.orders_enriched"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

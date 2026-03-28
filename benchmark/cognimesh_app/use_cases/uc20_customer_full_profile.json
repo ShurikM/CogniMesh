@@ -1,0 +1,11 @@
+{
+    "id": "UC-20",
+    "question": "Give me the complete 360 profile for customer X?",
+    "consuming_agent": "customer_success_agent",
+    "required_fields": ["customer_id", "name", "region", "signup_date", "total_orders", "total_spend", "days_since_last_order", "ltv_segment", "health_status", "risk_score", "months_active", "avg_monthly_spend", "rank_overall"],
+    "access_pattern": "individual_lookup",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_360",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

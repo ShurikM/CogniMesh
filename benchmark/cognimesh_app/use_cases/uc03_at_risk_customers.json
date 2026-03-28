@@ -5,7 +5,7 @@
     "required_fields": ["customer_id", "name", "region", "days_since_last_order", "ltv_segment", "total_spend", "risk_score"],
     "access_pattern": "bulk_query",
     "freshness_ttl_seconds": 14400,
-    "gold_view": "gold_cognimesh.at_risk_customers",
+    "gold_view": "gold_cognimesh.customer_360",
     "source_tables": ["silver.customer_profiles"],
-    "derivation_sql": "INSERT INTO gold_cognimesh.at_risk_customers (customer_id, name, region, days_since_last_order, ltv_segment, total_spend, risk_score) SELECT customer_id, name, region, days_since_last_order, ltv_segment, total_spend, LEAST((days_since_last_order::NUMERIC / 365) * 50 + CASE ltv_segment WHEN 'high' THEN 30 WHEN 'medium' THEN 15 ELSE 5 END, 99.99) FROM silver.customer_profiles WHERE days_since_last_order > 60 OR (ltv_segment IN ('high', 'medium') AND days_since_last_order > 30)"
+    "derivation_sql": "-- populated by seed_scale.py"
 }

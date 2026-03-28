@@ -1,0 +1,11 @@
+{
+    "id": "UC-05",
+    "question": "What is the lifetime value of customer X?",
+    "consuming_agent": "analytics_agent",
+    "required_fields": ["customer_id", "name", "region", "signup_date", "total_spend", "total_orders", "ltv_segment", "months_active", "avg_monthly_spend"],
+    "access_pattern": "individual_lookup",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_360",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

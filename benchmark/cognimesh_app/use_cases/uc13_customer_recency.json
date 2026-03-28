@@ -1,8 +1,8 @@
 {
-    "id": "UC-01",
-    "question": "What is the current health status of customer X?",
+    "id": "UC-13",
+    "question": "When did customer X last place an order?",
     "consuming_agent": "customer_success_agent",
-    "required_fields": ["customer_id", "name", "region", "total_orders", "total_spend", "days_since_last_order", "ltv_segment", "health_status"],
+    "required_fields": ["customer_id", "name", "days_since_last_order", "total_orders", "health_status"],
     "access_pattern": "individual_lookup",
     "freshness_ttl_seconds": 14400,
     "gold_view": "gold_cognimesh.customer_360",

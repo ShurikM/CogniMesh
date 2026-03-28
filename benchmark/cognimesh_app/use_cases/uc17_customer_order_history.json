@@ -1,0 +1,11 @@
+{
+    "id": "UC-17",
+    "question": "What is the full order history for customer X?",
+    "consuming_agent": "customer_success_agent",
+    "required_fields": ["customer_id", "order_id", "order_date", "product_id", "product_name", "category", "quantity", "unit_price", "total_price", "region"],
+    "access_pattern": "individual_lookup",
+    "freshness_ttl_seconds": 3600,
+    "gold_view": "gold_cognimesh.customer_orders",
+    "source_tables": ["silver.orders_enriched"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

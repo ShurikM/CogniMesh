@@ -1,0 +1,11 @@
+{
+    "id": "UC-19",
+    "question": "What is the order fulfillment performance by region?",
+    "consuming_agent": "operations_agent",
+    "required_fields": ["dimension_value", "total_revenue", "order_count", "avg_order_value"],
+    "access_pattern": "bulk_query",
+    "freshness_ttl_seconds": 3600,
+    "gold_view": "gold_cognimesh.order_analytics",
+    "source_tables": ["silver.orders_enriched"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

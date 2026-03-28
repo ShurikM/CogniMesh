@@ -1,0 +1,11 @@
+{
+    "id": "UC-07",
+    "question": "How many customers are in each region and what is their average spend?",
+    "consuming_agent": "analytics_agent",
+    "required_fields": ["region", "total_orders", "total_spend", "ltv_segment"],
+    "access_pattern": "aggregation",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_360",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}

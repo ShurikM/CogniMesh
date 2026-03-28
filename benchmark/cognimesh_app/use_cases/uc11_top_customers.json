@@ -1,0 +1,11 @@
+{
+    "id": "UC-11",
+    "question": "Who are the top N customers by overall ranking?",
+    "consuming_agent": "customer_success_agent",
+    "required_fields": ["customer_id", "name", "region", "total_spend", "total_orders", "ltv_segment", "rank_overall"],
+    "access_pattern": "bulk_query",
+    "freshness_ttl_seconds": 14400,
+    "gold_view": "gold_cognimesh.customer_360",
+    "source_tables": ["silver.customer_profiles"],
+    "derivation_sql": "-- populated by seed_scale.py"
+}
