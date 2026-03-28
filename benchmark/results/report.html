@@ -202,7 +202,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-green">
       <div class="card-label">GOVERNED QUERIES</div>
       <div class="card-title">Every query is tracked and traceable</div>
-      <p>Every response includes where the data came from (lineage), how fresh it is (freshness), and who asked (audit). Schema changes don't break agents — the Gold layer acts as a buffer.</p>
+      <p>Every response includes where the data came from (lineage), how fresh it is (freshness), and who asked (audit). Schema changes don't break agents — the Gold layer acts as a buffer. Planned: per-agent access control, per-UC scoping, row-level data isolation.</p>
     </div>
     <div class="card c-purple">
       <div class="card-label">DEPENDENCY INTELLIGENCE</div>
@@ -678,6 +678,14 @@ Agent -> HTTP POST -> Gateway<br>
         <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
         <td>POST /refresh/check</td>
       </tr>
+      <tr>
+        <td><strong>12</strong></td>
+        <td><strong>Access Control</strong></td>
+        <td>Per-agent scoping — which UCs each agent can access, row-level data isolation, role-based UC management</td>
+        <td><span class="badge badge-coral">NO</span></td>
+        <td style="background:rgba(245,158,11,0.06)"><span class="badge badge-amber">PLANNED</span></td>
+        <td>Phase 2 — agent identity + UC permissions</td>
+      </tr>
   </table>
   </div>
 
@@ -697,6 +705,7 @@ Agent -> HTTP POST -> Gateway<br>
       </div>
     </div>
   </div>
+  <p style="text-align:center; margin-top:12px; font-size:12px; color:var(--muted);">Plus 1 planned capability (Access Control) in Phase 2.</p>
 </div>
 
 <!-- SECTION 09: RESILIENCE SCENARIOS -->
@@ -1631,6 +1640,11 @@ Agent -> HTTP POST -> Gateway<br>
         <td><strong>Dependency intelligence</strong></td>
         <td><strong>CogniMesh</strong></td>
         <td>Impact analysis, provenance, smart refresh — REST has none</td>
+      </tr>
+      <tr>
+        <td><strong>Access control</strong></td>
+        <td><strong>CogniMesh (planned)</strong></td>
+        <td>Agent scoping, per-UC permissions, row-level isolation — Phase 2</td>
       </tr>
   </table>
 

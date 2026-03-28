@@ -86,6 +86,7 @@ Consuming agents (any LLM / framework)
 | SQL Mesh tooling | Pluggable adapter interface. Default: SQLMesh. Snowflake / Databricks adapters in Phase 2 |
 | Embedded LLM | Pluggable via Protocol. Phase 2: A/B test routing via LLM-as-judge (DeepEval-style) |
 | UC conflict resolution | Phase 1: surfaces structured suggestions with conflict detail — human decides. Phase 2: threshold-based auto-resolution rules |
+| Security model | Phase 2: per-agent scoping, per-UC access control, row-level isolation. Phase 1: single-tenant, no access control |
 
 ---
 
@@ -144,6 +145,14 @@ The authoring unit is a **question**, not a table.
 
 **Governing principle:** No phase skips the one before it. Phase 1 builds the human feedback
 loop that Phase 2 automates.
+
+### Security & Access Control (Phase 2)
+
+- Agent identity: each agent has an ID and a set of allowed UCs
+- Per-UC access control: UC registration includes `allowed_agents` field
+- Row-level isolation: Gold views can be filtered by agent's tenant/scope
+- Role-based management: who can register UCs, who can approve Gold changes
+- Approval permissions: separate from UC authoring permissions
 
 ---
 

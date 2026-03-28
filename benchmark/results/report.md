@@ -445,6 +445,7 @@ This is the core result. Eleven binary yes/no assertions about system capabiliti
 | 9 | **Impact Analysis** | Can the system show what breaks if a Silver table changes? | **No** — developer manually traces SQL dependencies | **Yes** — `GET /dependencies/impact` returns affected Gold views and UCs | Query impact endpoint for a Silver table, verify affected views and UCs listed |
 | 10 | **Provenance** | Can you trace a Gold column back to its Silver source and transformation? | **No** — read the SQL source code | **Yes** — `GET /dependencies/provenance` returns source table, column, and transformation | Query provenance endpoint for a Gold column, verify source mapping |
 | 11 | **Smart Refresh** | Does the system refresh only what changed? | **No** — cron job refreshes all tables regardless | **Yes** — dependency-aware refresh targets only affected Gold views | Change one Silver table, verify only dependent Gold views refreshed |
+| 12 | **Access Control** | Can you control which agents access which UCs, with row-level data isolation? | **No** — no access control mechanism | **Planned** — Phase 2: agent identity, per-UC permissions, row-level isolation | Planned (Phase 2) |
 
 ### Final Score
 
@@ -452,6 +453,8 @@ This is the core result. Eleven binary yes/no assertions about system capabiliti
 REST API:     0 / 11
 CogniMesh:    11 / 11
 ```
+
+> **Note:** Plus 1 planned capability (Access Control — agent scoping, per-UC permissions, row-level isolation) in Phase 2.
 
 ---
 

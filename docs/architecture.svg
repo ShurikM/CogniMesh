@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 800" width="900" height="800">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 800" width="1060" height="800">
   <defs>
     <marker id="arrow" viewBox="0 0 10 8" refX="10" refY="4" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
       <path d="M0,0 L10,4 L0,8 Z" fill="rgba(255,255,255,0.5)"/>
@@ -9,7 +9,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="900" height="800" fill="#0d0f12"/>
+  <rect width="1060" height="800" fill="#0d0f12"/>
 
   <!-- ===== TOP: AGENTS & THEIR USE CASES (~150px) ===== -->
 
@@ -38,114 +38,133 @@
   <text x="650" y="79" text-anchor="middle" fill="#fcd34d" font-size="10" font-family="system-ui,sans-serif">"Revenue by region?" (new)</text>
 
   <!-- Agent 4 (smaller, right side) -->
-  <circle cx="820" cy="36" r="16" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1" stroke-opacity="0.5"/>
-  <path d="M820,30 a3,3 0 1,1 0,0.01 M814,42 a6,5 0 0,1 12,0" fill="none" stroke="#60a5fa" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round"/>
+  <circle cx="920" cy="36" r="16" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1" stroke-opacity="0.5"/>
+  <path d="M920,30 a3,3 0 1,1 0,0.01 M914,42 a6,5 0 0,1 12,0" fill="none" stroke="#60a5fa" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round"/>
 
   <!-- Label -->
-  <text x="450" y="112" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="bold" font-family="system-ui,sans-serif" letter-spacing="1.5">AI AGENTS -- ask questions, not SQL</text>
+  <text x="530" y="112" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="bold" font-family="system-ui,sans-serif" letter-spacing="1.5">AI AGENTS -- ask questions, not SQL</text>
 
   <!-- Arrow down into CogniMesh -->
-  <line x1="450" y1="122" x2="450" y2="142" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="530" y1="122" x2="530" y2="142" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" marker-end="url(#arrow)"/>
 
   <!-- ===== MIDDLE: COGNIMESH SERVING LAYER (~350px) ===== -->
 
   <!-- Main band -->
-  <rect x="24" y="148" width="852" height="370" rx="12" fill="rgba(139,124,248,0.06)" stroke="#8b7cf8" stroke-width="2" stroke-opacity="0.4"/>
+  <rect x="24" y="148" width="1012" height="370" rx="12" fill="rgba(139,124,248,0.06)" stroke="#8b7cf8" stroke-width="2" stroke-opacity="0.4"/>
 
   <!-- Title bar -->
-  <text x="450" y="174" text-anchor="middle" fill="#8b7cf8" font-size="16" font-weight="bold" font-family="system-ui,sans-serif" letter-spacing="1">CogniMesh -- Intelligent Serving Layer</text>
+  <text x="530" y="174" text-anchor="middle" fill="#8b7cf8" font-size="16" font-weight="bold" font-family="system-ui,sans-serif" letter-spacing="1">CogniMesh -- Intelligent Serving Layer</text>
 
-  <!-- ===== FOUR PILLARS ===== -->
+  <!-- ===== FIVE PILLARS ===== -->
 
   <!-- PILLAR 1: EXPLAINABILITY (teal) -->
-  <rect x="38" y="192" width="196" height="200" rx="8" fill="#13151a"/>
-  <rect x="38" y="192" width="196" height="4" rx="2" fill="#2dd4bf"/>
+  <rect x="38" y="192" width="190" height="200" rx="8" fill="#13151a"/>
+  <rect x="38" y="192" width="190" height="4" rx="2" fill="#2dd4bf"/>
   <!-- Chain link icon -->
   <circle cx="73" cy="216" r="8" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
   <circle cx="87" cy="216" r="8" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
-  <text x="104" y="220" fill="#2dd4bf" font-size="13" font-weight="bold" font-family="system-ui,sans-serif">EXPLAINABILITY</text>
-  <line x1="52" y1="232" x2="220" y2="232" stroke="rgba(45,212,191,0.15)" stroke-width="1"/>
-  <text x="52" y="250" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">Every response traces back</text>
-  <text x="52" y="264" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">to source data</text>
+  <text x="104" y="220" fill="#2dd4bf" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">EXPLAINABILITY</text>
+  <line x1="52" y1="232" x2="214" y2="232" stroke="rgba(45,212,191,0.15)" stroke-width="1"/>
+  <text x="52" y="250" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">Every response traces back</text>
+  <text x="52" y="264" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">to source data</text>
   <circle cx="56" cy="284" r="2" fill="#2dd4bf" fill-opacity="0.6"/>
-  <text x="64" y="288" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Column-level lineage</text>
+  <text x="64" y="288" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Column-level lineage</text>
   <circle cx="56" cy="304" r="2" fill="#2dd4bf" fill-opacity="0.6"/>
-  <text x="64" y="308" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Dependency graph</text>
+  <text x="64" y="308" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Dependency graph</text>
   <circle cx="56" cy="324" r="2" fill="#2dd4bf" fill-opacity="0.6"/>
-  <text x="64" y="328" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Impact analysis</text>
+  <text x="64" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Impact analysis</text>
   <circle cx="56" cy="344" r="2" fill="#2dd4bf" fill-opacity="0.6"/>
-  <text x="64" y="348" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Provenance per column</text>
-  <text x="52" y="378" fill="#5eead4" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic">"Where did this number</text>
-  <text x="52" y="390" fill="#5eead4" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic"> come from?"</text>
+  <text x="64" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Provenance per column</text>
+  <text x="52" y="378" fill="#5eead4" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"Where did this number</text>
+  <text x="52" y="390" fill="#5eead4" font-size="9" font-family="system-ui,sans-serif" font-style="italic"> come from?"</text>
 
   <!-- PILLAR 2: OBSERVABILITY (amber) -->
-  <rect x="248" y="192" width="196" height="200" rx="8" fill="#13151a"/>
-  <rect x="248" y="192" width="196" height="4" rx="2" fill="#f59e0b"/>
+  <rect x="240" y="192" width="190" height="200" rx="8" fill="#13151a"/>
+  <rect x="240" y="192" width="190" height="4" rx="2" fill="#f59e0b"/>
   <!-- Eye icon -->
-  <ellipse cx="284" cy="216" rx="12" ry="7" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
-  <circle cx="284" cy="216" r="3" fill="#f59e0b"/>
-  <text x="304" y="220" fill="#f59e0b" font-size="13" font-weight="bold" font-family="system-ui,sans-serif">OBSERVABILITY</text>
-  <line x1="262" y1="232" x2="430" y2="232" stroke="rgba(245,158,11,0.15)" stroke-width="1"/>
-  <text x="262" y="250" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">Every query logged:</text>
-  <text x="262" y="264" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">who, when, what it cost</text>
-  <circle cx="266" cy="284" r="2" fill="#f59e0b" fill-opacity="0.6"/>
-  <text x="274" y="288" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Full audit trail</text>
-  <circle cx="266" cy="304" r="2" fill="#f59e0b" fill-opacity="0.6"/>
-  <text x="274" y="308" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Cost attribution per UC</text>
-  <circle cx="266" cy="324" r="2" fill="#f59e0b" fill-opacity="0.6"/>
-  <text x="274" y="328" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Freshness monitoring</text>
-  <circle cx="266" cy="344" r="2" fill="#f59e0b" fill-opacity="0.6"/>
-  <text x="274" y="348" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Cost per agent</text>
-  <text x="262" y="378" fill="#fcd34d" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic">"Who asked what, how often,</text>
-  <text x="262" y="390" fill="#fcd34d" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic"> what did it cost?"</text>
+  <ellipse cx="276" cy="216" rx="12" ry="7" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+  <circle cx="276" cy="216" r="3" fill="#f59e0b"/>
+  <text x="296" y="220" fill="#f59e0b" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">OBSERVABILITY</text>
+  <line x1="254" y1="232" x2="416" y2="232" stroke="rgba(245,158,11,0.15)" stroke-width="1"/>
+  <text x="254" y="250" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">Every query logged:</text>
+  <text x="254" y="264" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">who, when, what it cost</text>
+  <circle cx="258" cy="284" r="2" fill="#f59e0b" fill-opacity="0.6"/>
+  <text x="266" y="288" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Full audit trail</text>
+  <circle cx="258" cy="304" r="2" fill="#f59e0b" fill-opacity="0.6"/>
+  <text x="266" y="308" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Cost attribution per UC</text>
+  <circle cx="258" cy="324" r="2" fill="#f59e0b" fill-opacity="0.6"/>
+  <text x="266" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Freshness monitoring</text>
+  <circle cx="258" cy="344" r="2" fill="#f59e0b" fill-opacity="0.6"/>
+  <text x="266" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Cost per agent</text>
+  <text x="254" y="378" fill="#fcd34d" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"Who asked what, how often,</text>
+  <text x="254" y="390" fill="#fcd34d" font-size="9" font-family="system-ui,sans-serif" font-style="italic"> what did it cost?"</text>
 
   <!-- PILLAR 3: SELF-SERVICE (green) -->
-  <rect x="458" y="192" width="196" height="200" rx="8" fill="#13151a"/>
-  <rect x="458" y="192" width="196" height="4" rx="2" fill="#4ade80"/>
+  <rect x="442" y="192" width="190" height="200" rx="8" fill="#13151a"/>
+  <rect x="442" y="192" width="190" height="4" rx="2" fill="#4ade80"/>
   <!-- Lightning bolt icon -->
-  <path d="M478,208 l6,0 l-2,7 l5,0 l-8,12 l2,-8 l-5,0 Z" fill="#4ade80"/>
-  <text x="496" y="220" fill="#4ade80" font-size="13" font-weight="bold" font-family="system-ui,sans-serif">SELF-SERVICE</text>
-  <line x1="472" y1="232" x2="640" y2="232" stroke="rgba(74,222,128,0.15)" stroke-width="1"/>
-  <text x="472" y="250" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">Register a UC with 1 JSON</text>
-  <text x="472" y="264" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">file -- system does the rest</text>
-  <circle cx="476" cy="284" r="2" fill="#4ade80" fill-opacity="0.6"/>
-  <text x="484" y="288" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Auto Gold derivation</text>
-  <circle cx="476" cy="304" r="2" fill="#4ade80" fill-opacity="0.6"/>
-  <text x="484" y="308" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Auto consolidation</text>
-  <circle cx="476" cy="324" r="2" fill="#4ade80" fill-opacity="0.6"/>
-  <text x="484" y="328" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Smart refresh</text>
-  <circle cx="476" cy="344" r="2" fill="#4ade80" fill-opacity="0.6"/>
-  <text x="484" y="348" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Approval queue</text>
-  <text x="472" y="378" fill="#86efac" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic">"1 JSON, 12 lines --</text>
-  <text x="472" y="390" fill="#86efac" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic"> system derives the rest"</text>
+  <path d="M462,208 l6,0 l-2,7 l5,0 l-8,12 l2,-8 l-5,0 Z" fill="#4ade80"/>
+  <text x="480" y="220" fill="#4ade80" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">SELF-SERVICE</text>
+  <line x1="456" y1="232" x2="618" y2="232" stroke="rgba(74,222,128,0.15)" stroke-width="1"/>
+  <text x="456" y="250" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">Register a UC with 1 JSON</text>
+  <text x="456" y="264" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">file -- system does the rest</text>
+  <circle cx="460" cy="284" r="2" fill="#4ade80" fill-opacity="0.6"/>
+  <text x="468" y="288" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Auto Gold derivation</text>
+  <circle cx="460" cy="304" r="2" fill="#4ade80" fill-opacity="0.6"/>
+  <text x="468" y="308" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Auto consolidation</text>
+  <circle cx="460" cy="324" r="2" fill="#4ade80" fill-opacity="0.6"/>
+  <text x="468" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Smart refresh</text>
+  <circle cx="460" cy="344" r="2" fill="#4ade80" fill-opacity="0.6"/>
+  <text x="468" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Approval queue</text>
+  <text x="456" y="378" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"1 JSON, 12 lines --</text>
+  <text x="456" y="390" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic"> system derives the rest"</text>
 
   <!-- PILLAR 4: FLEXIBILITY (purple) -->
-  <rect x="668" y="192" width="196" height="200" rx="8" fill="#13151a"/>
-  <rect x="668" y="192" width="196" height="4" rx="2" fill="#8b7cf8"/>
+  <rect x="644" y="192" width="190" height="200" rx="8" fill="#13151a"/>
+  <rect x="644" y="192" width="190" height="4" rx="2" fill="#8b7cf8"/>
   <!-- Branching path icon -->
-  <circle cx="693" cy="210" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
-  <line x1="693" y1="213" x2="693" y2="219" stroke="#8b7cf8" stroke-width="1.5"/>
-  <circle cx="684" cy="224" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
-  <circle cx="702" cy="224" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
-  <line x1="691" y1="219" x2="684" y2="221" stroke="#8b7cf8" stroke-width="1.5"/>
-  <line x1="695" y1="219" x2="702" y2="221" stroke="#8b7cf8" stroke-width="1.5"/>
-  <text x="714" y="220" fill="#8b7cf8" font-size="13" font-weight="bold" font-family="system-ui,sans-serif">FLEXIBILITY</text>
-  <line x1="682" y1="232" x2="850" y2="232" stroke="rgba(139,124,248,0.15)" stroke-width="1"/>
-  <text x="682" y="250" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">Unknown questions get</text>
-  <text x="682" y="264" fill="#b0aea6" font-size="10.5" font-family="system-ui,sans-serif">answers, not 404s</text>
-  <circle cx="686" cy="284" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
-  <text x="694" y="288" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">T0: instant from Gold</text>
-  <circle cx="686" cy="304" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
-  <text x="694" y="308" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">T2: composed from Silver</text>
-  <circle cx="686" cy="324" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
-  <text x="694" y="328" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">T3: explains + alternatives</text>
-  <circle cx="686" cy="344" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
-  <text x="694" y="348" fill="#8a887f" font-size="10.5" font-family="system-ui,sans-serif">Auto UC discovery</text>
-  <text x="682" y="378" fill="#c4b5fd" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic">"Schema changes don't</text>
-  <text x="682" y="390" fill="#c4b5fd" font-size="9.5" font-family="system-ui,sans-serif" font-style="italic"> break agents"</text>
+  <circle cx="669" cy="210" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
+  <line x1="669" y1="213" x2="669" y2="219" stroke="#8b7cf8" stroke-width="1.5"/>
+  <circle cx="660" cy="224" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
+  <circle cx="678" cy="224" r="3" fill="none" stroke="#8b7cf8" stroke-width="1.5"/>
+  <line x1="667" y1="219" x2="660" y2="221" stroke="#8b7cf8" stroke-width="1.5"/>
+  <line x1="671" y1="219" x2="678" y2="221" stroke="#8b7cf8" stroke-width="1.5"/>
+  <text x="690" y="220" fill="#8b7cf8" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">FLEXIBILITY</text>
+  <line x1="658" y1="232" x2="820" y2="232" stroke="rgba(139,124,248,0.15)" stroke-width="1"/>
+  <text x="658" y="250" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">Unknown questions get</text>
+  <text x="658" y="264" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">answers, not 404s</text>
+  <circle cx="662" cy="284" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
+  <text x="670" y="288" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">T0: instant from Gold</text>
+  <circle cx="662" cy="304" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
+  <text x="670" y="308" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">T2: composed from Silver</text>
+  <circle cx="662" cy="324" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
+  <text x="670" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">T3: explains + alternatives</text>
+  <circle cx="662" cy="344" r="2" fill="#8b7cf8" fill-opacity="0.6"/>
+  <text x="670" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Auto UC discovery</text>
+  <text x="658" y="378" fill="#c4b5fd" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"Schema changes don't</text>
+  <text x="658" y="390" fill="#c4b5fd" font-size="9" font-family="system-ui,sans-serif" font-style="italic"> break agents"</text>
+
+  <!-- PILLAR 5: SECURITY (coral) -->
+  <rect x="846" y="192" width="190" height="200" rx="8" fill="#13151a"/>
+  <rect x="846" y="192" width="190" height="4" rx="2" fill="#f87171"/>
+  <!-- Shield icon -->
+  <path d="M879,207 l-10,4 v10 c0,7 4,13 10,16 c6,-3 10,-9 10,-16 v-10 Z" fill="none" stroke="#f87171" stroke-width="1.5" stroke-linejoin="round"/>
+  <text x="896" y="220" fill="#f87171" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">SECURITY</text>
+  <line x1="860" y1="232" x2="1022" y2="232" stroke="rgba(248,113,113,0.15)" stroke-width="1"/>
+  <text x="860" y="250" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">Control who can access</text>
+  <text x="860" y="264" fill="#b0aea6" font-size="10" font-family="system-ui,sans-serif">which data and UCs</text>
+  <circle cx="864" cy="284" r="2" fill="#f87171" fill-opacity="0.6"/>
+  <text x="872" y="288" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Agent identity &amp; scoping</text>
+  <circle cx="864" cy="304" r="2" fill="#f87171" fill-opacity="0.6"/>
+  <text x="872" y="308" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Per-UC access control</text>
+  <circle cx="864" cy="324" r="2" fill="#f87171" fill-opacity="0.6"/>
+  <text x="872" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Row-level data isolation</text>
+  <circle cx="864" cy="344" r="2" fill="#f87171" fill-opacity="0.6"/>
+  <text x="872" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Role-based UC mgmt</text>
+  <text x="860" y="378" fill="#fca5a5" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"Who can see what?"</text>
 
   <!-- ===== ROUTING FLOW (inside the band, below pillars) ===== -->
-  <line x1="38" y1="410" x2="862" y2="410" stroke="rgba(139,124,248,0.15)" stroke-width="1"/>
+  <line x1="38" y1="410" x2="1022" y2="410" stroke="rgba(139,124,248,0.15)" stroke-width="1"/>
 
   <!-- Flow: Question in -> UC Match? -> T0/T2/T3 -> Response out -->
   <!-- "Question in" label -->
@@ -198,47 +217,47 @@
   <text x="562" y="509" text-anchor="middle" fill="#fca5a5" font-size="8.5" font-family="system-ui,sans-serif">+ alternatives</text>
 
   <!-- All three converge to Response -->
-  <line x1="422" y1="443" x2="660" y2="443" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-  <line x1="484" y1="499" x2="660" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-  <line x1="622" y1="499" x2="660" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <line x1="422" y1="443" x2="760" y2="443" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <line x1="484" y1="499" x2="760" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <line x1="622" y1="499" x2="760" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
   <!-- Converge lines -->
-  <line x1="660" y1="443" x2="660" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-  <line x1="660" y1="470" x2="700" y2="470" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="760" y1="443" x2="760" y2="499" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <line x1="760" y1="470" x2="800" y2="470" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" marker-end="url(#arrow)"/>
 
   <!-- Response out -->
-  <rect x="704" y="448" width="152" height="44" rx="6" fill="rgba(139,124,248,0.12)" stroke="#8b7cf8" stroke-width="1.2" stroke-opacity="0.5"/>
-  <text x="780" y="465" text-anchor="middle" fill="#c4b5fd" font-size="10.5" font-weight="bold" font-family="system-ui,sans-serif">Response out</text>
-  <text x="780" y="480" text-anchor="middle" fill="#9ca3af" font-size="8.5" font-family="system-ui,sans-serif">+ lineage + freshness + audit</text>
+  <rect x="804" y="448" width="216" height="44" rx="6" fill="rgba(139,124,248,0.12)" stroke="#8b7cf8" stroke-width="1.2" stroke-opacity="0.5"/>
+  <text x="912" y="465" text-anchor="middle" fill="#c4b5fd" font-size="10.5" font-weight="bold" font-family="system-ui,sans-serif">Response out</text>
+  <text x="912" y="480" text-anchor="middle" fill="#9ca3af" font-size="8.5" font-family="system-ui,sans-serif">+ lineage + freshness + audit + access</text>
 
   <!-- ===== BOTTOM: DATA PLATFORM (~200px) ===== -->
 
   <!-- Arrow from CogniMesh to Data -->
-  <line x1="450" y1="518" x2="450" y2="546" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="530" y1="518" x2="530" y2="546" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" marker-end="url(#arrow)"/>
 
   <!-- Gold bar -->
-  <rect x="50" y="556" width="800" height="52" rx="8" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="1.2" stroke-opacity="0.4"/>
+  <rect x="50" y="556" width="960" height="52" rx="8" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="1.2" stroke-opacity="0.4"/>
   <text x="84" y="580" fill="#4ade80" font-size="14" font-weight="bold" font-family="system-ui,sans-serif">GOLD</text>
   <text x="140" y="580" fill="#e8e6df" font-size="11" font-family="system-ui,sans-serif">Consolidated views -- derived from use cases, refreshed when data changes</text>
   <text x="140" y="598" fill="#9ca3af" font-size="10" font-family="system-ui,sans-serif">7 consolidated views serving 20 UCs</text>
 
   <!-- Arrow Gold -> Silver -->
-  <line x1="450" y1="608" x2="450" y2="622" stroke="rgba(255,255,255,0.3)" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="530" y1="608" x2="530" y2="622" stroke="rgba(255,255,255,0.3)" stroke-width="1" marker-end="url(#arrow)"/>
 
   <!-- Silver bar -->
-  <rect x="50" y="626" width="800" height="52" rx="8" fill="rgba(45,212,191,0.08)" stroke="#2dd4bf" stroke-width="1.2" stroke-opacity="0.4"/>
+  <rect x="50" y="626" width="960" height="52" rx="8" fill="rgba(45,212,191,0.08)" stroke="#2dd4bf" stroke-width="1.2" stroke-opacity="0.4"/>
   <text x="84" y="652" fill="#2dd4bf" font-size="14" font-weight="bold" font-family="system-ui,sans-serif">SILVER</text>
   <text x="152" y="652" fill="#e8e6df" font-size="11" font-family="system-ui,sans-serif">Enriched data -- changes detected via LISTEN/NOTIFY</text>
   <text x="152" y="668" fill="#9ca3af" font-size="10" font-family="system-ui,sans-serif">customer_profiles  product_metrics  orders_enriched</text>
 
   <!-- Arrow Silver -> Bronze -->
-  <line x1="450" y1="678" x2="450" y2="692" stroke="rgba(255,255,255,0.3)" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="530" y1="678" x2="530" y2="692" stroke="rgba(255,255,255,0.3)" stroke-width="1" marker-end="url(#arrow)"/>
 
   <!-- Bronze bar -->
-  <rect x="50" y="696" width="800" height="46" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.2" stroke-opacity="0.3"/>
+  <rect x="50" y="696" width="960" height="46" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.2" stroke-opacity="0.3"/>
   <text x="84" y="722" fill="#f87171" font-size="14" font-weight="bold" font-family="system-ui,sans-serif">BRONZE</text>
   <text x="158" y="722" fill="#e8e6df" font-size="11" font-family="system-ui,sans-serif">Raw data -- any source</text>
 
   <!-- Bottom label -->
-  <text x="450" y="770" text-anchor="middle" fill="#6b7280" font-size="10.5" font-family="system-ui,sans-serif">Works with: Postgres, Snowflake, BigQuery, Spark, DuckDB, Delta, Iceberg</text>
+  <text x="530" y="770" text-anchor="middle" fill="#6b7280" font-size="10.5" font-family="system-ui,sans-serif">Works with: Postgres, Snowflake, BigQuery, Spark, DuckDB, Delta, Iceberg</text>
 
 </svg>

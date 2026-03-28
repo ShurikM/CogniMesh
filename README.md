@@ -22,6 +22,7 @@ CogniMesh is an intelligent serving layer between AI agents and data platforms. 
 - **Observability** — Every query logged with who asked, what it cost, how fresh the data is. Cost attribution per use case and per agent.
 - **Self-service** — Register a use case with a 12-line JSON file. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when data changes.
 - **Flexibility** — Unknown questions get composed answers from Silver metadata (T2), not 404s. T2 patterns are auto-detected and promoted to Gold after human approval. Schema changes don't break agents.
+- **Security** — Agent identity and scoping controls which UCs each agent can access. Per-tenant data isolation, role-based UC management, and approval permissions. *(Planned — Phase 2)*
 
 ---
 
@@ -59,6 +60,7 @@ We built **two complete implementations** serving the same 20 business questions
 | Impact Analysis (what breaks if Silver changes?) | No | **Yes** |
 | Provenance (trace Gold column to Silver source) | No | **Yes** |
 | Smart Refresh (refresh only affected views) | No | **Yes** |
+| Access Control (agent scoping, per-UC permissions) | No | Planned |
 
 ### Documents
 
@@ -241,6 +243,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 | SQLMesh integration | Planned | Benchmark uses template-based Gold derivation |
 | Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
 | Production data volumes | Planned | 200K orders sufficient for latency comparison |
+| Security & access control | Planned (Phase 2) | Agent scoping, per-UC permissions, row-level isolation |
 
 ---
 
