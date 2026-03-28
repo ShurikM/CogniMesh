@@ -41,10 +41,10 @@ We built **two complete implementations** serving the same 3 business questions 
 
 | Document | What It Contains |
 |----------|-----------------|
-| **[Visual Benchmark Report](benchmark/results/report.html)** | Full HTML report with charts, scorecards, request flow diagrams, resilience scenarios, and marginal cost projections. **Start here.** |
+| **[Visual Benchmark Report](https://htmlpreview.github.io/?https://github.com/ShurikM/CogniMesh/blob/main/benchmark/results/report.html)** | Full HTML report with charts, scorecards, request flow diagrams, resilience scenarios, and marginal cost projections. **Start here.** |
 | [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 15 sections covering glossary, dataset, use cases, request flows, latency analysis, all 8 properties explained, resilience scenarios, code metrics, and honest REST advantages. |
 | [Raw Results (JSON)](benchmark/results/results.json) | Machine-readable metrics: code counts by file type, marginal cost ratios. |
-| [Design Document](cognimesh.html) | Full CogniMesh architecture, comparison tables, tier system, observability, product phases. |
+| **[Design Document](https://htmlpreview.github.io/?https://github.com/ShurikM/CogniMesh/blob/main/cognimesh.html)** | Full CogniMesh architecture, comparison tables, tier system, observability, product phases. |
 | [Session Handover](cognimesh_handover.md) | Design decisions, measurement framework, day-one comparison analysis. |
 
 ---
