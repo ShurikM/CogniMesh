@@ -1,10 +1,22 @@
 # CogniMesh
 
+<p align="center">
+  <img src="docs/logo.svg" alt="CogniMesh Logo" width="96">
+</p>
+
 **An intelligent data mesh layer between AI agents and structured data platforms.**
 
 Teams register Use Cases (business questions agents need answered). CogniMesh derives optimal Gold views, exposes them via MCP, tracks lineage, monitors freshness, logs every query, and handles unsupported questions gracefully — all from day one.
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
+
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="600">
+</p>
+
+CogniMesh sits between AI agents and the data platform. Agents query through a single gateway that routes to pre-computed Gold views (T0), falls back to Silver (T2), or explains why it can't answer (T3). The system tracks lineage, monitors freshness, logs every query, and knows its own dependency graph.
 
 ---
 
