@@ -212,7 +212,7 @@ We designed a concrete comparison starting from identical Bronze/Silver data (Du
 with 3 UCs (Customer Health, Top Products, At-Risk Customers). Both approaches serve the same questions —
 the difference is everything around the answer.
 
-### Measurement dimensions (8 total)
+### Measurement dimensions (11 total)
 1. Developer lifecycle — time-to-first-UC, marginal UC cost, lines of code, maintenance
 2. Runtime performance — T0/T1/T2 latency, throughput, resource overhead
 3. Agent experience — discovery, error quality, schema evolution handling, response metadata
@@ -274,7 +274,7 @@ We designed a 10-UC scenario showing how CogniMesh's Gold layer consolidates as 
 | Dimension | Crossover |
 |-----------|-----------|
 | Marginal dev hours | UC = 1 (always) |
-| Governance (8 properties) | UC = 1 (always) |
+| Governance (11 properties) | UC = 1 (always) |
 | Unsupported query handling | UC = 1 (always) |
 | Gold table count | UC = 5 |
 | Refresh time + storage | UC = 5 |
@@ -289,6 +289,15 @@ detects pattern → UC candidate generated → human approves → promoted to T0
 REST equivalent: 404 → support ticket → developer builds endpoint → 2-5 business days.
 
 The full analysis with charts is in `benchmark/results/report.html` sections 12-14.
+
+### Dependency intelligence (implemented + tested)
+
+New capabilities added to CogniMesh that REST cannot replicate:
+- **Impact analysis:** `GET /dependencies/impact?table=silver.customer_profiles` → shows 3 affected Gold views, 10 affected UCs
+- **Provenance:** `GET /dependencies/provenance?view=...&column=health_status` → traces to source Silver column + transformation
+- **Smart refresh:** Silver changes detected via Postgres LISTEN/NOTIFY → only affected Gold views refreshed (3 instead of 20)
+- **Full dependency graph:** `GET /dependencies` → Silver → Gold → UC tree with consolidation ratio
+- 14 new tests, all passing. Scorecard expanded from 8/8 to 11/11.
 
 ---
 

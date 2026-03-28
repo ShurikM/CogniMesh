@@ -17,14 +17,14 @@ We built **two complete implementations** serving the same 3 business questions 
 | Dimension | REST API | CogniMesh | Winner |
 |-----------|----------|-----------|--------|
 | Raw query latency | 2.57 ms | 4.22 ms | REST (+2ms faster) |
-| System properties (8 checks) | **0 / 8** | **8 / 8** | CogniMesh |
+| System properties (11 checks) | **0 / 11** | **11 / 11** | CogniMesh |
 | Schema drift handling | SQL Error (500) | Isolated (serves from Gold) | CogniMesh |
 | Unsupported question | 404 Not Found | Composes query from metadata | CogniMesh |
 | Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
 | Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15%) | CogniMesh |
 | Initial setup simplicity | 286 lines | 1,952 lines | REST |
 
-### The 8-Property Scorecard
+### The 11-Property Scorecard
 
 | Property | REST | CogniMesh |
 |----------|:----:|:---------:|
@@ -36,13 +36,16 @@ We built **two complete implementations** serving the same 3 business questions 
 | Freshness Awareness (stale data flagged) | No | **Yes** |
 | Tiered Fallback (unsupported → T2/T3) | 404 | **Yes** |
 | Schema Drift Detection (Silver changes) | 500 | **Yes** |
+| Impact Analysis (what breaks if Silver changes?) | No | **Yes** |
+| Provenance (trace Gold column to Silver source) | No | **Yes** |
+| Smart Refresh (refresh only affected views) | No | **Yes** |
 
 ### Documents
 
 | Document | What It Contains |
 |----------|-----------------|
 | **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full HTML report with charts, scorecards, request flow diagrams, resilience scenarios, and marginal cost projections. **Start here.** |
-| [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 15 sections covering glossary, dataset, use cases, request flows, latency analysis, all 8 properties explained, resilience scenarios, code metrics, and honest REST advantages. |
+| [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 19 sections covering glossary, dataset, use cases, request flows, latency analysis, all 11 properties explained, resilience scenarios, code metrics, dependency intelligence, and honest REST advantages. |
 | [Raw Results (JSON)](benchmark/results/results.json) | Machine-readable metrics: code counts by file type, marginal cost ratios. |
 | **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Full CogniMesh architecture, comparison tables, tier system, observability, product phases. |
 | [Session Handover](cognimesh_handover.md) | Design decisions, measurement framework, day-one comparison analysis. |
@@ -97,7 +100,7 @@ make report
 |------------|-------|-----------------|
 | `test_performance.py` | 6 | T0 latency per UC, both approaches (pytest-benchmark) |
 | `test_throughput.py` | 8 | Concurrent request throughput at 1/5/10/25 users |
-| `test_properties.py` | 16 | 8 binary assertions x 2 approaches (the scorecard) |
+| `test_properties.py` | 16 | 11 binary assertions x 2 approaches (the scorecard) |
 | `test_resilience_schema_drift.py` | 2 | Rename Silver column, observe both approaches |
 | `test_resilience_unsupported_uc.py` | 2 | Ask unsupported question, compare REST 404 vs CogniMesh T2 |
 | `test_resilience_staleness.py` | 2 | Expire TTL, check freshness metadata |
@@ -147,7 +150,7 @@ CogniMesh/
 │   ├── tests/                  # All benchmark tests (41 total)
 │   │   ├── test_performance.py
 │   │   ├── test_throughput.py
-│   │   ├── test_properties.py  #   ← The 8/8 scorecard
+│   │   ├── test_properties.py  #   ← The 11/11 scorecard
 │   │   ├── test_resilience_*.py
 │   │   └── test_marginal_cost.py
 │   │

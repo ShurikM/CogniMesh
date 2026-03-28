@@ -16,15 +16,16 @@
 7. [Approach B: CogniMesh — How It Works](#7-approach-b-cognimesh)
 8. [The Full CogniMesh Request Flow](#8-the-full-cognimesh-request-flow)
 9. [Performance Results — Latency](#9-performance-results)
-10. [The 8-Property Scorecard](#10-the-8-property-scorecard)
+10. [The 11-Property Scorecard](#10-the-11-property-scorecard)
 11. [Resilience Scenarios](#11-resilience-scenarios)
 12. [Developer Effort — Code Metrics](#12-developer-effort)
 13. [Marginal Cost — Adding a New Use Case](#13-marginal-cost)
 14. [Gold Layer Consolidation at Scale](#14-gold-layer-consolidation-at-scale)
-15. [When CogniMesh Wins — Crossover Points](#15-when-cognimesh-wins--crossover-points)
-16. [Self-Improving Data Layer](#16-self-improving-data-layer)
-17. [Where REST Wins](#17-where-rest-wins)
-18. [Conclusion](#18-conclusion)
+15. [Dependency Intelligence & Smart Refresh](#15-dependency-intelligence--smart-refresh)
+16. [When CogniMesh Wins — Crossover Points](#16-when-cognimesh-wins--crossover-points)
+17. [Self-Improving Data Layer](#17-self-improving-data-layer)
+18. [Where REST Wins](#18-where-rest-wins)
+19. [Conclusion](#19-conclusion)
 
 ---
 
@@ -39,7 +40,7 @@ Both approaches serve the same answers. The difference is **everything around th
 
 **Bottom line:**
 - REST is ~2x faster on raw query latency (2-3ms vs 4-6ms)
-- CogniMesh scores **8/8** on system properties where REST scores **0/8**
+- CogniMesh scores **11/11** on system properties where REST scores **0/11**
 - Adding a new use case costs **15% of the effort** with CogniMesh vs REST
 
 ---
@@ -427,9 +428,9 @@ REST gives you 2-3ms faster responses. CogniMesh gives you a **governed, observa
 
 ---
 
-## 10. The 8-Property Scorecard
+## 10. The 11-Property Scorecard
 
-This is the core result. Eight binary yes/no assertions about system capabilities. Each is a real test that either passes or fails.
+This is the core result. Eleven binary yes/no assertions about system capabilities. Each is a real test that either passes or fails.
 
 | # | Property | What It Means | REST | CogniMesh | How It's Tested |
 |---|----------|--------------|------|-----------|----------------|
@@ -441,12 +442,15 @@ This is the core result. Eight binary yes/no assertions about system capabilitie
 | 6 | **Freshness Awareness** | Does the system know when its own data is stale? | **No** — serves data regardless of age | **Yes** — response includes `is_stale`, `age_seconds`, `ttl_seconds` | Check `freshness` field in response |
 | 7 | **Tiered Fallback** | What happens when the agent asks something unsupported? | **404** — hard failure | **T2/T3** — attempts Silver query or explains why it can't | POST unsupported question → check tier is T2 or T3, not HTTP 404 |
 | 8 | **Schema Drift Detection** | What happens when a Silver column is renamed? | **500** — Gold refresh fails silently | **Isolated** — Gold view still serves; drift detected | Rename Silver column → query both → REST fails, CogniMesh serves |
+| 9 | **Impact Analysis** | Can the system show what breaks if a Silver table changes? | **No** — developer manually traces SQL dependencies | **Yes** — `GET /dependencies/impact` returns affected Gold views and UCs | Query impact endpoint for a Silver table, verify affected views and UCs listed |
+| 10 | **Provenance** | Can you trace a Gold column back to its Silver source and transformation? | **No** — read the SQL source code | **Yes** — `GET /dependencies/provenance` returns source table, column, and transformation | Query provenance endpoint for a Gold column, verify source mapping |
+| 11 | **Smart Refresh** | Does the system refresh only what changed? | **No** — cron job refreshes all tables regardless | **Yes** — dependency-aware refresh targets only affected Gold views | Change one Silver table, verify only dependent Gold views refreshed |
 
 ### Final Score
 
 ```
-REST API:     0 / 8
-CogniMesh:    8 / 8
+REST API:     0 / 11
+CogniMesh:    11 / 11
 ```
 
 ---
@@ -640,12 +644,62 @@ The consolidation ratio follows a logarithmic decay: most UCs in a domain draw f
 
 ---
 
-## 15. When CogniMesh Wins — Crossover Points
+## 15. Dependency Intelligence & Smart Refresh
+
+CogniMesh knows the full dependency graph — which Silver tables feed which Gold views, which Gold views serve which UCs. REST has no awareness of dependencies.
+
+### Impact Analysis — "What breaks if I change this?"
+
+```
+GET /dependencies/impact?table=silver.customer_profiles
+
+Result (measured):
+  Affected Gold views: 3 (customer_360, at_risk_customers, customer_health)
+  Affected UCs: 10 (UC-01, UC-03, UC-05, UC-06, UC-07, UC-09, UC-11, UC-13, UC-15, UC-20)
+  NOT affected: product_catalog, order_analytics
+```
+
+REST equivalent: nobody knows. A developer manually traces SQL dependencies.
+
+### Provenance — "Where does this number come from?"
+
+```
+GET /dependencies/provenance?view=gold_cognimesh.customer_360&column=health_status
+
+Result: source_table=silver.customer_profiles, source_column=days_since_last_order, transformation=computed
+```
+
+REST equivalent: read the SQL source code. No API.
+
+### Smart Refresh
+
+| Approach | When customer_profiles changes | When nothing changes |
+|----------|-------------------------------|---------------------|
+| REST | Refresh all 20 tables (cron job doesn't know what changed) | Still refreshes all 20 tables |
+| CogniMesh | Refresh only 3 affected views (dependency-aware) | Refreshes nothing (TTL not exceeded) |
+
+### API Endpoints (all tested, all working)
+
+| Endpoint | What It Does | REST |
+|----------|-------------|------|
+| GET /dependencies | Full Silver → Gold → UC graph | None |
+| GET /dependencies/impact | What breaks if this Silver table changes? | None |
+| GET /dependencies/provenance | Where does this Gold column come from? | None |
+| GET /dependencies/what-if | Change impact estimation | None |
+| GET /refresh/status | Freshness of all Gold views | None |
+| POST /refresh/check | Auto-refresh only stale views | None |
+| GET /refresh/plan | Preview what would be refreshed | None |
+
+REST has zero dependency awareness. CogniMesh understands its own data.
+
+---
+
+## 16. When CogniMesh Wins — Crossover Points
 
 | Dimension | CogniMesh Wins At | Why |
 |-----------|-------------------|-----|
 | Marginal dev hours per UC | **UC = 1** (always) | 12 SLOC JSON vs 78 SLOC code — 15% effort from day one |
-| Governance & observability | **UC = 1** (always) | 8/8 properties built-in from first query |
+| Governance & observability | **UC = 1** (always) | 11/11 properties built-in from first query |
 | Unsupported question handling | **UC = 1** (always) | T2 fallback vs 404 — never hard-fails |
 | Gold table count | **UC = 5** | First Silver source overlap triggers consolidation |
 | Total refresh time | **UC = 5** | Fewer consolidated views = fewer refresh cycles |
@@ -668,7 +722,7 @@ The consolidation ratio follows a logarithmic decay: most UCs in a domain draw f
 
 ---
 
-## 16. Self-Improving Data Layer
+## 17. Self-Improving Data Layer
 
 ### The T2-to-UC Promotion Cycle
 
@@ -701,7 +755,7 @@ CogniMesh's audit log records every T2 hit — questions answered from Silver be
 
 ---
 
-## 17. Where REST Wins
+## 18. Where REST Wins
 
 We will not pretend CogniMesh wins everywhere. REST is genuinely better on these dimensions:
 
@@ -722,12 +776,12 @@ REST needs FastAPI + psycopg. CogniMesh additionally needs its core library (whi
 
 ---
 
-## 18. Conclusion
+## 19. Conclusion
 
 | Dimension | Winner | Evidence |
 |-----------|--------|----------|
 | Raw T0 latency | **REST** | 2.57ms vs 4.22ms (UC-01) |
-| System properties (8 checks) | **CogniMesh** | 8/8 vs 0/8 |
+| System properties (11 checks) | **CogniMesh** | 11/11 vs 0/11 |
 | Schema drift resilience | **CogniMesh** | Gold isolation vs SQL error |
 | Unsupported question handling | **CogniMesh** | T2 fallback vs 404 |
 | Freshness awareness | **CogniMesh** | Built-in vs absent |
