@@ -83,7 +83,7 @@ Consuming agents (any LLM / framework)
 | Auto-promotion threshold | Phase 1: reported metric only. Phase 2: configurable threshold |
 | Agentic health monitor autonomy | Phase 1: human-in-loop — **important governance gate** |
 | Multi-tenancy | Per-model scoping. Per-tenant optional, not required |
-| SQL Mesh tooling | Pluggable adapter interface. Default: SQLMesh. Snowflake / Databricks adapters in Phase 2 |
+| SQL Mesh tooling | CogniMesh uses SQLMesh as foundation. Mode 1: SQLMesh manages Gold only. Mode 2: SQLMesh manages Bronze→Silver→Gold. Pluggable adapter interface for Snowflake/Databricks in Phase 2 |
 | Embedded LLM | Pluggable via Protocol. Phase 2: A/B test routing via LLM-as-judge (DeepEval-style) |
 | UC conflict resolution | Phase 1: surfaces structured suggestions with conflict detail — human decides. Phase 2: threshold-based auto-resolution rules |
 | Security model | Foundation implemented (agent_id in audit, UC scoping, approval queue), full model Phase 2 |
@@ -318,6 +318,38 @@ New capabilities added to CogniMesh that REST cannot replicate:
 - **Smart refresh:** Silver changes detected via Postgres LISTEN/NOTIFY → only affected Gold views refreshed (3 instead of 20)
 - **Full dependency graph:** `GET /dependencies` → Silver → Gold → UC tree with consolidation ratio
 - 14 new tests, all passing. Scorecard expanded from 8/8 to 12/12.
+
+---
+
+## Deployment Modes & Migration Path
+
+### Mode 1: Connect (adoption path)
+- Team has existing Bronze/Silver (dbt, Spark, Airflow, etc.)
+- CogniMesh connects to Silver, introspects schema via information_schema
+- Builds Gold views from UC definitions, serves agents
+- Lineage: Gold→Silver only (partial — doesn't know Bronze→Silver transformations)
+- The benchmark demonstrates this mode
+
+### Mode 2: Manage (full platform)
+- CogniMesh + SQLMesh manages Bronze→Silver→Gold
+- Full lineage from raw source to agent response
+- Complete schema knowledge and refresh DAG across all layers
+- SQLMesh provides: model definitions, column-level lineage, materialization, change detection
+
+### Migration path
+1. Day 1: Connect to existing Silver (Mode 1) — zero disruption
+2. Incrementally migrate Silver models into SQLMesh
+3. Each migrated table gains full Bronze→Silver→Gold lineage
+4. Eventually: CogniMesh has full observation of all layers needed for current + future UCs
+
+### Why full observation matters
+Without knowing what's in Bronze, CogniMesh can't:
+- Suggest new Silver enrichments for future UCs
+- Trace lineage to the original data source
+- Detect schema drift at the Bronze level
+- Optimize the full Bronze→Silver→Gold refresh pipeline
+
+Mode 2 is the target state. Mode 1 is how you get there without disruption.
 
 ---
 

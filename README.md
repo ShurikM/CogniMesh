@@ -16,13 +16,23 @@ Teams register Use Cases (business questions agents need answered). CogniMesh de
   <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="700">
 </p>
 
-CogniMesh is an intelligent serving layer between AI agents and data platforms. Agents ask questions — CogniMesh makes sure those questions are answered with four guarantees:
+CogniMesh is an intelligent serving layer for AI agents with two deployment modes:
 
-- **Explainability** — Every response traces back to source data. Column-level lineage, dependency graph, impact analysis, and provenance — all queryable via API.
-- **Observability** — Every query logged with who asked, what it cost, how fresh the data is. Cost attribution per use case and per agent.
-- **Self-service** — Register a use case with a 12-line JSON file. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when data changes.
-- **Flexibility** — Unknown questions get composed answers from Silver metadata (T2), not 404s. T2 patterns are auto-detected and promoted to Gold after human approval. Schema changes don't break agents.
-- **Security** — Agent identity and scoping controls which UCs each agent can access. Per-tenant data isolation, role-based UC management, and approval permissions.
+### Mode 1: Connect (start here)
+Connect to your existing Silver layer. CogniMesh introspects the schema, builds Gold views from UC definitions, and serves agents with lineage, observability, and access control. Your existing dbt/Spark/Airflow pipeline stays untouched.
+
+### Mode 2: Manage (full platform)
+CogniMesh + SQLMesh manages the entire Bronze→Silver→Gold pipeline. Full lineage from raw source to agent response. Complete schema knowledge across all layers. Intelligent refresh based on the full DAG.
+
+### Migration path
+Start with Mode 1 — zero disruption. Migrate Silver tables into SQLMesh models one at a time. Each migrated table gains full Bronze→Silver→Gold lineage. Eventually, CogniMesh has complete observation of all layers needed to support current and future UCs.
+
+**Five pillars across both modes:**
+- **Explainability** — Every response traces back to source data. Full lineage in Mode 2, Gold→Silver lineage in Mode 1.
+- **Observability** — Every query logged: who asked, what it cost, how fresh the data is.
+- **Self-service** — Register a UC with a 12-line JSON. System derives Gold, consolidates overlapping views, refreshes only what's affected.
+- **Flexibility** — Unknown questions composed from metadata (T2), not 404s. T2 patterns auto-promoted to Gold UCs.
+- **Security** — Agent identity and scoping, per-UC access control, row-level data isolation.
 
 ---
 

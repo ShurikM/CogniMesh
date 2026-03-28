@@ -212,7 +212,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-teal">
       <div class="card-label">SMART INFRASTRUCTURE</div>
       <div class="card-title">65% fewer tables, smart refresh</div>
-      <p>20 UCs consolidated into 7 Gold views (measured). When Silver data changes, only affected views refresh — not all of them. 49% less storage. REST refreshes everything blindly.</p>
+      <p>20 UCs consolidated into 7 Gold views (measured). When Silver data changes, only affected views refresh — not all of them. 49% less storage. REST refreshes everything blindly. Supports incremental adoption — connect to existing Silver (Mode 1) or manage the full pipeline with SQLMesh (Mode 2).</p>
     </div>
     <div class="card c-amber">
       <div class="card-label">ZERO FRICTION</div>
@@ -420,6 +420,10 @@ Agent -> HTTP POST -> Gateway<br>
       </div>
       <p>Every query passes through six stages. Audit logging (step 7) runs async after the response is returned.</p>
     </div>
+  </div>
+
+  <div class="callout">
+<strong>Two deployment modes:</strong> CogniMesh supports incremental adoption. <strong>Mode 1 (Connect):</strong> connect to your existing Silver layer — zero disruption to your pipeline. CogniMesh introspects the schema and builds Gold on top. <strong>Mode 2 (Manage):</strong> CogniMesh + SQLMesh manages Bronze→Silver→Gold with full lineage from source to agent. Teams start with Mode 1 and migrate tables incrementally — each migrated table gains complete lineage. The benchmark demonstrates Mode 1.
   </div>
 </div>
 
