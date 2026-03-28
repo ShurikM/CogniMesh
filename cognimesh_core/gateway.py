@@ -9,6 +9,7 @@ T3: Exceeds guardrails or cannot compose -> reject with explanation.
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from typing import Any
 
@@ -77,7 +78,8 @@ class Gateway:
         # T0: exact match with Gold view
         if uc and confidence > 0.6 and uc.gold_view:
             result = self._serve_t0(uc, params)
-            self._log_audit(uc.id, "T0", question, result, start, agent_id)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            self._log_audit_async(uc.id, "T0", question, result, elapsed_ms, agent_id)
             return result
 
         # T1: (reserved for cross-Gold-view composition — skip to T2)
@@ -89,8 +91,9 @@ class Gateway:
             # Check guardrails before executing
             if self._within_guardrails(composed):
                 result = self._serve_t2(composed, question, agent_id)
-                self._log_audit(
-                    None, result.tier, question, result, start, agent_id,
+                elapsed_ms = (time.perf_counter() - start) * 1000
+                self._log_audit_async(
+                    None, result.tier, question, result, elapsed_ms, agent_id,
                 )
                 return result
 
@@ -98,14 +101,16 @@ class Gateway:
             result = self._reject_t3(
                 question, composed, reason="guardrails_exceeded",
             )
-            self._log_audit(None, "T3", question, result, start, agent_id)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
             return result
 
         # T3: cannot compose a query at all
         result = self._reject_t3(
             question, composed, reason="cannot_compose",
         )
-        self._log_audit(None, "T3", question, result, start, agent_id)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
         return result
 
     # ------------------------------------------------------------------
@@ -410,7 +415,32 @@ class Gateway:
     # Audit logging
     # ------------------------------------------------------------------
 
-    def _log_audit(
+    def _log_audit_async(
+        self,
+        uc_id: str | None,
+        tier: str,
+        question: str,
+        result: QueryResult,
+        elapsed_ms: float,
+        agent_id: str,
+    ) -> None:
+        """Fire audit log in background thread — don't block the response."""
+        entry = AuditEntry(
+            uc_id=uc_id,
+            tier=tier,
+            query_text=question,
+            composed_sql=result.composed_sql,
+            latency_ms=elapsed_ms,
+            rows_returned=len(result.data),
+            agent_id=agent_id,
+            cost_units=self._compute_cost(tier, elapsed_ms, len(result.data)),
+        )
+        thread = threading.Thread(
+            target=self.audit.log_query, args=(entry,), daemon=True,
+        )
+        thread.start()
+
+    def _log_audit_sync(
         self,
         uc_id: str | None,
         tier: str,
@@ -419,7 +449,7 @@ class Gateway:
         start_time: float,
         agent_id: str,
     ) -> None:
-        """Log to audit trail."""
+        """Log to audit trail (synchronous — kept for tests)."""
         elapsed = (time.perf_counter() - start_time) * 1000
         entry = AuditEntry(
             uc_id=uc_id,

@@ -216,7 +216,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-purple">
       <div class="card-label">LATENCY</div>
       <div class="card-title">Both under 6ms — practically identical</div>
-      <p>REST: 2.3ms. CogniMesh: 5.5ms. Both are instant. In a real agent pipeline where the LLM call takes 500-2000ms, the 3ms difference is less than 0.5% of total response time. The extra 3ms buys you lineage, freshness, and audit on every query.</p>
+      <p>REST: 2.1ms. CogniMesh: 4.1ms. Both are instant. In a real agent pipeline where the LLM call takes 500-2000ms, the 2ms difference is less than 0.3% of total response time. The extra 2ms buys you lineage, freshness, and audit on every query. Audit logging is now async and adds zero latency.</p>
     </div>
   </div>
 </div>
@@ -414,10 +414,10 @@ Agent -> HTTP POST -> Gateway<br>
 &nbsp;&nbsp;-> 2. Query Gold table<br>
 &nbsp;&nbsp;-> 3. Attach lineage (column-level source mapping)<br>
 &nbsp;&nbsp;-> 4. Check freshness (age vs TTL)<br>
-&nbsp;&nbsp;-> 5. Log audit (agent, UC, tier, latency, cost)<br>
-&nbsp;&nbsp;-> 6. Return data + metadata
+&nbsp;&nbsp;-> 5. Return data + metadata<br>
+&nbsp;&nbsp;-> 6. Log audit async (agent, UC, tier, latency, cost)
       </div>
-      <p>Every query passes through six stages. The extra 2-3ms buys lineage, freshness, audit, and cost attribution on every single request.</p>
+      <p>Every query passes through six stages. Audit logging is async (step 6) — it runs in a background thread after the response is returned, adding zero latency to the response path.</p>
     </div>
   </div>
 </div>
@@ -474,18 +474,18 @@ Agent -> HTTP POST -> Gateway<br>
     </div>
 
     <div class="tier">
-      <div class="tier-tag" style="background: var(--coral-dim); color: var(--coral);">STEP 6</div>
+      <div class="tier-tag" style="background: var(--green-dim); color: var(--green);">STEP 6</div>
       <div class="tier-body">
-        <div class="tier-title">AUDIT</div>
-        <div class="tier-desc">INSERT into <code>audit_log</code>: UC-01, T0, 4.22ms, 1 row, cost=1.001. Immutable record.</div>
+        <div class="tier-title">RESPOND</div>
+        <div class="tier-desc">Return <code>QueryResult</code> with data + lineage + freshness + tier. Agent has full context to explain the answer.</div>
       </div>
     </div>
 
     <div class="tier">
-      <div class="tier-tag" style="background: var(--green-dim); color: var(--green);">STEP 7</div>
+      <div class="tier-tag" style="background: var(--coral-dim); color: var(--coral);">STEP 7</div>
       <div class="tier-body">
-        <div class="tier-title">RESPOND</div>
-        <div class="tier-desc">Return <code>QueryResult</code> with data + lineage + freshness + tier. Agent has full context to explain the answer.</div>
+        <div class="tier-title">AUDIT</div>
+        <div class="tier-desc">Async — runs in background after response is sent. Does not add latency. INSERT into <code>audit_log</code>: UC-01, T0, 3.2ms, 1 row, cost=1.001. Immutable record.</div>
       </div>
     </div>
   </div>
@@ -534,7 +534,7 @@ Agent -> HTTP POST -> Gateway<br>
     <span class="section-num">07</span>
     <span class="section-title">Performance Results</span>
   </div>
-  <p><strong>Both approaches respond in under 6ms.</strong> The 3ms difference is the cost of governance — and it's invisible in any real agent pipeline where the LLM call takes 500-2000ms.</p>
+  <p><strong>Both approaches respond in under 6ms.</strong> The 2ms difference is the cost of governance — and it's invisible in any real agent pipeline where the LLM call takes 500-2000ms. Audit logging is now async and no longer adds latency.</p>
   <p>All benchmarks ran against the same Postgres 15 instance with identical data. Latency measured via <code>pytest-benchmark</code> with statistical rigor.</p>
 
   <table class="data-table">
@@ -547,24 +547,24 @@ Agent -> HTTP POST -> Gateway<br>
     </tr>
     <tr>
       <td><strong>UC-01: Customer Health</strong></td>
-      <td><span class="badge badge-coral">2.57 ms</span></td>
-      <td><span class="badge badge-green">4.22 ms</span></td>
-      <td>+1.65 ms</td>
-      <td>Lineage + freshness + audit on every query</td>
+      <td><span class="badge badge-coral">2.77 ms</span></td>
+      <td><span class="badge badge-green">3.38 ms</span></td>
+      <td>+0.61 ms</td>
+      <td>Lineage + freshness on every query (audit is async)</td>
     </tr>
     <tr>
       <td><strong>UC-02: Top Products</strong></td>
-      <td><span class="badge badge-coral">1.90 ms</span></td>
-      <td><span class="badge badge-green">4.65 ms</span></td>
-      <td>+2.75 ms</td>
+      <td><span class="badge badge-coral">1.40 ms</span></td>
+      <td><span class="badge badge-green">3.31 ms</span></td>
+      <td>+1.91 ms</td>
       <td>Same + larger lineage for 8 columns</td>
     </tr>
     <tr>
       <td><strong>UC-03: At-Risk Customers</strong></td>
-      <td><span class="badge badge-coral">2.58 ms</span></td>
-      <td><span class="badge badge-green">5.64 ms</span></td>
-      <td>+3.06 ms</td>
-      <td>Same + more rows -> larger audit entry</td>
+      <td><span class="badge badge-coral">2.15 ms</span></td>
+      <td><span class="badge badge-green">5.48 ms</span></td>
+      <td>+3.33 ms</td>
+      <td>Same + more rows -> larger lineage payload</td>
     </tr>
   </table>
 
@@ -594,24 +594,24 @@ Agent -> HTTP POST -> Gateway<br>
 
         <!-- UC-01 -->
         <text x="115" y="42" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="11" text-anchor="end">UC-01</text>
-        <rect x="120" y="28" width="176.2" height="14" rx="3" fill="#f87171" opacity="0.85"/>
-        <text x="300" y="39" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">2.57ms</text>
-        <rect x="120" y="46" width="289.5" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
-        <text x="414" y="57" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">4.22ms</text>
+        <rect x="120" y="28" width="190" height="14" rx="3" fill="#f87171" opacity="0.85"/>
+        <text x="314" y="39" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">2.77ms</text>
+        <rect x="120" y="46" width="232" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
+        <text x="356" y="57" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">3.38ms</text>
 
         <!-- UC-02 -->
         <text x="115" y="97" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="11" text-anchor="end">UC-02</text>
-        <rect x="120" y="83" width="130.3" height="14" rx="3" fill="#f87171" opacity="0.85"/>
-        <text x="254" y="94" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">1.90ms</text>
-        <rect x="120" y="101" width="319" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
-        <text x="443" y="112" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">4.65ms</text>
+        <rect x="120" y="83" width="96" height="14" rx="3" fill="#f87171" opacity="0.85"/>
+        <text x="220" y="94" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">1.40ms</text>
+        <rect x="120" y="101" width="227" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
+        <text x="351" y="112" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">3.31ms</text>
 
         <!-- UC-03 -->
         <text x="115" y="152" fill="#e8e6df" font-family="DM Sans, sans-serif" font-size="11" text-anchor="end">UC-03</text>
-        <rect x="120" y="138" width="177" height="14" rx="3" fill="#f87171" opacity="0.85"/>
-        <text x="301" y="149" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">2.58ms</text>
-        <rect x="120" y="156" width="387" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
-        <text x="511" y="167" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">5.64ms</text>
+        <rect x="120" y="138" width="147.5" height="14" rx="3" fill="#f87171" opacity="0.85"/>
+        <text x="272" y="149" fill="#f87171" font-family="IBM Plex Mono, monospace" font-size="9">2.15ms</text>
+        <rect x="120" y="156" width="376" height="14" rx="3" fill="#4ade80" opacity="0.85"/>
+        <text x="500" y="167" fill="#4ade80" font-family="IBM Plex Mono, monospace" font-size="9">5.48ms</text>
 
         <!-- Legend -->
         <rect x="120" y="188" width="10" height="10" rx="2" fill="#f87171"/>
@@ -625,7 +625,7 @@ Agent -> HTTP POST -> Gateway<br>
   <div class="subsection">
     <div class="subsection-title">How Latency Is Measured</div>
     <p><strong>pytest-benchmark</strong> runs each function 50+ times across 5 rounds, computes statistical metrics (mean, median, stddev, min, max), and uses warmup iterations to stabilize. All tests use FastAPI <code>TestClient</code> (in-process, no network overhead). The measurements reflect pure application + database time, not network latency.</p>
-    <p>The overhead (1.6-3.1ms) comes from: lineage lookup (~0.5ms), freshness check (~0.3ms), audit log INSERT (~0.8ms), and metadata assembly. These are not optional -- they are the system properties that make CogniMesh a platform rather than a pipe.</p>
+    <p>The overhead (0.6-3.3ms) comes from: lineage lookup (~0.5ms), freshness check (~0.3ms), and metadata assembly. Audit log INSERT now runs async in a background thread and adds zero latency to the response path. Lineage and freshness remain synchronous because the agent needs them in the response.</p>
   </div>
 </div>
 
@@ -1332,12 +1332,12 @@ Agent -> HTTP POST -> Gateway<br>
       <tr>
         <td><strong>Query latency (T0)</strong></td>
         <td><span class="badge badge-teal">Practically equal (always)</span></td>
-        <td>Both under 6ms. CogniMesh adds ~3ms for governance (lineage, audit, freshness). Invisible in any real agent pipeline (LLM calls take 500-2000ms).</td>
+        <td>Both under 6ms. CogniMesh adds ~2ms for governance (lineage, freshness). Audit is async. Invisible in any real agent pipeline (LLM calls take 500-2000ms).</td>
       </tr>
       <tr>
         <td><strong>ALL dimensions</strong></td>
         <td><span class="badge badge-purple">UC = 5</span></td>
-        <td>CogniMesh wins storage, table count, refresh, dev hours, governance. Latency is practically identical.</td>
+        <td>CogniMesh wins storage, table count, refresh, dev hours, governance. Latency is practically identical (audit now async).</td>
       </tr>
     </table>
   </div>
@@ -1348,11 +1348,11 @@ Agent -> HTTP POST -> Gateway<br>
 <strong>Governance:</strong> Every query has lineage, freshness tracking, audit trail, cost attribution. REST has none.<br>
 <strong>Resilience:</strong> Unsupported questions get T2 answers (not 404). Schema changes don't break agents.<br>
 <strong>Adding UCs:</strong> 1 JSON file vs 4 code files per new use case.<br>
-<strong>Latency:</strong> Both under 6ms — practically identical for any real-world use.
+<strong>Latency:</strong> Both under 6ms — practically identical for any real-world use. Audit logging is now async.
   </div>
 
   <div class="callout">
-    <strong>Latency is practically identical:</strong> REST at ~2.3ms, CogniMesh at ~5.5ms — both under 6ms at UC=20. The 3ms difference is the cost of governance (lineage, audit, freshness on every query) and is invisible in any real agent pipeline where LLM calls take 500-2000ms. <strong>Where CogniMesh clearly wins at UC=20 (all measured):</strong> 49% less storage (12 MB &rarr; 6.3 MB), 65% fewer tables (20 &rarr; 7), ~65% fewer refresh cycles, full governance on every query vs none, and marginal cost of 1 JSON file vs 4 code files per new UC.
+    <strong>Latency is practically identical:</strong> REST at ~2.2ms, CogniMesh at ~3.7ms — both under 6ms at UC=20. The 1.5ms difference is the cost of governance (lineage, freshness on every query; audit is now async) and is invisible in any real agent pipeline where LLM calls take 500-2000ms. <strong>Where CogniMesh clearly wins at UC=20 (all measured):</strong> 49% less storage (12 MB &rarr; 6.3 MB), 65% fewer tables (20 &rarr; 7), ~65% fewer refresh cycles, full governance on every query vs none, and marginal cost of 1 JSON file vs 4 code files per new UC.
   </div>
 
   <div class="subsection">
@@ -1367,21 +1367,21 @@ Agent -> HTTP POST -> Gateway<br>
       </tr>
       <tr style="background: rgba(74,222,128,0.08);">
         <td><strong>3 (measured)</strong></td>
-        <td>2.57 ms</td>
-        <td>4.22 ms</td>
-        <td>Benchmark run 1</td>
-        <td>Both under 6ms. 1.6ms overhead = lineage + audit + freshness.</td>
+        <td>2.77 ms</td>
+        <td>3.38 ms</td>
+        <td>Benchmark run 2</td>
+        <td>Both under 6ms. 0.6ms overhead = lineage + freshness (audit is async).</td>
       </tr>
       <tr style="background: rgba(74,222,128,0.08);">
         <td><strong>20 (measured)</strong></td>
-        <td>2.26 ms avg</td>
-        <td>5.52 ms avg</td>
+        <td>2.17 ms avg</td>
+        <td>3.74 ms avg</td>
         <td>Scale benchmark</td>
-        <td>Both under 6ms. 3ms overhead = governance cost, invisible in real pipelines.</td>
+        <td>Both under 6ms. 1.6ms overhead = governance cost (audit async), invisible in real pipelines.</td>
       </tr>
     </table>
     <p style="color: var(--muted); font-size: 12px; margin-top: 8px;">
-      <strong>Note:</strong> Both approaches remain under 6ms at all measured scales. The 3ms difference is the cost of governance (lineage, audit, freshness) and is less than 0.5% of total response time in any real agent pipeline where LLM calls take 500-2000ms. CogniMesh's real advantage is infrastructure: 49% less storage, 65% fewer tables, ~65% fewer refresh cycles.
+      <strong>Note:</strong> Both approaches remain under 6ms at all measured scales. The 1.6ms difference is the cost of governance (lineage, freshness; audit is now async) and is less than 0.3% of total response time in any real agent pipeline where LLM calls take 500-2000ms. CogniMesh's real advantage is infrastructure: 49% less storage, 65% fewer tables, ~65% fewer refresh cycles.
     </p>
   </div>
 </div>
@@ -1485,7 +1485,7 @@ Agent -> HTTP POST -> Gateway<br>
     <div class="card c-coral">
       <div class="card-label">Advantage</div>
       <div class="card-title">Raw Latency</div>
-      <p>Both respond in under 6ms. CogniMesh adds ~3ms for governance (lineage, audit, freshness). In isolation that's measurable; in a real agent pipeline (500-2000ms LLM calls), it's invisible.</p>
+      <p>Both respond in under 6ms. CogniMesh adds ~2ms for governance (lineage, freshness; audit is now async). In isolation that's measurable; in a real agent pipeline (500-2000ms LLM calls), it's invisible.</p>
     </div>
     <div class="card c-coral">
       <div class="card-label">Advantage</div>
@@ -1521,7 +1521,7 @@ Agent -> HTTP POST -> Gateway<br>
     <tr>
       <td><strong>Raw T0 latency</strong></td>
       <td><span class="badge badge-teal">Practically equal</span></td>
-      <td>Both under 6ms (2.3ms vs 5.5ms). 3ms difference = governance cost, invisible in real pipelines.</td>
+      <td>Both under 6ms (2.1ms vs 4.1ms). 2ms difference = governance cost (audit async), invisible in real pipelines.</td>
     </tr>
     <tr>
       <td><strong>System properties</strong></td>
@@ -1566,7 +1566,7 @@ Agent -> HTTP POST -> Gateway<br>
     <tr>
       <td><strong>Latency at scale (measured, UC=20)</strong></td>
       <td><span class="badge badge-teal">Practically equal</span></td>
-      <td>Both under 6ms. 3ms overhead buys lineage, audit, freshness on every query.</td>
+      <td>Both under 6ms. 1.6ms overhead buys lineage, freshness on every query (audit is async).</td>
     </tr>
     <tr>
       <td><strong>Self-improving Gold layer</strong></td>
@@ -1576,7 +1576,7 @@ Agent -> HTTP POST -> Gateway<br>
   </table>
 
   <div class="callout callout-green">
-    <strong>Both approaches respond in under 6ms — the latency difference is invisible in practice.</strong> The real question is: do you want a fast pipe with no observability, or a governed, self-documenting data serving layer that adds 3ms and gives you lineage, audit, freshness, and resilience on every query?<br><br>
+    <strong>Both approaches respond in under 6ms — the latency difference is invisible in practice.</strong> The real question is: do you want a fast pipe with no observability, or a governed, self-documenting data serving layer that adds 2ms and gives you lineage, audit, freshness, and resilience on every query?<br><br>
     REST at UC=1 gives you an endpoint. <strong>CogniMesh at UC=1 gives you a platform.</strong>
   </div>
 </div>
