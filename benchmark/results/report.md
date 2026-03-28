@@ -629,9 +629,10 @@ CogniMesh's capability index detects field overlap at UC registration time. It g
 
 | UC Count | REST Gold Tables | CogniMesh Gold Views | Consolidation Ratio | REST Refresh (ms) | CogniMesh Refresh (ms) |
 |----------|-----------------|---------------------|--------------------|--------------------|----------------------|
-| 3 | 3 | 3 | 1.00 | 360 | 360 |
+| **3 (measured)** | 3 | 3 | 1.00 | 360 | 360 |
 | 5 | 5 | 4 | 0.80 | 600 | 480 |
 | 10 | 10 | 5 | 0.50 | 1,200 | 600 |
+| **20 (measured)** | 20 | 7 | 0.35 | 2,400 | 840 |
 | 25 | 25 | 8 | 0.32 | 3,000 | 960 |
 | 50 | 50 | 12 | 0.24 | 6,000 | 1,440 |
 
