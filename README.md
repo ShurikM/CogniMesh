@@ -16,7 +16,12 @@ Teams register Use Cases (business questions agents need answered). CogniMesh de
   <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="600">
 </p>
 
-CogniMesh sits between AI agents and the data platform. Agents query through a single gateway that routes to pre-computed Gold views (T0), falls back to Silver (T2), or explains why it can't answer (T3). The system tracks lineage, monitors freshness, logs every query, and knows its own dependency graph.
+CogniMesh is a complete data serving platform, not just a query layer:
+
+- **Query path**: Agents query through a gateway that routes to pre-computed Gold views (T0) or falls back to Silver (T2). Every response includes lineage and freshness.
+- **Lifecycle engine**: UCs are registered as JSON. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when Silver changes.
+- **Dependency intelligence**: Full Silver -> Gold -> UC graph. Impact analysis, provenance, and what-if queries available via API.
+- **Self-improving loop** *(Phase 2)*: T2 query patterns are auto-detected and promoted to Gold UCs after human approval.
 
 ---
 
