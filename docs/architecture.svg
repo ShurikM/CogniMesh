@@ -267,8 +267,8 @@
 
   <!-- Mode 1: Arrow from CogniMesh reads Silver -->
   <line x1="273" y1="598" x2="273" y2="692" stroke="#2dd4bf" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrowTeal)"/>
-  <text x="283" y="650" fill="#2dd4bf" font-size="8.5" font-family="system-ui,sans-serif" font-style="italic">reads schema</text>
-  <text x="283" y="661" fill="#2dd4bf" font-size="8.5" font-family="system-ui,sans-serif" font-style="italic">+ data</text>
+  <text x="283" y="618" fill="#2dd4bf" font-size="8.5" font-family="system-ui,sans-serif" font-style="italic">reads schema</text>
+  <text x="283" y="629" fill="#2dd4bf" font-size="8.5" font-family="system-ui,sans-serif" font-style="italic">+ data</text>
 
   <!-- Mode 1: Silver bar (external) -->
   <rect x="58" y="746" width="430" height="40" rx="6" fill="rgba(45,212,191,0.06)" stroke="#2dd4bf" stroke-width="1" stroke-opacity="0.3"/>
