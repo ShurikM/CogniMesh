@@ -13,15 +13,18 @@ Teams register Use Cases (business questions agents need answered). CogniMesh de
 ## Architecture
 
 <p align="center">
-  <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="600">
+  <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="700">
 </p>
 
-CogniMesh is a complete data serving platform, not just a query layer:
+**CogniMesh is a complete data serving platform:**
 
-- **Query path**: Agents query through a gateway that routes to pre-computed Gold views (T0) or falls back to Silver (T2). Every response includes lineage and freshness.
-- **Lifecycle engine**: UCs are registered as JSON. The system derives Gold views, consolidates overlapping ones, and refreshes only what's affected when Silver changes.
-- **Dependency intelligence**: Full Silver -> Gold -> UC graph. Impact analysis, provenance, and what-if queries available via API.
-- **Self-improving loop** *(Phase 2)*: T2 query patterns are auto-detected and promoted to Gold UCs after human approval.
+- **UC Registry** — Use cases registered as JSON definitions. Each defines a question, required fields, freshness TTL, and access pattern. The system derives everything else.
+- **Query path** — Agents query through a gateway. T0: instant from Gold. T2: composed from Silver metadata. T3: rejected with explanation. Every response includes lineage and freshness.
+- **Gold derivation & consolidation** — Gold views are created automatically from UC definitions. Overlapping UCs share consolidated views (20 UCs -> 7 views, measured).
+- **Smart refresh** — Silver changes detected via Postgres LISTEN/NOTIFY. Only affected Gold views refresh. TTL-based staleness tracking per view.
+- **Dependency intelligence** — Full Silver -> Gold -> UC graph. Impact analysis, provenance, and what-if queries via API.
+- **Self-improving loop** — T2 query patterns auto-detected and promoted to Gold UCs after human approval. *(Phase 2)*
+- **Observability** — Lineage per response, audit trail, cost attribution per UC and agent, freshness monitoring.
 
 ---
 
