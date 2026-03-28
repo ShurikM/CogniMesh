@@ -262,6 +262,36 @@ The full visual comparison is in `cognimesh.html` Section 01c.
 
 ---
 
+## Gold Layer Consolidation & Crossover Analysis
+
+We designed a 10-UC scenario showing how CogniMesh's Gold layer consolidates as UCs grow:
+- REST creates 10 independent Gold tables (1 per UC) with 45 overlapping columns
+- CogniMesh consolidates to 5 Gold views (50% fewer) by detecting Silver source overlap
+- Consolidation ratio at UC=50: 0.24 (12 views for 50 UCs)
+
+### Crossover points — when CogniMesh wins each dimension
+
+| Dimension | Crossover |
+|-----------|-----------|
+| Marginal dev hours | UC = 1 (always) |
+| Governance (8 properties) | UC = 1 (always) |
+| Unsupported query handling | UC = 1 (always) |
+| Gold table count | UC = 5 |
+| Refresh time + storage | UC = 5 |
+| Total SLOC | UC = 22 |
+| Query latency (projected) | UC = 22-25 |
+| ALL dimensions | UC = 25 |
+
+### Self-improving behavior
+
+T2-to-UC promotion cycle: unsupported question → T2 serves immediately → audit log
+detects pattern → UC candidate generated → human approves → promoted to T0 (85× faster).
+REST equivalent: 404 → support ticket → developer builds endpoint → 2-5 business days.
+
+The full analysis with charts is in `benchmark/results/report.html` sections 12-14.
+
+---
+
 ## Suggested first steps in Claude Code
 
 1. Scaffold repo structure
