@@ -209,7 +209,7 @@ cognimesh/
 ## Day-One Comparison: REST API vs CogniMesh (same data)
 
 We designed a concrete comparison starting from identical Bronze/Silver data (DuckDB e-commerce dataset)
-with 3 UCs (Customer Health, Top Products, At-Risk Customers). Both approaches serve the same questions —
+with 20 UCs (starting from Customer Health, Top Products, At-Risk Customers and scaled to 20). Both approaches serve the same questions —
 the difference is everything around the answer.
 
 ### Measurement dimensions (11 total)
@@ -221,6 +221,17 @@ the difference is everything around the answer.
 6. Observability — time-to-first-dashboard, cost attribution granularity
 7. Evolvability — marginal UC cost, Gold consolidation, dead view cleanup
 8. Total cost of ownership — setup cost, per-UC cost, operational cost, compute cost
+
+### Measured results (20 UCs, 71 tests, all passing)
+
+| Metric | Value |
+|--------|-------|
+| Total UCs registered | 20 |
+| System properties scorecard | 11/11 (REST: 0/11) |
+| Gold view consolidation | 7 views for 20 UCs (65% fewer than REST) |
+| Benchmark tests | 71 (all pass) |
+| Dependency intelligence | Full graph, impact analysis, provenance, what-if |
+| Smart refresh | Only affected views refreshed (not all) |
 
 ### Honest assessment at UC = 1
 
@@ -264,10 +275,10 @@ The full visual comparison is in `cognimesh.html` Section 01c.
 
 ## Gold Layer Consolidation & Crossover Analysis
 
-We designed a 10-UC scenario showing how CogniMesh's Gold layer consolidates as UCs grow:
-- REST creates 10 independent Gold tables (1 per UC) with 45 overlapping columns
-- CogniMesh consolidates to 5 Gold views (50% fewer) by detecting Silver source overlap
-- Consolidation ratio at UC=50: 0.24 (12 views for 50 UCs)
+We implemented and measured a 20-UC scenario showing how CogniMesh's Gold layer consolidates as UCs grow:
+- REST creates 20 independent Gold tables (1 per UC)
+- CogniMesh consolidates to 7 Gold views (65% fewer) by detecting Silver source overlap
+- Consolidation ratio at UC=50 (projected): 0.24 (12 views for 50 UCs)
 
 ### Crossover points — when CogniMesh wins each dimension
 
