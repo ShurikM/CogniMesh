@@ -325,7 +325,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
   </div>
 
   <div class="callout">
-    <strong>Why Gold is on Postgres, not Iceberg:</strong> Agents do individual lookups — "health of customer X." That needs sub-10ms. Open table formats on object storage (Iceberg/Delta on S3) take 100-1000ms per lookup. CogniMesh keeps Gold on a serving database (Postgres, DuckDB, MongoDB) for instant agent responses. Silver and Bronze can live anywhere — lakehouse, warehouse, or database.
+    <strong>Why Gold is on a serving database, not Iceberg:</strong> Agents do individual lookups — "health of customer X." That needs sub-10ms. Open table formats on object storage (Iceberg/Delta on S3) take 100-1000ms per lookup. CogniMesh keeps Gold on a serving database (Postgres, DuckDB, MongoDB, StarRocks, ClickHouse — any serving database) for instant agent responses. OLAP databases like StarRocks work well for analytical UCs while still serving individual lookups in 10-50ms. Silver and Bronze can live anywhere — lakehouse, warehouse, or database.
   </div>
 </div>
 

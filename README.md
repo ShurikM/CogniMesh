@@ -33,7 +33,7 @@ Agents do individual lookups — "health of customer X", "orders for product Y."
 
 CogniMesh separates **transformation storage** from **serving storage**:
 - **Bronze/Silver**: can live on a lakehouse (Iceberg, Delta, Spark) — cheap, batch-optimized
-- **Gold**: must be a serving database (Postgres, DuckDB, MongoDB) — fast, agent-optimized
+- **Gold**: must be a serving database — OLTP (Postgres, DuckDB, MongoDB) or OLAP (StarRocks, ClickHouse, Druid) — fast, agent-optimized
 
 SQLMesh manages transformations across all layers. CogniMesh materializes Gold into the serving DB and serves agents from there.
 
@@ -271,7 +271,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 |-----------|-----------|
 | Data models | Pydantic v2 |
 | API framework | FastAPI |
-| Database | Gold: Postgres / DuckDB / MongoDB (serving DB) · Silver/Bronze: any (Iceberg, Delta, Spark, Snowflake) |
+| Database | Gold: Postgres / DuckDB / MongoDB / StarRocks / ClickHouse (serving DB — OLTP or OLAP) · Silver/Bronze: any (Iceberg, Delta, Spark, Snowflake) |
 | DB driver | psycopg 3 + connection pool |
 | Test framework | pytest + pytest-benchmark |
 | Package manager | uv |

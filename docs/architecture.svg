@@ -262,8 +262,8 @@
 
   <!-- Mode 1: Gold bar (managed by CogniMesh) -->
   <rect x="58" y="692" width="430" height="48" rx="6" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="1.2" stroke-opacity="0.5"/>
-  <text x="78" y="712" fill="#4ade80" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">GOLD — Serving DB (Postgres / DuckDB / MongoDB)</text>
-  <text x="78" y="728" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">Sub-10ms lookups for agents</text>
+  <text x="78" y="712" fill="#4ade80" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">GOLD — Serving DB: Postgres, DuckDB, MongoDB, StarRocks, ClickHouse</text>
+  <text x="78" y="728" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">Fast lookups for agents — OLTP or OLAP</text>
 
   <!-- Mode 1: Arrow from CogniMesh reads Silver -->
   <line x1="273" y1="598" x2="273" y2="692" stroke="#2dd4bf" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrowTeal)"/>
@@ -298,8 +298,8 @@
 
   <!-- Mode 2: Gold bar -->
   <rect x="572" y="692" width="430" height="48" rx="6" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="1.2" stroke-opacity="0.5"/>
-  <text x="592" y="712" fill="#4ade80" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">GOLD — Serving DB (Postgres / DuckDB / MongoDB)</text>
-  <text x="592" y="728" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">Sub-10ms lookups for agents</text>
+  <text x="592" y="712" fill="#4ade80" font-size="12" font-weight="bold" font-family="system-ui,sans-serif">GOLD — Serving DB: Postgres, DuckDB, MongoDB, StarRocks, ClickHouse</text>
+  <text x="592" y="728" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">Fast lookups for agents — OLTP or OLAP</text>
 
   <!-- Mode 2: Silver bar -->
   <rect x="572" y="754" width="430" height="48" rx="6" fill="rgba(45,212,191,0.08)" stroke="#2dd4bf" stroke-width="1.2" stroke-opacity="0.4"/>
@@ -328,6 +328,6 @@
   <text x="530" y="882" text-anchor="middle" fill="#fcd34d" font-size="8.5" font-family="system-ui,sans-serif" font-style="italic">each gains full lineage</text>
 
   <!-- Bottom label -->
-  <text x="530" y="1020" text-anchor="middle" fill="#6b7280" font-size="10.5" font-family="system-ui,sans-serif">Gold: Postgres, DuckDB, MongoDB · Silver/Bronze: Iceberg, Delta, Spark, Snowflake, BigQuery</text>
+  <text x="530" y="1020" text-anchor="middle" fill="#6b7280" font-size="10.5" font-family="system-ui,sans-serif">Gold: Postgres, DuckDB, MongoDB, StarRocks, ClickHouse · Silver/Bronze: Iceberg, Delta, Spark, Snowflake, BigQuery</text>
 
 </svg>

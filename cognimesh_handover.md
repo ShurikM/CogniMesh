@@ -87,7 +87,7 @@ Consuming agents (any LLM / framework)
 | Embedded LLM | Pluggable via Protocol. Phase 2: A/B test routing via LLM-as-judge (DeepEval-style) |
 | UC conflict resolution | Phase 1: surfaces structured suggestions with conflict detail — human decides. Phase 2: threshold-based auto-resolution rules |
 | Security model | Foundation implemented (agent_id in audit, UC scoping, approval queue), full model Phase 2 |
-| Gold storage | Gold MUST be a serving DB (Postgres/DuckDB/MongoDB) for sub-10ms agent lookups. Silver/Bronze can be on lakehouse (Iceberg/Delta). CogniMesh separates transformation storage from serving storage |
+| Gold storage | Gold MUST be a serving DB — OLTP (Postgres/DuckDB/MongoDB) or OLAP (StarRocks/ClickHouse/Druid). Not open table formats on S3 (too slow for agent lookups). CogniMesh is backend-agnostic — serving DB is pluggable. Silver/Bronze can be on lakehouse (Iceberg/Delta). CogniMesh separates transformation storage from serving storage |
 
 ---
 
