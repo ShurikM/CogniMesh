@@ -157,14 +157,14 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
   <div class="doc-subtitle">REST API vs CogniMesh -- Same Data, Two Approaches</div>
   <div class="doc-meta">
     <div class="meta-item"><strong>Generated</strong> 2026-03-27</div>
-    <div class="meta-item"><strong>Tests</strong> 41/41 passed</div>
+    <div class="meta-item"><strong>Tests</strong> 71/71 passed</div>
     <div class="meta-item"><strong>Database</strong> Postgres 15</div>
   </div>
   <div class="badge-row">
     <span class="pill pill-green">full governance from query 1</span>
     <span class="pill pill-coral">3 resilience scenarios</span>
     <span class="pill pill-amber">1 JSON file per new UC</span>
-    <span class="pill pill-purple">41 tests</span>
+    <span class="pill pill-purple">71 tests</span>
   </div>
 </div>
 
@@ -575,7 +575,7 @@ Agent -> HTTP POST -> Gateway<br>
   <p>The ~2ms overhead covers lineage lookup and freshness check on every query. Audit logging runs async in a background thread and adds zero latency. Measured with pytest-benchmark (50+ iterations, 5 rounds, FastAPI TestClient in-process).</p>
 </div>
 
-<!-- SECTION 08: THE 8-PROPERTY SCORECARD -->
+<!-- SECTION 08: THE 12-PROPERTY SCORECARD -->
 <div class="section" id="s08">
   <div class="section-header">
     <span class="section-num">08</span>
@@ -1658,7 +1658,7 @@ Agent -> HTTP POST -> Gateway<br>
 
 <!-- FOOTER -->
 <div class="footer">
-  <span>41/41 tests passed</span>
+  <span>71/71 tests passed</span>
   <span>Full source at github.com/ShurikM/CogniMesh</span>
   <span>Apache 2.0</span>
 </div>

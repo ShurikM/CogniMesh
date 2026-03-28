@@ -131,7 +131,7 @@ make report
 |------------|-------|-----------------|
 | `test_performance.py` | 6 | T0 latency per UC, both approaches (pytest-benchmark) |
 | `test_throughput.py` | 8 | Concurrent request throughput at 1/5/10/25 users |
-| `test_properties.py` | 16 | 11 binary assertions x 2 approaches (the scorecard) |
+| `test_properties.py` | 16 | 12 binary assertions x 2 approaches (the scorecard) |
 | `test_resilience_schema_drift.py` | 2 | Rename Silver column, observe both approaches |
 | `test_resilience_unsupported_uc.py` | 2 | Ask unsupported question, compare REST 404 vs CogniMesh T2 |
 | `test_resilience_staleness.py` | 2 | Expire TTL, check freshness metadata |
@@ -188,7 +188,7 @@ CogniMesh/
 │   ├── tests/                  # All benchmark tests (71 total)
 │   │   ├── test_performance.py
 │   │   ├── test_throughput.py
-│   │   ├── test_properties.py  #   ← The 11/11 scorecard
+│   │   ├── test_properties.py  #   ← The 12/12 scorecard
 │   │   ├── test_resilience_*.py
 │   │   ├── test_marginal_cost.py
 │   │   ├── test_scale_benchmark.py    # 20-UC scale + infra metrics

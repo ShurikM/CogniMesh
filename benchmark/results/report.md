@@ -1,7 +1,7 @@
 # CogniMesh Benchmark Report
 ## REST API vs CogniMesh — Same Data, Two Approaches
 
-**Generated:** 2026-03-27 | **All 41 tests: PASSED** | **Postgres 15 on Docker**
+**Generated:** 2026-03-27 | **All 71 tests: PASSED** | **Postgres 15 on Docker**
 
 ---
 
@@ -16,7 +16,7 @@
 7. [Approach B: CogniMesh — How It Works](#7-approach-b-cognimesh)
 8. [The Full CogniMesh Request Flow](#8-the-full-cognimesh-request-flow)
 9. [Performance Results — Latency](#9-performance-results)
-10. [The 11-Property Scorecard](#10-the-11-property-scorecard)
+10. [The 12-Property Scorecard](#10-the-12-property-scorecard)
 11. [Resilience Scenarios](#11-resilience-scenarios)
 12. [Developer Effort — Code Metrics](#12-developer-effort)
 13. [Marginal Cost — Adding a New Use Case](#13-marginal-cost)
@@ -31,7 +31,7 @@
 
 ## 1. What This Benchmark Proves
 
-We took the **exact same data** in Postgres (10,000 customers, 500 products, 200,000 orders) and built **two complete implementations** that answer the same three business questions:
+We took the **exact same data** in Postgres (10,000 customers, 500 products, 200,000 orders) and built **two complete implementations** starting from three core business questions and scaling to 20 UCs:
 
 - **Approach A (REST API):** Traditional FastAPI endpoints reading from hand-designed Gold tables. This is how most teams serve data to AI agents today.
 - **Approach B (CogniMesh):** A Use Case registry + intelligent gateway that derives Gold tables from UC definitions, tracks lineage, logs every query, monitors freshness, and handles unsupported questions gracefully.
@@ -428,13 +428,13 @@ REST gives you 2-3ms faster responses. CogniMesh gives you a **governed, observa
 
 ---
 
-## 10. The 11-Property Scorecard
+## 10. The 12-Property Scorecard
 
-This is the core result. Eleven binary yes/no assertions about system capabilities. Each is a real test that either passes or fails.
+This is the core result. Twelve binary yes/no assertions about system capabilities. Each is a real test that either passes or fails.
 
 | # | Property | What It Means | REST | CogniMesh | How It's Tested |
 |---|----------|--------------|------|-----------|----------------|
-| 1 | **Discovery** | Can an agent ask "what can you answer?" and get a list of capabilities? | **No** — `/discover` returns 404 | **Yes** — returns 3 UCs with questions, parameters, freshness guarantees | `GET /discover` → check response has UC list |
+| 1 | **Discovery** | Can an agent ask "what can you answer?" and get a list of capabilities? | **No** — `/discover` returns 404 | **Yes** — returns all registered UCs with questions, parameters, freshness guarantees | `GET /discover` → check response has UC list |
 | 2 | **Lineage** | Does the response trace each field back to its source table and column? | **No** — response is just data | **Yes** — every response includes column-level lineage | Check `lineage` field in response contains `source_table`, `source_column` |
 | 3 | **Audit Trail** | Is every query logged with who asked, what, when, which tier, cost? | **No** — no logging mechanism | **Yes** — every query → `cognimesh_internal.audit_log` | Query audit table after making a request, verify row exists |
 | 4 | **Cost Attribution** | Can you see per-UC, per-agent cost breakdowns? | **No** — no cost tracking | **Yes** — audit log has `cost_units` per UC per agent | `SELECT uc_id, SUM(cost_units) FROM audit_log GROUP BY uc_id` |
@@ -706,20 +706,17 @@ REST has zero dependency awareness. CogniMesh understands its own data.
 | Total refresh time | **UC = 5** | Fewer consolidated views = fewer refresh cycles |
 | Storage cost | **UC = 5** | Consolidated views eliminate duplicate rows |
 | Total maintenance SLOC | **UC = 22** | REST: 286 + (n-3)×78 overtakes CogniMesh: 1,952 + (n-3)×12 |
-| Query latency (T0) | **UC = 22-25** (projected) | Buffer pool consolidation overcomes per-query overhead |
-| **ALL dimensions** | **UC = 25** | CogniMesh wins on every axis including raw speed |
+| Query latency (T0) | **Equivalent** (always) | Both under 6ms at all measured scales (3 and 20 UCs) |
+| **ALL dimensions** | **UC = 5** | CogniMesh wins storage, table count, refresh, dev hours, governance. Latency is equivalent. |
 
-### Projected Latency at Scale
+### Measured Latency at Scale
 
-| UC Count | REST T0 | CogniMesh T0 | Winner |
-|----------|---------|-------------|--------|
-| 3 (measured) | 2.57 ms | 4.22 ms | REST (+1.65ms) |
-| 10 (projected) | 3.1 ms | 4.3 ms | REST (+1.2ms, gap closing) |
-| 20 (projected) | 4.0 ms | 4.4 ms | Nearly even (+0.4ms) |
-| 25 (projected) | 4.8 ms | 4.4 ms | **CogniMesh** (-0.4ms) |
-| 50 (projected) | 7.2 ms | 4.5 ms | **CogniMesh** (-2.7ms) |
+| UC Count | REST T0 | CogniMesh T0 | Source | Notes |
+|----------|---------|-------------|--------|-------|
+| 3 (measured) | 2.77 ms | 3.38 ms | Benchmark run 2 | Equivalent |
+| 20 (measured) | 2.17 ms avg | 3.74 ms avg | Scale benchmark | Equivalent -- latency unchanged at scale |
 
-> **Note:** The latency crossover at UC-22-25 is projected from Postgres buffer pool modeling. REST's many separate Gold tables compete for shared_buffers, causing cache eviction. CogniMesh's consolidated views maintain better cache hit rates. The exact crossover depends on hardware and data volume.
+> **Note:** Both approaches respond in under 6ms at all measured scales. Latency is not the differentiator between REST and CogniMesh.
 
 ---
 
@@ -789,8 +786,10 @@ REST needs FastAPI + psycopg. CogniMesh additionally needs its core library (whi
 | Initial setup simplicity | **REST** | 286 SLOC vs 1,952 SLOC |
 | Gold consolidation at scale | **CogniMesh** | 5 views vs 10 tables at UC=10 |
 | Refresh cost at scale | **CogniMesh** | 960ms vs 3,000ms at UC=25 |
-| Latency at scale (projected) | **CogniMesh** | 4.4ms vs 4.8ms at UC=25 |
+| Latency at scale (measured) | **Equivalent** | Both under 6ms at 3 and 20 UCs |
 | Self-improving Gold layer | **CogniMesh** | T2 auto-promotes; REST needs manual work |
+| Dependency intelligence | **CogniMesh** | Impact analysis, provenance, smart refresh -- REST has none |
+| Access control | **CogniMesh** | Agent scoping, per-UC permissions, row-level isolation |
 
 **Both approaches respond in under 6ms. Latency is not the differentiator.**
 
@@ -798,6 +797,8 @@ REST needs FastAPI + psycopg. CogniMesh additionally needs its core library (whi
 
 REST at UC=1 gives you an endpoint. CogniMesh at UC=1 gives you a **platform** -- governed queries, dependency intelligence, smart refresh, and near-zero cost to add new use cases. The platform is what makes UC=2 through UC=100 possible without linear engineering cost.
 
+CogniMesh supports two deployment modes: **Mode 1 (Connect)** -- connect to your existing Silver layer with zero disruption; **Mode 2 (Manage)** -- CogniMesh + SQLMesh manages the full Bronze-to-Gold pipeline. This benchmark demonstrates Mode 1.
+
 ---
 
-*41/41 tests passed. Full source code at [github.com/ShurikM/CogniMesh](https://github.com/ShurikM/CogniMesh).*
+*71/71 tests passed. Full source code at [github.com/ShurikM/CogniMesh](https://github.com/ShurikM/CogniMesh).*

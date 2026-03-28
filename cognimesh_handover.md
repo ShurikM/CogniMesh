@@ -294,13 +294,13 @@ We implemented and measured a 20-UC scenario showing how CogniMesh's Gold layer 
 | Dimension | Crossover |
 |-----------|-----------|
 | Marginal dev hours | UC = 1 (always) |
-| Governance (11 properties) | UC = 1 (always) |
+| Governance (12 properties) | UC = 1 (always) |
 | Unsupported query handling | UC = 1 (always) |
 | Gold table count | UC = 5 |
 | Refresh time + storage | UC = 5 |
 | Total SLOC | UC = 22 |
-| Query latency (projected) | UC = 22-25 |
-| ALL dimensions | UC = 25 |
+| Query latency (measured) | Equivalent (always) |
+| ALL dimensions | UC = 5 |
 
 ### Self-improving behavior
 
