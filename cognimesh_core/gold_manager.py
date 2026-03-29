@@ -2,30 +2,94 @@
 
 from __future__ import annotations
 
+import logging
 import time
+from typing import TYPE_CHECKING
 
 from cognimesh_core.config import CogniMeshConfig
 from cognimesh_core.db import get_connection
 from cognimesh_core.models import FreshnessInfo, UseCase
 
+if TYPE_CHECKING:
+    from cognimesh_core.sqlmesh_adapter import SQLMeshAdapter
+
+logger = logging.getLogger(__name__)
+
 
 class GoldManager:
     """Manages the lifecycle of Gold tables derived from Silver sources."""
 
-    def __init__(self, config: CogniMeshConfig):
+    def __init__(
+        self,
+        config: CogniMeshConfig,
+        sqlmesh_adapter: SQLMeshAdapter | None = None,
+    ):
         self.config = config
+        self.sqlmesh_adapter = sqlmesh_adapter
 
     # ------------------------------------------------------------------
     # Refresh
     # ------------------------------------------------------------------
 
     def refresh_gold(self, uc: UseCase) -> int:
-        """Refresh a Gold table from Silver using the UC's derivation_sql.
+        """Refresh a Gold view. Uses SQLMesh if available, falls back to direct SQL."""
+        if not uc.gold_view:
+            raise ValueError(f"UC {uc.id} has no gold_view")
+
+        # Try SQLMesh first
+        if self.sqlmesh_adapter and self.sqlmesh_adapter.is_available():
+            model_fqn = uc.gold_view  # e.g. "gold_cognimesh.customer_360"
+            logger.info("Attempting SQLMesh refresh for %s", model_fqn)
+            success = self.sqlmesh_adapter.run(model_name=model_fqn)
+            if success:
+                start_ms = time.perf_counter()
+                with get_connection(self.config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT count(*) AS cnt FROM {gold_view}".format(  # noqa: S608
+                                gold_view=uc.gold_view
+                            )
+                        )
+                        row_count: int = cur.fetchone()["cnt"]
+
+                        elapsed_ms = (time.perf_counter() - start_ms) * 1000
+                        cur.execute(
+                            """
+                            INSERT INTO cognimesh_internal.freshness
+                                (gold_view, uc_id, last_refreshed_at, ttl_seconds,
+                                 row_count, refresh_duration_ms)
+                            VALUES (%s, %s, now(), %s, %s, %s)
+                            ON CONFLICT (gold_view) DO UPDATE SET
+                                last_refreshed_at = now(),
+                                ttl_seconds = EXCLUDED.ttl_seconds,
+                                row_count = EXCLUDED.row_count,
+                                refresh_duration_ms = EXCLUDED.refresh_duration_ms
+                            """,
+                            (
+                                uc.gold_view,
+                                uc.id,
+                                uc.freshness_ttl_seconds,
+                                row_count,
+                                round(elapsed_ms, 2),
+                            ),
+                        )
+                    conn.commit()
+                return row_count
+            logger.warning(
+                "SQLMesh refresh failed for %s, falling back to direct SQL",
+                model_fqn,
+            )
+
+        # Fallback: direct SQL
+        return self._refresh_direct_sql(uc)
+
+    def _refresh_direct_sql(self, uc: UseCase) -> int:
+        """Refresh a Gold table via direct TRUNCATE + INSERT (fallback path).
 
         Returns the row count.  Updates cognimesh_internal.freshness.
         """
-        if not uc.gold_view or not uc.derivation_sql:
-            raise ValueError(f"UC {uc.id} has no gold_view or derivation_sql")
+        if not uc.derivation_sql:
+            raise ValueError(f"UC {uc.id} has no derivation_sql")
 
         start_ms = time.perf_counter()
 

@@ -1,0 +1,14 @@
+gateways:
+  local:
+    connection:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: cognimesh
+      password: cognimesh
+      database: cognimesh_bench
+
+default_gateway: local
+
+model_defaults:
+  dialect: postgres

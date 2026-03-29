@@ -9,3 +9,6 @@ benchmark/data/*.csv
 .env
 .pytest_cache/
 .ruff_cache/
+# SQLMesh generated files
+cognimesh_core/sqlmesh_project/.cache/
+cognimesh_core/sqlmesh_project/logs/

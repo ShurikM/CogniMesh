@@ -18,6 +18,7 @@ from cognimesh_core.gold_manager import GoldManager
 from cognimesh_core.lineage import LineageTracker
 from cognimesh_core.refresh_manager import RefreshManager
 from cognimesh_core.registry import UCRegistry
+from cognimesh_core.sqlmesh_adapter import SQLMeshAdapter
 
 
 # ------------------------------------------------------------------
@@ -40,7 +41,8 @@ async def lifespan(application: FastAPI):
     config = CogniMeshConfig()
     registry = UCRegistry(config)
     capability_index = CapabilityIndex(registry)
-    gold_manager = GoldManager(config)
+    sqlmesh_adapter = SQLMeshAdapter(config)
+    gold_manager = GoldManager(config, sqlmesh_adapter=sqlmesh_adapter)
     lineage_tracker = LineageTracker(config)
     audit_log = AuditLog(config)
 
