@@ -86,9 +86,13 @@ def query(req: QueryRequest) -> dict[str, Any]:
 
 
 @app.get("/discover")
-def discover() -> list[dict[str, Any]]:
-    """Return all active UC capabilities for agent discovery."""
-    descriptors = app.state.capability_index.discover()
+def discover(agent_id: str | None = None) -> list[dict[str, Any]]:
+    """Return active UC capabilities for agent discovery.
+
+    If *agent_id* is provided as a query param, only UCs the agent is
+    allowed to access are returned.
+    """
+    descriptors = app.state.capability_index.discover(agent_id=agent_id)
     return [d.model_dump() for d in descriptors]
 
 

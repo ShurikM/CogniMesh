@@ -22,6 +22,7 @@ class UseCase(BaseModel):
     source_tables: list[str] | None = None
     derivation_sql: str | None = None
     status: Literal["active", "pending", "deprecated"] = "active"
+    allowed_agents: list[str] | None = None  # None = open access (all agents allowed)
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

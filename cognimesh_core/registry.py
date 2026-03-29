@@ -28,8 +28,9 @@ class UCRegistry:
                     INSERT INTO cognimesh_internal.uc_registry
                         (id, question, consuming_agent, required_fields,
                          access_pattern, freshness_ttl_seconds, gold_view,
-                         gold_schema, source_tables, derivation_sql, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         gold_schema, source_tables, derivation_sql, status,
+                         allowed_agents)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (id) DO UPDATE SET
                         question = EXCLUDED.question,
                         consuming_agent = EXCLUDED.consuming_agent,
@@ -41,6 +42,7 @@ class UCRegistry:
                         source_tables = EXCLUDED.source_tables,
                         derivation_sql = EXCLUDED.derivation_sql,
                         status = EXCLUDED.status,
+                        allowed_agents = EXCLUDED.allowed_agents,
                         updated_at = now()
                     RETURNING created_at, updated_at
                     """,
@@ -56,6 +58,7 @@ class UCRegistry:
                         json.dumps(uc.source_tables) if uc.source_tables else None,
                         uc.derivation_sql,
                         uc.status,
+                        json.dumps(uc.allowed_agents) if uc.allowed_agents else None,
                     ),
                 )
                 row = cur.fetchone()
@@ -118,6 +121,7 @@ class UCRegistry:
                         source_tables = %s,
                         derivation_sql = %s,
                         status = %s,
+                        allowed_agents = %s,
                         updated_at = now()
                     WHERE id = %s
                     RETURNING created_at, updated_at
@@ -133,6 +137,7 @@ class UCRegistry:
                         json.dumps(uc.source_tables) if uc.source_tables else None,
                         uc.derivation_sql,
                         uc.status,
+                        json.dumps(uc.allowed_agents) if uc.allowed_agents else None,
                         uc.id,
                     ),
                 )
@@ -192,6 +197,10 @@ class UCRegistry:
         if isinstance(source_tables, str):
             source_tables = json.loads(source_tables)
 
+        allowed_agents = row.get("allowed_agents")
+        if isinstance(allowed_agents, str):
+            allowed_agents = json.loads(allowed_agents)
+
         return UseCase(
             id=row["id"],
             question=row["question"],
@@ -204,6 +213,7 @@ class UCRegistry:
             source_tables=source_tables,
             derivation_sql=row.get("derivation_sql"),
             status=row.get("status", "active"),
+            allowed_agents=allowed_agents,
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
         )

@@ -75,6 +75,22 @@ class Gateway:
         else:
             uc, confidence = self.capability_index.match_question(question)
 
+        # Access control check
+        if uc and uc.allowed_agents and agent_id not in uc.allowed_agents:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            result = QueryResult(
+                tier="T3",
+                metadata={
+                    "reason": "access_denied",
+                    "agent_id": agent_id,
+                    "uc_id": uc.id,
+                    "message": f"Agent '{agent_id}' is not authorized to access UC '{uc.id}'",
+                    "allowed_agents": uc.allowed_agents,
+                },
+            )
+            self._log_audit_async(uc.id, "T3", question, result, elapsed_ms, agent_id)
+            return result
+
         # T0: exact match with Gold view
         if uc and confidence > 0.6 and uc.gold_view:
             result = self._serve_t0(uc, params)

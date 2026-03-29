@@ -114,10 +114,16 @@ class CapabilityIndex:
     # Agent-facing discovery
     # ------------------------------------------------------------------
 
-    def discover(self) -> list[CapabilityDescriptor]:
-        """Return all active UCs as CapabilityDescriptors."""
+    def discover(self, agent_id: str | None = None) -> list[CapabilityDescriptor]:
+        """Return active UCs as CapabilityDescriptors.
+
+        If *agent_id* is provided, only UCs the agent is allowed to access
+        are returned.  UCs with ``allowed_agents=None`` are open to everyone.
+        """
         descriptors: list[CapabilityDescriptor] = []
         for uc in self._uc_index.values():
+            if agent_id and uc.allowed_agents and agent_id not in uc.allowed_agents:
+                continue
             descriptors.append(
                 CapabilityDescriptor(
                     uc_id=uc.id,

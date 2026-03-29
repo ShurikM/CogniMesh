@@ -7,5 +7,6 @@
     "freshness_ttl_seconds": 14400,
     "gold_view": "gold_cognimesh.customer_360",
     "source_tables": ["silver.customer_profiles"],
-    "derivation_sql": "-- populated by seed_scale.py"
+    "derivation_sql": "-- populated by seed_scale.py",
+    "allowed_agents": ["retention_agent", "benchmark"]
 }

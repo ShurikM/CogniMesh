@@ -180,6 +180,7 @@ CREATE TABLE cognimesh_internal.uc_registry (
     source_tables       JSONB,  -- list of Silver source tables
     derivation_sql      TEXT,  -- SQL used to derive Gold from Silver
     status              TEXT NOT NULL DEFAULT 'active',
+    allowed_agents      JSONB,  -- list of agent IDs allowed to query this UC. NULL = open access
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
