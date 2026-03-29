@@ -152,7 +152,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
   <div class="badge-row">
     <span class="pill pill-green">open source</span>
     <span class="pill pill-purple">vendor neutral</span>
-    <span class="pill pill-teal">MCP native</span>
+    <span class="pill pill-teal">REST API</span>
     <span class="pill pill-amber">self-improving</span>
   </div>
 </div>
@@ -168,7 +168,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <li><a href="#s3"><span class="toc-num">03</span> Data Layers</a></li>
     <li><a href="#s4"><span class="toc-num">04</span> Use Case Registry</a></li>
     <li><a href="#s5"><span class="toc-num">05</span> SQL Mesh Layer</a></li>
-    <li><a href="#s6"><span class="toc-num">06</span> Agent Gateway — MCP Server</a></li>
+    <li><a href="#s6"><span class="toc-num">06</span> Agent Gateway — REST API</a></li>
     <li><a href="#s7"><span class="toc-num">07</span> Fallback Tiers</a></li>
     <li><a href="#s8"><span class="toc-num">08</span> Observability & Monitoring</a></li>
     <li><a href="#s9"><span class="toc-num">09</span> Explainability</a></li>
@@ -188,7 +188,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
   </div>
   <p>Today, no production system relies on AI agents doing self-directed data discovery. When agents need to consume structured data, engineering teams build the access layer manually — dedicated REST APIs over a pre-defined Gold layer, or a GraphQL schema that agents query against. These are proven, performant approaches. They work well at small scale.</p>
   <p>The problem is <strong>what happens as the number of agents and use cases grows</strong>. Every new agent question that isn't covered by an existing endpoint requires a new engineering cycle: schema design, API implementation, documentation, versioning, deployment. The data team becomes a bottleneck. Gold tables proliferate without a coherent lifecycle. Stale endpoints accumulate. Freshness policies are set once and never revisited.</p>
-  <p>CogniMesh is a new approach — the first framework designed specifically for agentic data consumption. Instead of manually engineering each access path, teams register use cases declaratively. CogniMesh derives the Gold layer automatically, exposes it as an MCP server, observes usage patterns, and continuously consolidates and optimizes the serving layer without human intervention. <strong>The data platform learns from its own usage.</strong></p>
+  <p>CogniMesh is a new approach — the first framework designed specifically for agentic data consumption. Instead of manually engineering each access path, teams register use cases declaratively. CogniMesh derives the Gold layer automatically, exposes it via a REST API, observes usage patterns, and continuously consolidates and optimizes the serving layer without human intervention. <strong>The data platform learns from its own usage.</strong></p>
   <div class="cards">
     <div class="card c-coral">
       <div class="card-label">The real problem</div>
@@ -263,7 +263,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
       <td><strong>Scales with agent count</strong></td>
       <td><span class="badge badge-coral">Poorly</span><br><span style="font-size:12px;">Linear engineering cost per new agent type. Breaks down beyond ~5 agents.</span></td>
       <td><span class="badge badge-teal">Reasonably</span><br><span style="font-size:12px;">Same schema shared across agents. New agents reuse existing resolvers.</span></td>
-      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Well</span><br><span style="font-size:12px;">New agents discover UCs via MCP. Gold views shared and reused across agents automatically.</span></td>
+      <td style="background: rgba(139,124,248,0.04);"><span class="badge badge-green">Well</span><br><span style="font-size:12px;">New agents discover UCs via REST API. Gold views shared and reused across agents automatically.</span></td>
     </tr>
     <tr>
       <td><strong>Unsupported UCs</strong></td>
@@ -490,7 +490,7 @@ bronze.products                 silver.product_metrics<br>
     <div class="subsection-title">Where REST Wins — Honest Assessment</div>
 
     <div class="callout callout-coral">
-      <strong>Where REST wins — and we won't pretend otherwise:</strong> Raw T0 latency is 2-5ms faster per query — MCP protocol + embedded agent routing is not free, and never will be. Setup simplicity for a truly static, single-UC system is real — if you need one endpoint, will never add another, and don't need lineage or monitoring, REST is the right tool. Compute footprint is thinner — no embedded agent, no capability index, no OTel instrumentation. And team familiarity: every developer knows REST. CogniMesh is new.
+      <strong>Where REST wins — and we won't pretend otherwise:</strong> Raw T0 latency is 2-5ms faster per query — embedded agent routing is not free, and never will be. Setup simplicity for a truly static, single-UC system is real — if you need one endpoint, will never add another, and don't need lineage or monitoring, a plain REST endpoint is the right tool. Compute footprint is thinner — no embedded agent, no capability index, no OTel instrumentation. And team familiarity: every developer knows REST. CogniMesh is new.
     </div>
   </div>
 
@@ -622,7 +622,7 @@ bronze.products                 silver.product_metrics<br>
     <span class="section-num">02</span>
     <span class="section-title">Full Architecture</span>
   </div>
-  <p>CogniMesh sits as a layer between consuming agents and the underlying data platform. It exposes an MCP server upward and speaks to any medallion-compatible data store downward.</p>
+  <p>CogniMesh sits as a layer between consuming agents and the underlying data platform. It exposes a REST API upward (FastAPI) and speaks to any medallion-compatible data store downward.</p>
   <div class="diagram-wrap">
     <div class="diagram-label">CogniMesh — full system diagram</div>
     <svg width="100%" viewBox="0 0 1020 790" style="min-width:700px">
@@ -649,11 +649,11 @@ bronze.products                 silver.product_metrics<br>
     <text x="825" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#7a7870">Future agents</text>
     <text x="825" y="60" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#3a3a38">any agent · any framework</text>
 
-    <!-- MCP labels + arrows -->
-    <text x="115" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
-    <text x="320" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
-    <text x="525" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">MCP</text>
-    <text x="825" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">MCP</text>
+    <!-- REST API labels + arrows -->
+    <text x="115" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">REST</text>
+    <text x="320" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">REST</text>
+    <text x="525" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">REST</text>
+    <text x="825" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">REST</text>
     <line x1="115" y1="72" x2="115" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
     <line x1="320" y1="72" x2="320" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
     <line x1="525" y1="72" x2="525" y2="116" stroke="#8b7cf8" stroke-width="0.8" marker-end="url(#arr)" stroke-opacity=".6"/>
@@ -661,14 +661,14 @@ bronze.products                 silver.product_metrics<br>
 
     <!-- Gateway outer box -->
     <rect x="10" y="118" width="1000" height="214" rx="12" fill="rgba(139,124,248,0.04)" stroke="#8b7cf8" stroke-width="0.8" stroke-opacity=".4"/>
-    <text x="510" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8b7cf8" font-weight="500">COGNIMESH — AGENT GATEWAY (MCP SERVER)</text>
+    <text x="510" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8b7cf8" font-weight="500">COGNIMESH — AGENT GATEWAY (REST API)</text>
 
     <!-- Capability index -->
     <rect x="26" y="152" width="215" height="166" rx="8" fill="#13161b" stroke="#60a5fa" stroke-width="0.8" stroke-opacity=".5"/>
     <text x="133" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#60a5fa">CAPABILITY INDEX</text>
     <text x="133" y="190" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7a7870">UC registry → serving view map</text>
     <text x="44" y="212" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· registered use cases</text>
-    <text x="44" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· MCP tool definitions</text>
+    <text x="44" y="228" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· REST endpoint registry</text>
     <text x="44" y="244" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· UC → Gold view mapping</text>
     <text x="44" y="260" font-family="IBM Plex Mono" font-size="9" fill="#3a3a38">· freshness TTL per UC</text>
     <text x="44" y="280" font-family="IBM Plex Mono" font-size="9" fill="#8b7cf8">+ auto-registered on materialize</text>
@@ -898,18 +898,21 @@ bronze.products                 silver.product_metrics<br>
 <div class="section" id="s6">
   <div class="section-header">
     <span class="section-num">06</span>
-    <span class="section-title">Agent Gateway — MCP Server</span>
+    <span class="section-title">Agent Gateway — REST API</span>
   </div>
 
   <div class="subsection">
-    <div class="subsection-title">Why MCP</div>
-    <p>The gateway exposes an <strong>MCP server</strong>. Consuming agents discover tools at runtime — they do not hardcode endpoint names, column names, or join keys. Any agent on any LLM framework that speaks MCP can consume data through CogniMesh without schema knowledge.</p>
-    <p>MCP is the right interface because: tool discovery is built-in, inputs and outputs are typed, the agent gets structured data back (not a string to parse), and new tools auto-appear in the registry when a UC is materialized.</p>
+    <div class="subsection-title">Why REST API</div>
+    <p>The gateway exposes a <strong>REST API</strong> (FastAPI). Consuming agents discover capabilities via <code>GET /discover</code> and query data via <code>POST /query</code> — they do not hardcode column names or join keys. Any agent on any LLM framework that can make HTTP calls can consume data through CogniMesh without schema knowledge.</p>
+    <p>REST is the right interface because: any HTTP client works (Python, JavaScript, curl, LangChain, CrewAI, custom agents), inputs and outputs are typed (Pydantic models), the agent gets structured data back (not a string to parse), and new capabilities auto-appear in the discovery endpoint when a UC is materialized.</p>
+    <div class="callout" style="margin-top:16px;">
+      <strong>Why not MCP?</strong> MCP (Model Context Protocol) was originally planned as the agent interface. We deferred it because REST does everything MCP does for our use case — <code>GET /discover</code> returns capabilities, <code>POST /query</code> serves data. MCP adds protocol complexity without adding capability. REST is more universally supported, easier to debug (curl, browser), and the existing REST API maps directly to MCP tools. Adding MCP support is a weekend of work, not an architectural change. It can be added when a specific agent framework requires it.
+    </div>
   </div>
 
   <div class="subsection">
     <div class="subsection-title">How the embedded agent routes to the right Gold view</div>
-    <p>The consuming agent sends a natural language question via MCP. The embedded gateway agent resolves it in three steps — the consuming agent never sees table names or column names:</p>
+    <p>The consuming agent sends a natural language question via <code>POST /query</code>. The embedded gateway agent resolves it in three steps — the consuming agent never sees table names or column names:</p>
     <ol style="margin:12px 0 12px 20px; font-size:13px; color:var(--muted); line-height:2.2;">
       <li>Read capability index → match question to registered UCs by semantic similarity</li>
       <li>Map matched UCs → Gold views (stored in index, zero schema inspection needed)</li>
@@ -1199,7 +1202,7 @@ mesh.register_uc(<br>
         <div>· T2 hit frequency reported — human promotes manually</div>
         <div>· LLM-as-judge evaluation framework wired in</div>
         <div>· Full observability and lineage built in</div>
-        <div>· MCP interface for any consuming agent</div>
+        <div>· REST API for any consuming agent</div>
       </div>
     </div>
 
@@ -1315,8 +1318,8 @@ mesh.register_uc(<br>
       </tr>
       <tr>
         <td><strong>MCP Server</strong></td>
-        <td>Model Context Protocol server. Production agent interface replacing FastAPI REST. Agents discover and call tools via MCP.</td>
-        <td><span class="badge badge-coral">HIGH</span></td>
+        <td>Model Context Protocol server. <strong>Deferred</strong> — REST API covers all agent integration needs. GET /discover returns capabilities, POST /query serves data. Every agent framework can make HTTP calls. MCP can be added as a thin wrapper when a specific framework requires it.</td>
+        <td><span class="badge badge-purple">DEFERRED</span></td>
         <td>—</td>
       </tr>
       <tr>
@@ -1387,8 +1390,8 @@ mesh.register_uc(<br>
       </tr>
       <tr>
         <td><strong>Phase 1B</strong></td>
-        <td>MCP server, T1 tier, CLI</td>
-        <td>Production agent interface. Full tier coverage. Management tooling.</td>
+        <td>T1 tier, CLI</td>
+        <td>Full tier coverage. Management tooling. MCP: Deferred — REST API covers all agent integration needs. MCP can be added as a thin wrapper when a specific framework requires it.</td>
       </tr>
       <tr>
         <td><strong>Phase 2</strong></td>
@@ -1591,9 +1594,9 @@ benchmark/tests/
         <td>SQLMesh model validation tests. Incremental refresh tests. Lineage auto-derivation tests.</td>
       </tr>
       <tr>
-        <td><strong>MCP replaces REST</strong></td>
-        <td>All scorecard and contract tests (adapted to MCP). Response data must be identical.</td>
-        <td>MCP protocol compliance tests. MCP discovery tests. Transport-agnostic contract tests.</td>
+        <td><strong>MCP added (if needed)</strong></td>
+        <td>All scorecard and contract tests continue to pass via REST. MCP would be an additional transport, not a replacement.</td>
+        <td>MCP protocol compliance tests. MCP discovery tests. Transport-agnostic contract tests. <em>Deferred — REST API covers all current agent integration needs.</em></td>
       </tr>
       <tr>
         <td><strong>LLM routing replaces keyword matching</strong></td>

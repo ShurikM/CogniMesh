@@ -6,7 +6,7 @@
 
 **An intelligent data mesh layer between AI agents and structured data platforms.**
 
-Teams register Use Cases (business questions agents need answered). CogniMesh derives optimal Gold views, exposes them via MCP, tracks lineage, monitors freshness, logs every query, and handles unsupported questions gracefully — all from day one.
+Teams register Use Cases (business questions agents need answered). CogniMesh derives optimal Gold views, exposes them via REST API, tracks lineage, monitors freshness, logs every query, and handles unsupported questions gracefully — all from day one.
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
@@ -259,7 +259,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 
 | Feature | Status | Why Skipped |
 |---------|--------|-------------|
-| MCP server | Planned | Benchmark measures architecture, not transport protocol |
+| MCP server | Deferred | REST API covers all agent integration needs. `GET /discover` returns capabilities, `POST /query` serves data. Every agent framework can make HTTP calls. MCP adds protocol complexity without adding capability. The existing REST API maps directly to MCP tools — adding MCP support is a weekend of work, not an architectural change. It can be added when a specific agent framework requires it. |
 | LLM-based UC routing | Planned | Benchmark uses deterministic keyword matching for reproducibility |
 | SQLMesh integration | Planned | Benchmark uses template-based Gold derivation |
 | Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
@@ -278,7 +278,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 | Test framework | pytest + pytest-benchmark |
 | Package manager | uv |
 | LLM (production) | Pluggable: OpenAI / Anthropic / Ollama |
-| MCP (production) | Official MCP Python SDK |
+| Agent interface | REST API (FastAPI). MCP deferred — REST covers all use cases. Can be added as a thin wrapper when needed. |
 
 ## License
 
