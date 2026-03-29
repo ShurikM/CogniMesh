@@ -176,6 +176,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <li><a href="#s11"><span class="toc-num">11</span> Design Decisions</a></li>
     <li><a href="#s12"><span class="toc-num">12</span> Product Phases</a></li>
     <li><a href="#s13"><span class="toc-num">13</span> Implementation Roadmap</a></li>
+    <li><a href="#s14"><span class="toc-num">14</span> Testing & Quality Verification</a></li>
   </ul>
 </div>
 
@@ -1426,6 +1427,246 @@ mesh.register_uc(<br>
 
   <div class="callout">
     <strong>Scorecard integrity note:</strong> The benchmark scorecard claims 12/12 for CogniMesh. Two properties are partially implemented: <strong>Access Control</strong> (agent_id logged but not enforced) and <strong>Smart Refresh</strong> (works but needs scheduling). These will be fully implemented in Phase 1A.
+  </div>
+</div>
+
+<!-- S14: TESTING & QUALITY VERIFICATION -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <span class="section-title">Testing & Quality Verification</span>
+  </div>
+
+  <p>CogniMesh is a data serving platform for AI agents. Incorrect data, broken lineage, or silent failures can cause agents to make wrong decisions. Testing is not optional — it's how we guarantee the platform does what it claims.</p>
+
+  <p>Every test category below runs on every build. No exceptions. If a test fails, the build fails. If a benchmark regresses, we investigate before merging.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">Test Categories</div>
+    <table class="data-table">
+      <tr><th>Category</th><th>What It Verifies</th><th>When It Runs</th><th>Failure Means</th></tr>
+      <tr>
+        <td><strong>Unit Tests</strong></td>
+        <td>Each module works correctly in isolation. Models validate. Config loads from env. Registry CRUD is correct. Lineage registers and retrieves. Audit logs entries. Cost computation is accurate.</td>
+        <td>Every commit</td>
+        <td>A module is broken. Fix before merge.</td>
+      </tr>
+      <tr>
+        <td><strong>Integration Tests</strong></td>
+        <td>Components work together end-to-end. Gateway routes to Gold via registry + capability index. Responses include lineage + freshness. Audit entries appear after queries. Refresh updates the right views. Dependency graph reflects actual lineage.</td>
+        <td>Every commit</td>
+        <td>Components don't talk to each other correctly. Fix the integration.</td>
+      </tr>
+      <tr>
+        <td><strong>Contract Tests</strong></td>
+        <td>API responses match expected schemas. QueryResult always has <code>tier</code>, <code>data</code>, <code>lineage</code>, <code>freshness</code>. Discovery returns valid CapabilityDescriptors. Dependency graph has the right structure. Agents depend on these contracts — breaking them breaks agents.</td>
+        <td>Every commit</td>
+        <td>An API contract changed. Either fix the code or version the API.</td>
+      </tr>
+      <tr>
+        <td><strong>Scorecard Tests</strong></td>
+        <td>The 12 system properties are present and working. Discovery returns UCs. Lineage is in every T0 response. Audit logs every query. Cost attribution works. Freshness is tracked. T2 fallback serves data. Schema drift is isolated. Access control is enforced. Impact analysis works. Provenance traces columns. Smart refresh only updates affected views.</td>
+        <td>Every commit</td>
+        <td>A claimed capability is broken. This is a release blocker — no exceptions.</td>
+      </tr>
+      <tr>
+        <td><strong>Resilience Scenarios</strong></td>
+        <td>The system handles adversity correctly. Schema drift: Gold isolates agents. Unsupported UC: T2 composes or T3 explains. Staleness: flagged in response. Silver down: Gold still serves. Concurrent refresh: no corruption.</td>
+        <td>Every commit</td>
+        <td>The system fails under stress. Fix the resilience mechanism.</td>
+      </tr>
+      <tr>
+        <td><strong>Performance Benchmarks</strong></td>
+        <td>Latency, throughput, storage, and refresh time stay within bounds. T0 latency under 10ms. Storage consolidation ratio under 0.5 at 10+ UCs. Refresh only touches affected views.</td>
+        <td>Weekly + before releases</td>
+        <td>Performance regressed. Investigate: was a new feature added without optimization? Did a query plan change?</td>
+      </tr>
+      <tr>
+        <td><strong>Regression Guards</strong></td>
+        <td>New features don't break existing behavior. Adding UC-21 doesn't slow UC-01. SQLMesh migration doesn't change query results. MCP interface returns the same data as REST.</td>
+        <td>Every commit</td>
+        <td>A new change broke something that was working. Revert or fix before merge.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Test Infrastructure</div>
+    <div class="cards">
+      <div class="card c-teal">
+        <div class="card-label">DATABASE</div>
+        <div class="card-title">Postgres in Docker</div>
+        <p>All tests run against a real Postgres instance (Docker Compose). No mocks for database operations — mocks hide real SQL errors. The test database is seeded with deterministic data (fixed random seed) for reproducible results.</p>
+      </div>
+      <div class="card c-purple">
+        <div class="card-label">FRAMEWORK</div>
+        <div class="card-title">pytest + pytest-benchmark</div>
+        <p>pytest for all test categories. pytest-benchmark for performance measurement with statistical analysis (p50, p95, p99). Fixtures manage database state, API clients, and component initialization.</p>
+      </div>
+      <div class="card c-amber">
+        <div class="card-label">CI/CD</div>
+        <div class="card-title">Run on every PR</div>
+        <p>GitHub Actions runs the full test suite on every pull request. Unit + integration + contract + scorecard + resilience on every commit. Performance benchmarks weekly or on-demand. No merge without green tests.</p>
+      </div>
+      <div class="card c-green">
+        <div class="card-label">DATA</div>
+        <div class="card-title">Deterministic seed</div>
+        <p>Test data is generated with a fixed seed (faker + random with seed=42). 10K customers, 500 products, 200K orders. Same data every run. Results are reproducible across machines and CI environments.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Test Directory Structure</div>
+    <div class="code">
+benchmark/tests/
+├── unit/                           <span class="c"># Module-level tests</span>
+│   ├── test_models.py              <span class="c"># Pydantic model validation</span>
+│   ├── test_config.py              <span class="c"># Config loading from env vars</span>
+│   ├── test_registry.py            <span class="c"># UC CRUD + change logging</span>
+│   ├── test_capability_index.py    <span class="c"># UC matching + discovery</span>
+│   ├── test_lineage.py             <span class="c"># Lineage registration + query</span>
+│   ├── test_audit.py               <span class="c"># Audit logging + cost attribution</span>
+│   ├── test_gold_manager.py        <span class="c"># Gold refresh + freshness</span>
+│   ├── test_query_composer.py      <span class="c"># T2 SQL composition</span>
+│   ├── test_refresh_manager.py     <span class="c"># TTL refresh + Silver change handling</span>
+│   ├── test_dependency.py          <span class="c"># Impact analysis + provenance</span>
+│   └── test_access_control.py      <span class="c"># Agent scoping + permissions</span>
+│
+├── integration/                    <span class="c"># End-to-end component tests</span>
+│   ├── test_gateway_e2e.py         <span class="c"># Full query path: request → route → serve → audit</span>
+│   ├── test_refresh_cycle.py       <span class="c"># Silver change → detect → refresh → verify</span>
+│   ├── test_uc_lifecycle.py        <span class="c"># Register → derive Gold → query → deactivate</span>
+│   └── test_consolidation.py       <span class="c"># Multiple UCs → shared Gold view → correct routing</span>
+│
+├── contract/                       <span class="c"># API response schema tests</span>
+│   ├── test_query_contract.py      <span class="c"># QueryResult schema: tier, data, lineage, freshness</span>
+│   ├── test_discover_contract.py   <span class="c"># CapabilityDescriptor schema</span>
+│   ├── test_dependency_contract.py <span class="c"># Dependency graph schema</span>
+│   └── test_refresh_contract.py    <span class="c"># Refresh status/plan schema</span>
+│
+├── scorecard/                      <span class="c"># The 12 system properties</span>
+│   └── test_scorecard.py           <span class="c"># 12 binary pass/fail assertions</span>
+│
+├── resilience/                     <span class="c"># Adversity scenarios</span>
+│   ├── test_schema_drift.py        <span class="c"># Silver column rename → Gold isolation</span>
+│   ├── test_unsupported_uc.py      <span class="c"># Unknown question → T2/T3 handling</span>
+│   ├── test_staleness.py           <span class="c"># TTL expiry → freshness flag</span>
+│   ├── test_concurrent_refresh.py  <span class="c"># Parallel refresh → no corruption</span>
+│   └── test_silver_down.py         <span class="c"># Silver unavailable → Gold still serves</span>
+│
+├── performance/                    <span class="c"># Benchmark gates</span>
+│   ├── test_latency.py             <span class="c"># T0 latency per UC (pytest-benchmark)</span>
+│   ├── test_throughput.py          <span class="c"># Concurrent request handling</span>
+│   ├── test_scale.py               <span class="c"># Metrics at 3, 10, 20 UCs</span>
+│   └── test_marginal_cost.py       <span class="c"># UC-04 addition: files + LOC comparison</span>
+│
+└── conftest.py                     <span class="c"># Shared fixtures: DB, apps, gateway, seed data</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Performance Gates — Thresholds</div>
+    <p>These are the bounds that must hold. If a change causes a metric to exceed its threshold, the build fails and we investigate before merging.</p>
+    <table class="data-table">
+      <tr><th>Metric</th><th>Threshold</th><th>Current Value</th><th>Why This Threshold</th></tr>
+      <tr>
+        <td><strong>T0 latency (p95)</strong></td>
+        <td>&lt; 10 ms</td>
+        <td>~5 ms</td>
+        <td>Agents need sub-10ms for real-time interaction. Governance overhead must stay bounded.</td>
+      </tr>
+      <tr>
+        <td><strong>T2 latency (p95)</strong></td>
+        <td>&lt; 500 ms</td>
+        <td>~100-300 ms</td>
+        <td>Silver fallback must still feel responsive. Guardrails enforce a 5-second hard ceiling.</td>
+      </tr>
+      <tr>
+        <td><strong>Storage ratio</strong></td>
+        <td>&lt; 0.6 (CogniMesh / REST)</td>
+        <td>0.49</td>
+        <td>Gold consolidation must reduce storage. If ratio exceeds 0.6, consolidation logic needs review.</td>
+      </tr>
+      <tr>
+        <td><strong>Consolidation ratio</strong></td>
+        <td>&lt; 0.5 at 10+ UCs</td>
+        <td>0.35 at 20 UCs</td>
+        <td>Gold views should consolidate as UCs grow. Ratio above 0.5 means views aren't being shared.</td>
+      </tr>
+      <tr>
+        <td><strong>Scorecard</strong></td>
+        <td>12 / 12</td>
+        <td>12 / 12</td>
+        <td>Every claimed capability must work. No exceptions. Dropping below 12 is a release blocker.</td>
+      </tr>
+      <tr>
+        <td><strong>Resilience scenarios</strong></td>
+        <td>All pass</td>
+        <td>All pass</td>
+        <td>Schema drift, unsupported UC, and staleness scenarios must always be handled gracefully.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Quality Verification During Evolution</div>
+    <p>As CogniMesh evolves from Phase 1A through Phase 3, the test suite grows with it. Each new component adds its own tests AND must not break existing ones.</p>
+    <table class="data-table">
+      <tr><th>When This Changes</th><th>These Tests Must Still Pass</th><th>These Tests Are Added</th></tr>
+      <tr>
+        <td><strong>SQLMesh replaces raw SQL</strong></td>
+        <td>All scorecard, resilience, and performance tests. Query results must be identical.</td>
+        <td>SQLMesh model validation tests. Incremental refresh tests. Lineage auto-derivation tests.</td>
+      </tr>
+      <tr>
+        <td><strong>MCP replaces REST</strong></td>
+        <td>All scorecard and contract tests (adapted to MCP). Response data must be identical.</td>
+        <td>MCP protocol compliance tests. MCP discovery tests. Transport-agnostic contract tests.</td>
+      </tr>
+      <tr>
+        <td><strong>LLM routing replaces keyword matching</strong></td>
+        <td>All scorecard tests. T0 must still serve registered UCs. T2/T3 must still work.</td>
+        <td>Routing accuracy tests (DeepEval). Latency tests for LLM overhead. Fallback tests when LLM is unavailable.</td>
+      </tr>
+      <tr>
+        <td><strong>Access control added</strong></td>
+        <td>All existing tests (run as authorized agent). Scorecard unchanged.</td>
+        <td>Permission enforcement tests. Denied access tests. Agent scoping tests. Role-based tests.</td>
+      </tr>
+      <tr>
+        <td><strong>New UCs registered</strong></td>
+        <td>All existing UC tests. Latency stays under threshold. Consolidation ratio stays under 0.5.</td>
+        <td>Tests for the new UC. Regression tests comparing before/after latency for existing UCs.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Running Tests</div>
+    <div class="code">
+<span class="c"># All tests (requires Postgres running)</span>
+<span class="k">make</span> <span class="s">up</span> <span class="n">&&</span> <span class="k">make</span> <span class="s">seed</span> <span class="n">&&</span> <span class="k">make</span> <span class="s">bench</span>
+
+<span class="c"># Unit tests only (fast, no DB needed for some)</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/unit/</span> <span class="n">-q</span>
+
+<span class="c"># Scorecard only (the 12 properties)</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/scorecard/</span> <span class="n">-v</span>
+
+<span class="c"># Resilience scenarios only</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/resilience/</span> <span class="n">-v -s</span>
+
+<span class="c"># Performance benchmarks with statistics</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/performance/</span> <span class="n">--benchmark-json=results.json</span>
+
+<span class="c"># Everything with verbose output</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/</span> <span class="n">-v --tb=short</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The test suite is the contract between CogniMesh and its users.</strong> If the scorecard says 12/12, all 12 tests pass on every build. If the benchmark says sub-10ms latency, the performance gate enforces it. If the architecture says "schema drift doesn't break agents," a test proves it on every commit. Documentation can lie. Tests cannot.
   </div>
 </div>
 
