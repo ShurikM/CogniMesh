@@ -155,7 +155,7 @@ class TemplateComposer:
         # Compose SQL
         schema = tables[best_table]["schema"]
         qualified_table = f"{schema}.{best_table}"
-        sql = self._compose_sql(qualified_table, tables[best_table], matched_columns, intent)
+        sql, params = self._compose_sql(qualified_table, tables[best_table], matched_columns, intent)
 
         # Estimate rows
         estimated_rows = self._estimate_rows(tables[best_table], intent)
@@ -165,6 +165,7 @@ class TemplateComposer:
 
         return ComposedQuery(
             sql=sql,
+            params=params,
             estimated_rows=estimated_rows,
             estimated_cost_units=estimated_cost,
             source_tables=[qualified_table],
@@ -399,12 +400,16 @@ class TemplateComposer:
         table_info: dict,
         matched_columns: dict[str, str],
         intent: dict,
-    ) -> str:
-        """Compose a SQL query from the detected intent and matched columns."""
+    ) -> tuple[str, list]:
+        """Compose a SQL query from the detected intent and matched columns.
+
+        Returns (sql, params) where params are bind values for %s placeholders.
+        """
         agg_func = intent["agg_func"]
         agg_column = intent["agg_column"]
         group_by = intent["group_by"]
         where_clauses = intent["where_clauses"]
+        where_params: list = intent.get("where_params", [])
         order_dir = intent["order_dir"]
         limit = intent["limit"]
 
@@ -468,7 +473,7 @@ class TemplateComposer:
         limit_sql = f" LIMIT {limit}"
 
         sql = f"SELECT {select} FROM {qualified_table}{where}{group_sql}{order_sql}{limit_sql}"  # noqa: S608 — constructed from trusted metadata, not user input
-        return sql
+        return sql, where_params
 
     # ------------------------------------------------------------------
     # Internal: Row estimation

@@ -88,6 +88,7 @@ class ComposedQuery(BaseModel):
     """Result of T2 SQL composition from table metadata."""
 
     sql: str
+    params: list = Field(default_factory=list)
     estimated_rows: int | None = None
     estimated_cost_units: float | None = None
     source_tables: list[str] = []

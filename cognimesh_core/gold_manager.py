@@ -31,10 +31,17 @@ class GoldManager:
 
         with get_connection(self.config) as conn:
             with conn.cursor() as cur:
+                # Atomic refresh: TRUNCATE + INSERT run in the same transaction.
+                # psycopg3 connections default to autocommit=False, so all
+                # statements share one transaction until conn.commit().
+                # In PostgreSQL, TRUNCATE is transactional — if the INSERT
+                # below fails, the entire transaction (including TRUNCATE)
+                # is rolled back, so the Gold table is never left empty.
+
                 # 1. Truncate the Gold table
                 # gold_view comes from the registry (not user input)
                 cur.execute(
-                    "TRUNCATE TABLE {gold_view}".format(gold_view=uc.gold_view)
+                    "TRUNCATE TABLE {gold_view}".format(gold_view=uc.gold_view)  # noqa: S608
                 )
 
                 # 2. Execute the derivation SQL (INSERT...SELECT from Silver)
@@ -42,7 +49,7 @@ class GoldManager:
 
                 # 3. Count rows
                 cur.execute(
-                    "SELECT count(*) AS cnt FROM {gold_view}".format(
+                    "SELECT count(*) AS cnt FROM {gold_view}".format(  # noqa: S608
                         gold_view=uc.gold_view
                     )
                 )

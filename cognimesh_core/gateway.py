@@ -311,7 +311,7 @@ class Gateway:
                     cur.execute(
                         "SET LOCAL statement_timeout = %s", (timeout_ms,)  # noqa: S608
                     )
-                    cur.execute(composed.sql)
+                    cur.execute(composed.sql, composed.params if composed.params else None)
                     rows = cur.fetchall()
 
             data = [self._serialize_row(r) for r in rows]
