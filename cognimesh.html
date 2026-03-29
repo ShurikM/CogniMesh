@@ -1446,46 +1446,34 @@ mesh.register_uc(<br>
     <table class="data-table">
       <tr><th>Category</th><th>What It Verifies</th><th>When It Runs</th><th>Failure Means</th></tr>
       <tr>
-        <td><strong>Unit Tests</strong></td>
-        <td>Each module works correctly in isolation. Models validate. Config loads from env. Registry CRUD is correct. Lineage registers and retrieves. Audit logs entries. Cost computation is accurate.</td>
+        <td><strong>Component Tests</strong></td>
+        <td>Each module works correctly against a real Postgres database. No mocks — mocks hide real SQL errors. Registry CRUD, lineage tracking, audit logging, Gold refresh, capability matching, dependency graph — all tested against the actual database.</td>
         <td>Every commit</td>
         <td>A module is broken. Fix before merge.</td>
       </tr>
       <tr>
-        <td><strong>Integration Tests</strong></td>
-        <td>Components work together end-to-end. Gateway routes to Gold via registry + capability index. Responses include lineage + freshness. Audit entries appear after queries. Refresh updates the right views. Dependency graph reflects actual lineage.</td>
-        <td>Every commit</td>
-        <td>Components don't talk to each other correctly. Fix the integration.</td>
-      </tr>
-      <tr>
-        <td><strong>Contract Tests</strong></td>
-        <td>API responses match expected schemas. QueryResult always has <code>tier</code>, <code>data</code>, <code>lineage</code>, <code>freshness</code>. Discovery returns valid CapabilityDescriptors. Dependency graph has the right structure. Agents depend on these contracts — breaking them breaks agents.</td>
-        <td>Every commit</td>
-        <td>An API contract changed. Either fix the code or version the API.</td>
-      </tr>
-      <tr>
         <td><strong>Scorecard Tests</strong></td>
-        <td>The 12 system properties are present and working. Discovery returns UCs. Lineage is in every T0 response. Audit logs every query. Cost attribution works. Freshness is tracked. T2 fallback serves data. Schema drift is isolated. Access control is enforced. Impact analysis works. Provenance traces columns. Smart refresh only updates affected views.</td>
+        <td>The 12 system properties are present and working. Discovery, lineage, audit, cost attribution, freshness, fallback, schema drift isolation, access control, impact analysis, provenance, smart refresh, governance. Binary pass/fail — no partial credit.</td>
         <td>Every commit</td>
-        <td>A claimed capability is broken. This is a release blocker — no exceptions.</td>
+        <td>A claimed capability is broken. Release blocker — no exceptions.</td>
       </tr>
       <tr>
         <td><strong>Resilience Scenarios</strong></td>
-        <td>The system handles adversity correctly. Schema drift: Gold isolates agents. Unsupported UC: T2 composes or T3 explains. Staleness: flagged in response. Silver down: Gold still serves. Concurrent refresh: no corruption.</td>
+        <td>The system handles adversity. Schema drift: Gold isolates agents. Unsupported UC: T2 composes or T3 explains. Staleness: flagged in response. Concurrent refresh: no corruption.</td>
         <td>Every commit</td>
         <td>The system fails under stress. Fix the resilience mechanism.</td>
       </tr>
       <tr>
-        <td><strong>Performance Benchmarks</strong></td>
-        <td>Latency, throughput, storage, and refresh time stay within bounds. T0 latency under 10ms. Storage consolidation ratio under 0.5 at 10+ UCs. Refresh only touches affected views.</td>
-        <td>Weekly + before releases</td>
-        <td>Performance regressed. Investigate: was a new feature added without optimization? Did a query plan change?</td>
+        <td><strong>Contract Tests</strong></td>
+        <td>API responses match expected schemas. QueryResult always has tier, data, lineage, freshness. Agents depend on these contracts — breaking them breaks agents.</td>
+        <td>Every commit</td>
+        <td>An API contract changed. Fix the code or version the API.</td>
       </tr>
       <tr>
-        <td><strong>Regression Guards</strong></td>
-        <td>New features don't break existing behavior. Adding UC-21 doesn't slow UC-01. SQLMesh migration doesn't change query results. MCP interface returns the same data as REST.</td>
-        <td>Every commit</td>
-        <td>A new change broke something that was working. Revert or fix before merge.</td>
+        <td><strong>Performance Benchmarks</strong></td>
+        <td>Latency, throughput, storage, and refresh time stay within bounds. T0 under 10ms. Storage ratio under 0.6. Consolidation ratio under 0.5 at 10+ UCs.</td>
+        <td>Weekly + before releases</td>
+        <td>Performance regressed. Investigate before merging.</td>
       </tr>
     </table>
   </div>
@@ -1496,7 +1484,7 @@ mesh.register_uc(<br>
       <div class="card c-teal">
         <div class="card-label">DATABASE</div>
         <div class="card-title">Postgres in Docker</div>
-        <p>All tests run against a real Postgres instance (Docker Compose). No mocks for database operations — mocks hide real SQL errors. The test database is seeded with deterministic data (fixed random seed) for reproducible results.</p>
+        <p>All tests run against a real Postgres instance (Docker Compose). <strong>No mocks, ever.</strong> Mocks hide real SQL errors, real connection issues, and real transaction behavior. If the test doesn't hit Postgres, it doesn't count.</p>
       </div>
       <div class="card c-purple">
         <div class="card-label">FRAMEWORK</div>
@@ -1506,7 +1494,7 @@ mesh.register_uc(<br>
       <div class="card c-amber">
         <div class="card-label">CI/CD</div>
         <div class="card-title">Run on every PR</div>
-        <p>GitHub Actions runs the full test suite on every pull request. Unit + integration + contract + scorecard + resilience on every commit. Performance benchmarks weekly or on-demand. No merge without green tests.</p>
+        <p>GitHub Actions runs the full test suite on every pull request. Component + contract + scorecard + resilience on every commit. Performance benchmarks weekly or on-demand. No merge without green tests.</p>
       </div>
       <div class="card c-green">
         <div class="card-label">DATA</div>
@@ -1520,48 +1508,31 @@ mesh.register_uc(<br>
     <div class="subsection-title">Test Directory Structure</div>
     <div class="code">
 benchmark/tests/
-├── unit/                           <span class="c"># Module-level tests</span>
-│   ├── test_models.py              <span class="c"># Pydantic model validation</span>
-│   ├── test_config.py              <span class="c"># Config loading from env vars</span>
-│   ├── test_registry.py            <span class="c"># UC CRUD + change logging</span>
-│   ├── test_capability_index.py    <span class="c"># UC matching + discovery</span>
-│   ├── test_lineage.py             <span class="c"># Lineage registration + query</span>
-│   ├── test_audit.py               <span class="c"># Audit logging + cost attribution</span>
-│   ├── test_gold_manager.py        <span class="c"># Gold refresh + freshness</span>
-│   ├── test_query_composer.py      <span class="c"># T2 SQL composition</span>
-│   ├── test_refresh_manager.py     <span class="c"># TTL refresh + Silver change handling</span>
-│   ├── test_dependency.py          <span class="c"># Impact analysis + provenance</span>
-│   └── test_access_control.py      <span class="c"># Agent scoping + permissions</span>
+├── conftest.py                     <span class="c"># Shared fixtures: DB, apps, gateway, seed data</span>
 │
-├── integration/                    <span class="c"># End-to-end component tests</span>
-│   ├── test_gateway_e2e.py         <span class="c"># Full query path: request → route → serve → audit</span>
-│   ├── test_refresh_cycle.py       <span class="c"># Silver change → detect → refresh → verify</span>
-│   ├── test_uc_lifecycle.py        <span class="c"># Register → derive Gold → query → deactivate</span>
-│   └── test_consolidation.py       <span class="c"># Multiple UCs → shared Gold view → correct routing</span>
+├── test_registry.py                <span class="c"># UC CRUD + change logging (real Postgres)</span>
+├── test_capability_index.py        <span class="c"># UC matching + discovery</span>
+├── test_gateway.py                 <span class="c"># Full query path: T0, T2, T3</span>
+├── test_gold_manager.py            <span class="c"># Gold refresh + freshness</span>
+├── test_lineage.py                 <span class="c"># Lineage registration + query</span>
+├── test_audit.py                   <span class="c"># Audit logging + cost attribution</span>
+├── test_query_composer.py          <span class="c"># T2 SQL composition</span>
+├── test_refresh_manager.py         <span class="c"># TTL refresh + Silver change handling</span>
+├── test_dependency.py              <span class="c"># Impact analysis + provenance + graph</span>
+├── test_access_control.py          <span class="c"># Agent scoping + permissions</span>
 │
-├── contract/                       <span class="c"># API response schema tests</span>
-│   ├── test_query_contract.py      <span class="c"># QueryResult schema: tier, data, lineage, freshness</span>
-│   ├── test_discover_contract.py   <span class="c"># CapabilityDescriptor schema</span>
-│   ├── test_dependency_contract.py <span class="c"># Dependency graph schema</span>
-│   └── test_refresh_contract.py    <span class="c"># Refresh status/plan schema</span>
+├── test_scorecard.py               <span class="c"># The 12 system properties (binary pass/fail)</span>
 │
-├── scorecard/                      <span class="c"># The 12 system properties</span>
-│   └── test_scorecard.py           <span class="c"># 12 binary pass/fail assertions</span>
+├── test_resilience_schema_drift.py <span class="c"># Silver column rename → Gold isolation</span>
+├── test_resilience_unsupported_uc.py <span class="c"># Unknown question → T2/T3 handling</span>
+├── test_resilience_staleness.py    <span class="c"># TTL expiry → freshness flag</span>
 │
-├── resilience/                     <span class="c"># Adversity scenarios</span>
-│   ├── test_schema_drift.py        <span class="c"># Silver column rename → Gold isolation</span>
-│   ├── test_unsupported_uc.py      <span class="c"># Unknown question → T2/T3 handling</span>
-│   ├── test_staleness.py           <span class="c"># TTL expiry → freshness flag</span>
-│   ├── test_concurrent_refresh.py  <span class="c"># Parallel refresh → no corruption</span>
-│   └── test_silver_down.py         <span class="c"># Silver unavailable → Gold still serves</span>
+├── test_performance.py             <span class="c"># T0 latency per UC (pytest-benchmark)</span>
+├── test_throughput.py              <span class="c"># Concurrent request handling</span>
+├── test_scale_benchmark.py         <span class="c"># Metrics at 3, 10, 20 UCs</span>
 │
-├── performance/                    <span class="c"># Benchmark gates</span>
-│   ├── test_latency.py             <span class="c"># T0 latency per UC (pytest-benchmark)</span>
-│   ├── test_throughput.py          <span class="c"># Concurrent request handling</span>
-│   ├── test_scale.py               <span class="c"># Metrics at 3, 10, 20 UCs</span>
-│   └── test_marginal_cost.py       <span class="c"># UC-04 addition: files + LOC comparison</span>
-│
-└── conftest.py                     <span class="c"># Shared fixtures: DB, apps, gateway, seed data</span>
+├── test_contracts.py               <span class="c"># API response schema validation</span>
+└── test_refresh_and_deps.py        <span class="c"># Dependency + refresh API tests</span>
     </div>
   </div>
 
@@ -1645,22 +1616,21 @@ benchmark/tests/
   <div class="subsection">
     <div class="subsection-title">Running Tests</div>
     <div class="code">
-<span class="c"># All tests (requires Postgres running)</span>
+<span class="c"># Stack: Python 3.11+ · uv · pytest · Postgres in Docker</span>
+
+<span class="c"># Start Postgres and run everything</span>
 <span class="k">make</span> <span class="s">up</span> <span class="n">&&</span> <span class="k">make</span> <span class="s">seed</span> <span class="n">&&</span> <span class="k">make</span> <span class="s">bench</span>
 
-<span class="c"># Unit tests only (fast, no DB needed for some)</span>
-<span class="k">uv run pytest</span> <span class="s">benchmark/tests/unit/</span> <span class="n">-q</span>
-
 <span class="c"># Scorecard only (the 12 properties)</span>
-<span class="k">uv run pytest</span> <span class="s">benchmark/tests/scorecard/</span> <span class="n">-v</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/test_scorecard.py</span> <span class="n">-v</span>
 
-<span class="c"># Resilience scenarios only</span>
-<span class="k">uv run pytest</span> <span class="s">benchmark/tests/resilience/</span> <span class="n">-v -s</span>
+<span class="c"># Resilience scenarios</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/test_resilience_*.py</span> <span class="n">-v</span>
 
-<span class="c"># Performance benchmarks with statistics</span>
-<span class="k">uv run pytest</span> <span class="s">benchmark/tests/performance/</span> <span class="n">--benchmark-json=results.json</span>
+<span class="c"># Performance with statistics</span>
+<span class="k">uv run pytest</span> <span class="s">benchmark/tests/test_performance.py</span> <span class="n">--benchmark-json=results.json</span>
 
-<span class="c"># Everything with verbose output</span>
+<span class="c"># All tests</span>
 <span class="k">uv run pytest</span> <span class="s">benchmark/tests/</span> <span class="n">-v --tb=short</span>
     </div>
   </div>
