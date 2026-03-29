@@ -175,6 +175,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <li><a href="#s10"><span class="toc-num">10</span> UC Freshness</a></li>
     <li><a href="#s11"><span class="toc-num">11</span> Design Decisions</a></li>
     <li><a href="#s12"><span class="toc-num">12</span> Product Phases</a></li>
+    <li><a href="#s13"><span class="toc-num">13</span> Implementation Roadmap</a></li>
   </ul>
 </div>
 
@@ -1238,6 +1239,193 @@ mesh.register_uc(<br>
 
   <div class="callout">
     <strong>Governing principle across all phases:</strong> automation is introduced only after the manual version of a decision has been validated in production. Phase 1 builds the observability and human feedback loop that Phase 2 automates. Phase 2 builds the rule corpus that Phase 3 generalizes. No phase skips the one before it.
+  </div>
+</div>
+
+<!-- IMPLEMENTATION ROADMAP -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <span class="section-title">Implementation Roadmap</span>
+  </div>
+
+  <p>Current state of every CogniMesh component — what's production-ready, what's a workaround, and what needs to be built.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">Production-Ready Components</div>
+    <table class="data-table">
+      <tr><th>Component</th><th>Module</th><th>What It Does</th></tr>
+      <tr><td><strong>UC Registry</strong></td><td><code>registry.py</code></td><td>Full CRUD on use cases with change logging (before/after state). Every mutation recorded.</td></tr>
+      <tr><td><strong>T0 Gold Serving</strong></td><td><code>gateway.py</code></td><td>Serves pre-computed Gold views with 3 access patterns: individual lookup, bulk query, aggregation.</td></tr>
+      <tr><td><strong>T3 Rejection</strong></td><td><code>gateway.py</code></td><td>Structured rejection with explanation and list of available UCs. Never returns a bare 404.</td></tr>
+      <tr><td><strong>Audit Log</strong></td><td><code>audit.py</code></td><td>Every query logged with agent ID, UC, tier, latency, cost. Async (zero latency impact). Cost attribution per UC and agent.</td></tr>
+      <tr><td><strong>Dependency Reporter</strong></td><td><code>dependency.py</code></td><td>Impact analysis, provenance, full graph, what-if queries. Traces Silver → Gold → UC dependencies.</td></tr>
+      <tr><td><strong>Refresh Manager</strong></td><td><code>refresh_manager.py</code></td><td>TTL-based refresh, Silver change detection via LISTEN/NOTIFY, dependency-aware cascading.</td></tr>
+      <tr><td><strong>Lineage Tracker</strong></td><td><code>lineage.py</code></td><td>Column-level lineage registration and query. Attached to every T0 response.</td></tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Workarounds — Need Replacement</div>
+    <table class="data-table">
+      <tr><th>Component</th><th>Current State</th><th>Target State</th><th>Priority</th></tr>
+      <tr>
+        <td><strong>Gold Manager</strong></td>
+        <td>Raw SQL: TRUNCATE + INSERT. Not atomic. No approval gate.</td>
+        <td>SQLMesh manages Gold derivation. Human approval before changes. Atomic refresh.</td>
+        <td><span class="badge badge-coral">CRITICAL</span></td>
+      </tr>
+      <tr>
+        <td><strong>Capability Index</strong></td>
+        <td>Keyword matching (token overlap). No semantic understanding.</td>
+        <td>LLM-based semantic routing via pluggable Protocol. A/B testing of routing quality.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+      </tr>
+      <tr>
+        <td><strong>T2 Query Composer</strong></td>
+        <td>Template-based SQL composition. Single-table only. Has parameter binding bug.</td>
+        <td>LLM-based SQL composition with multi-table JOINs. Proper parameterization.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Missing Components — To Build</div>
+    <table class="data-table">
+      <tr><th>Component</th><th>What It Does</th><th>Priority</th><th>Depends On</th></tr>
+      <tr>
+        <td><strong>SQLMesh Integration</strong></td>
+        <td>Replace raw SQL Gold derivation with SQLMesh models. Managed materialization, built-in lineage, change detection, incremental refresh.</td>
+        <td><span class="badge badge-coral">CRITICAL</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Approval Queue</strong></td>
+        <td>Human approval gate before any Gold change. Phase 1 invariant: "nothing changes in Gold without approval." Approval API + CLI.</td>
+        <td><span class="badge badge-coral">CRITICAL</span></td>
+        <td>SQLMesh</td>
+      </tr>
+      <tr>
+        <td><strong>Access Control</strong></td>
+        <td>Agent identity enforcement. Per-UC permissions (allowed_agents). Row-level data isolation. Role-based UC management.</td>
+        <td><span class="badge badge-coral">HIGH</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>MCP Server</strong></td>
+        <td>Model Context Protocol server. Production agent interface replacing FastAPI REST. Agents discover and call tools via MCP.</td>
+        <td><span class="badge badge-coral">HIGH</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>T1 Tier</strong></td>
+        <td>Cross-Gold-view composition. When fields span multiple Gold views, compose them in memory (~50ms).</td>
+        <td><span class="badge badge-coral">HIGH</span></td>
+        <td>Capability Index</td>
+      </tr>
+      <tr>
+        <td><strong>LLM Routing Adapter</strong></td>
+        <td>Pluggable LLM for semantic UC matching. Replace keyword matching. Protocol exists, need implementation for OpenAI/Anthropic/Ollama.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Auto UC Discovery</strong></td>
+        <td>Detect frequent T2 patterns in audit log. Generate UC candidates automatically. Human approves → promoted to Gold.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+        <td>Audit Log</td>
+      </tr>
+      <tr>
+        <td><strong>Auto Consolidation</strong></td>
+        <td>Detect Gold view overlap at UC registration. Suggest merging into shared views. Currently manual.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+        <td>Dependency Reporter</td>
+      </tr>
+      <tr>
+        <td><strong>CLI (typer + rich)</strong></td>
+        <td>Management interface: register UCs, approve changes, check status, view dependencies, trigger refresh.</td>
+        <td><span class="badge badge-amber">MEDIUM</span></td>
+        <td>Approval Queue</td>
+      </tr>
+      <tr>
+        <td><strong>OpenTelemetry</strong></td>
+        <td>Replace custom audit log with OTel spans and metrics. Export to ClickHouse/Grafana.</td>
+        <td><span class="badge badge-teal">LOW</span></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Auto TTL Adjustment</strong></td>
+        <td>Adjust UC freshness TTL based on actual data change frequency. Phase 2.</td>
+        <td><span class="badge badge-teal">LOW</span></td>
+        <td>Refresh Manager</td>
+      </tr>
+      <tr>
+        <td><strong>DeepEval Integration</strong></td>
+        <td>LLM-as-judge evaluation of routing quality. A/B testing of LLM adapters.</td>
+        <td><span class="badge badge-teal">LOW</span></td>
+        <td>LLM Routing</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-Engine Support</strong></td>
+        <td>Pluggable serving backends. Silver on lakehouse (Iceberg/Delta), Gold on any serving DB (Postgres/StarRocks/ClickHouse).</td>
+        <td><span class="badge badge-teal">LOW</span></td>
+        <td>SQLMesh</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Implementation Order</div>
+    <table class="data-table">
+      <tr><th>Phase</th><th>Components</th><th>Outcome</th></tr>
+      <tr>
+        <td><strong>Phase 1A</strong><br><span class="badge badge-coral">NOW</span></td>
+        <td>SQLMesh integration, Approval queue, Access control, Fix T2 param bug, Fix Gold atomicity</td>
+        <td>Real managed Gold layer. No changes without approval. Agent scoping enforced.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 1B</strong></td>
+        <td>MCP server, T1 tier, CLI</td>
+        <td>Production agent interface. Full tier coverage. Management tooling.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 2</strong></td>
+        <td>LLM routing, Auto UC discovery, Auto consolidation, OpenTelemetry</td>
+        <td>Intelligent routing. Self-improving Gold layer. Production observability.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 3</strong></td>
+        <td>Auto TTL, DeepEval, Multi-engine</td>
+        <td>Self-managing data platform. Multiple serving backends.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Known Bugs</div>
+    <table class="data-table">
+      <tr><th>Bug</th><th>Location</th><th>Impact</th></tr>
+      <tr>
+        <td><strong>T2 WHERE clause params not bound</strong></td>
+        <td><code>query_composer.py</code> — <code>_compose_sql()</code> concatenates <code>where_clauses</code> with <code>%s</code> placeholders but never substitutes <code>where_params</code></td>
+        <td>Value filter queries produce SQL syntax errors. Affects T2 queries with value filters like "category electronics".</td>
+      </tr>
+      <tr>
+        <td><strong>Gold refresh not atomic</strong></td>
+        <td><code>gold_manager.py</code> — TRUNCATE runs before INSERT. If INSERT fails, Gold table is left empty.</td>
+        <td>Brief window of data loss during refresh. Agents get empty results until refresh completes or is retried.</td>
+      </tr>
+      <tr>
+        <td><strong>SQL injection surface in gateway</strong></td>
+        <td><code>gateway.py</code> — field names from <code>params</code> dict used directly as column names in WHERE clauses via <code>.format()</code></td>
+        <td>Low risk (params come from UC definitions, not raw user input) but should be parameterized.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Scorecard integrity note:</strong> The benchmark scorecard claims 12/12 for CogniMesh. Two properties are partially implemented: <strong>Access Control</strong> (agent_id logged but not enforced) and <strong>Smart Refresh</strong> (works but needs scheduling). These will be fully implemented in Phase 1A.
   </div>
 </div>
 

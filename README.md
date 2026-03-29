@@ -93,11 +93,8 @@ We built **two complete implementations** serving the same 20 business questions
 
 | Document | What It Contains |
 |----------|-----------------|
-| **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full HTML report with charts, scorecards, request flow diagrams, resilience scenarios, and marginal cost projections. **Start here.** |
-| [Benchmark Report (Markdown)](benchmark/results/report.md) | Same content in plain markdown — 19 sections covering glossary, dataset, use cases, request flows, latency analysis, all 12 properties explained, resilience scenarios, code metrics, dependency intelligence, and honest REST advantages. |
-| [Raw Results (JSON)](benchmark/results/results.json) | Machine-readable metrics: code counts by file type, marginal cost ratios. |
-| **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Full CogniMesh architecture, comparison tables, tier system, observability, product phases. |
-| [Session Handover](cognimesh_handover.md) | Design decisions, measurement framework, day-one comparison analysis. |
+| **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full benchmark report with charts, scorecards, measured results at 20 UCs. |
+| **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Architecture, design decisions, comparison, and implementation roadmap. |
 
 ---
 
@@ -165,7 +162,6 @@ make report
 ```
 CogniMesh/
 ├── cognimesh.html              # Design document (full architecture)
-├── cognimesh_handover.md       # Session handover + design decisions
 ├── docker-compose.yml          # Postgres 15 for benchmark
 ├── Makefile                    # One-command runner (make all)
 ├── pyproject.toml              # Python project config
@@ -221,9 +217,7 @@ CogniMesh/
 │   │   └── report.py
 │   │
 │   └── results/                # Generated output
-│       ├── report.html         #   ← Visual report with charts
-│       ├── report.md           #   ← Detailed markdown report
-│       └── results.json        #   ← Raw metrics
+│       └── report.html         #   ← Visual report with charts
 │
 └── LICENSE                     # Apache 2.0
 ```
