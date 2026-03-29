@@ -21,7 +21,7 @@ class UseCase(BaseModel):
     gold_schema: str = "gold_cognimesh"
     source_tables: list[str] | None = None
     derivation_sql: str | None = None
-    status: Literal["active", "pending", "deprecated"] = "active"
+    status: Literal["active", "pending", "pending_approval", "deprecated"] = "active"
     allowed_agents: list[str] | None = None  # None = open access (all agents allowed)
     created_at: datetime | None = None
     updated_at: datetime | None = None

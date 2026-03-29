@@ -3,24 +3,32 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
 from cognimesh_core.config import CogniMeshConfig
 from cognimesh_core.db import get_connection
 from cognimesh_core.models import UseCase
 
+if TYPE_CHECKING:
+    from cognimesh_core.approval import ApprovalQueue
+
 
 class UCRegistry:
     """Manages the Use Case registry in Postgres."""
 
-    def __init__(self, config: CogniMeshConfig):
+    def __init__(self, config: CogniMeshConfig, approval_queue: ApprovalQueue | None = None):
         self.config = config
+        self.approval_queue = approval_queue
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def register(self, uc: UseCase) -> UseCase:
-        """Insert UC into registry. Log to uc_change_log. Return with timestamps."""
+    def register(self, uc: UseCase, require_approval: bool = False, requested_by: str | None = None) -> UseCase:
+        """Insert UC into registry. If require_approval=True, UC starts as pending_approval."""
+        if require_approval and self.approval_queue:
+            uc.status = "pending_approval"
+
         with get_connection(self.config) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -68,6 +76,10 @@ class UCRegistry:
                 # Log creation to change log
                 self._log_change(cur, uc.id, "created", None, uc)
             conn.commit()
+
+        if require_approval and self.approval_queue:
+            self.approval_queue.submit(uc, action="register", requested_by=requested_by)
+
         return uc
 
     def get(self, uc_id: str) -> UseCase | None:
@@ -181,6 +193,25 @@ class UCRegistry:
 
                 self._log_change(cur, uc_id, "deactivated", before_uc, after_uc)
             conn.commit()
+
+    def activate(self, uc_id: str) -> UseCase | None:
+        """Activate a pending UC (called after approval)."""
+        with get_connection(self.config) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE cognimesh_internal.uc_registry
+                    SET status = 'active', updated_at = now()
+                    WHERE id = %s AND status = 'pending_approval'
+                    RETURNING *
+                    """,
+                    (uc_id,),
+                )
+                row = cur.fetchone()
+                if row:
+                    self._log_change(cur, uc_id, "activated", None, self._row_to_uc(row))
+            conn.commit()
+        return self._row_to_uc(row) if row else None
 
     # ------------------------------------------------------------------
     # Internal helpers

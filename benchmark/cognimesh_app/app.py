@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from cognimesh_core.approval import ApprovalQueue
 from cognimesh_core.audit import AuditLog
 from cognimesh_core.capability_index import CapabilityIndex
 from cognimesh_core.config import CogniMeshConfig
@@ -19,6 +21,8 @@ from cognimesh_core.lineage import LineageTracker
 from cognimesh_core.refresh_manager import RefreshManager
 from cognimesh_core.registry import UCRegistry
 from cognimesh_core.sqlmesh_adapter import SQLMeshAdapter
+
+logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------
@@ -39,7 +43,8 @@ class QueryRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     config = CogniMeshConfig()
-    registry = UCRegistry(config)
+    approval = ApprovalQueue(config)
+    registry = UCRegistry(config, approval_queue=approval)
     capability_index = CapabilityIndex(registry)
     sqlmesh_adapter = SQLMeshAdapter(config)
     gold_manager = GoldManager(config, sqlmesh_adapter=sqlmesh_adapter)
@@ -59,6 +64,9 @@ async def lifespan(application: FastAPI):
     refresh_mgr = RefreshManager(config, gold_manager, registry)
 
     application.state.gateway = gateway
+    application.state.registry = registry
+    application.state.approval = approval
+    application.state.gold_mgr = gold_manager
     application.state.capability_index = capability_index
     application.state.dep_reporter = dep_reporter
     application.state.refresh_mgr = refresh_mgr
@@ -152,3 +160,57 @@ def check_and_refresh():
 def get_refresh_plan():
     """Preview what would be refreshed without doing it."""
     return app.state.refresh_mgr.get_refresh_plan()
+
+
+# ------------------------------------------------------------------
+# Approval endpoints
+# ------------------------------------------------------------------
+
+@app.get("/approvals")
+def list_approvals():
+    """List pending approvals."""
+    return app.state.approval.list_pending()
+
+
+@app.get("/approvals/history")
+def approval_history(uc_id: str | None = None, limit: int = 50):
+    """Get approval history."""
+    return app.state.approval.get_history(uc_id=uc_id, limit=limit)
+
+
+@app.get("/approvals/{approval_id}")
+def get_approval(approval_id: int):
+    """Get approval details."""
+    result = app.state.approval.get(approval_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    return result
+
+
+@app.post("/approvals/{approval_id}/approve")
+def approve_uc(approval_id: int, reviewed_by: str = "admin", note: str | None = None):
+    """Approve a pending UC change. Triggers Gold derivation."""
+    result = app.state.approval.approve(approval_id, reviewed_by=reviewed_by, note=note)
+    if not result:
+        raise HTTPException(status_code=404, detail="Approval not found or already reviewed")
+
+    # Activate the UC
+    uc = app.state.registry.activate(result["uc_id"])
+
+    # Trigger Gold derivation if UC has a gold_view
+    if uc and uc.gold_view:
+        try:
+            app.state.gold_mgr.refresh_gold(uc)
+        except Exception as e:
+            logger.warning("Gold refresh failed after approval: %s", e)
+
+    return {"approval": result, "uc_activated": uc is not None}
+
+
+@app.post("/approvals/{approval_id}/reject")
+def reject_uc(approval_id: int, reviewed_by: str = "admin", reason: str | None = None):
+    """Reject a pending UC change."""
+    result = app.state.approval.reject(approval_id, reviewed_by=reviewed_by, reason=reason)
+    if not result:
+        raise HTTPException(status_code=404, detail="Approval not found or already reviewed")
+    return result

@@ -237,3 +237,19 @@ CREATE TABLE cognimesh_internal.uc_change_log (
     changed_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     changed_by          TEXT
 );
+
+CREATE TABLE cognimesh_internal.approval_queue (
+    id                  BIGSERIAL PRIMARY KEY,
+    uc_id               TEXT NOT NULL,
+    action              TEXT NOT NULL,  -- register, update, deactivate, refresh
+    status              TEXT NOT NULL DEFAULT 'pending',  -- pending, approved, rejected
+    request_data        JSONB NOT NULL,
+    requested_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    requested_by        TEXT,
+    reviewed_by         TEXT,
+    reviewed_at         TIMESTAMPTZ,
+    review_note         TEXT
+);
+
+CREATE INDEX idx_approval_status ON cognimesh_internal.approval_queue(status);
+CREATE INDEX idx_approval_uc ON cognimesh_internal.approval_queue(uc_id);
