@@ -48,7 +48,7 @@ Both configurations get the same CogniMesh capabilities: UC registry, lineage, o
 **Five pillars across both modes:**
 - **Explainability** — Every response traces back to source data. Full lineage in Mode 2, Gold→Silver lineage in Mode 1.
 - **Observability** — Every query logged: who asked, what it cost, how fresh the data is.
-- **Self-service** — Register a UC with a 12-line JSON. System derives Gold, consolidates overlapping views, refreshes only what's affected.
+- **Self-service** — Register a UC with a 12-line JSON. System derives Gold, consolidates overlapping views. Scheduled refresh is the primary mode: check TTLs, rebuild only stale views, report what changed. Real-time mode (Postgres LISTEN/NOTIFY) available for UCs that need immediate freshness.
 - **Flexibility** — Unknown questions composed from metadata (T2), not 404s. T2 patterns auto-promoted to Gold UCs.
 - **Security** — Agent identity and scoping, per-UC access control, row-level data isolation.
 
@@ -67,7 +67,7 @@ We built **two complete implementations** serving the same 20 business questions
 | Unsupported question | 404 Not Found | Composes query from metadata | CogniMesh |
 | Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
 | Dependency intelligence | None | Full graph + impact analysis | CogniMesh |
-| Smart refresh | Cron (all tables) | Only affected views | CogniMesh |
+| Smart refresh | Cron (all tables) | Scheduled + real-time, only affected views | CogniMesh |
 | Gold tables at 20 UCs | 20 tables | 7 views (65% fewer) | CogniMesh |
 | Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15%) | CogniMesh |
 | Initial setup simplicity | 286 lines | 1,952 lines | REST |
@@ -178,7 +178,7 @@ CogniMesh/
 │   ├── audit.py                #   Audit log + cost attribution
 │   ├── query_composer.py       #   T2 SQL composition from metadata
 │   ├── dependency.py           #   Dependency graph + impact analysis + provenance
-│   └── refresh_manager.py      #   Smart refresh (only affected Gold views)
+│   └── refresh_manager.py      #   Scheduled + real-time refresh (only affected Gold views)
 │
 ├── benchmark/
 │   ├── data/
@@ -232,7 +232,7 @@ CogniMesh/
 4. **Unsupported question?** — Gateway composes SQL from Silver metadata (T2) or explains why it can't (T3). No 404s.
 5. **Schema changes?** — Gold layer isolates agents from Silver drift. System detects and flags changes.
 6. **Dependency intelligence** — impact analysis shows which Gold views and UCs break if a Silver table changes. Provenance traces any Gold column back to its Silver source.
-7. **Smart refresh** — when Silver data changes, only affected Gold views are refreshed (not all of them). At 20 UCs, this means refreshing 3 views instead of 20.
+7. **Smart refresh** — Scheduled refresh is the primary mode: check TTLs, rebuild only stale views, report what changed. Real-time mode (Postgres LISTEN/NOTIFY) available for UCs that need immediate freshness. At 20 UCs, this means refreshing 3 views instead of 20.
 
 ---
 
@@ -249,7 +249,8 @@ GET  /dependencies/provenance — Where does this Gold column come from?
 GET  /dependencies/what-if   — Change impact estimation
 
 GET  /refresh/status         — Freshness of all Gold views
-POST /refresh/check          — Auto-refresh stale views
+POST /refresh/scheduled      — Run scheduled refresh cycle (primary mode)
+POST /refresh/check          — Auto-refresh stale views (legacy)
 GET  /refresh/plan           — Preview what would be refreshed
 ```
 

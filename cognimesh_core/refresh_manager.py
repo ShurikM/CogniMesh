@@ -1,9 +1,14 @@
 """Smart Gold view refresh manager.
 
-Three refresh strategies:
-1. TTL-based: check Gold views, refresh any past their TTL
-2. Silver change detection: Postgres LISTEN/NOTIFY on Silver table changes
-3. On-demand: explicit refresh triggered by API call
+Two refresh modes:
+1. Scheduled (primary): periodic check of all Gold views, refresh stale ones,
+   return a report. Called via API (POST /refresh/scheduled), cron, or Airflow.
+2. Real-time (optional): Postgres LISTEN/NOTIFY detects Silver changes and
+   triggers immediate refresh of affected Gold views. Opt-in for latency-critical UCs.
+
+Most business data (customer health, product rankings, revenue reports) is
+daily/hourly, not per-second. Scheduled refresh is simpler, predictable, and cheaper.
+Real-time is for fraud detection, live dashboards, and similar use cases.
 
 Key advantage over REST: CogniMesh knows WHICH Gold views depend on WHICH Silver
 tables (via lineage). When Silver changes, only affected Gold views are refreshed.
@@ -13,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 
 import psycopg  # type: ignore[import-untyped]
 from cognimesh_core.config import CogniMeshConfig
@@ -24,7 +30,11 @@ logger = logging.getLogger(__name__)
 
 
 class RefreshManager:
-    """Manages Gold view refresh based on TTL, Silver changes, and on-demand triggers."""
+    """Manages Gold view refresh.
+
+    Primary mode: Scheduled refresh — called periodically (cron, API, CLI).
+    Optional mode: Real-time — Postgres LISTEN/NOTIFY for immediate reaction to Silver changes.
+    """
 
     def __init__(
         self,
@@ -39,7 +49,57 @@ class RefreshManager:
         self._listener_stop = threading.Event()
 
     # ------------------------------------------------------------------
-    # TTL-based refresh
+    # Scheduled refresh (PRIMARY mode)
+    # ------------------------------------------------------------------
+
+    def scheduled_refresh(self, force: bool = False) -> dict:
+        """Run a scheduled refresh cycle. Primary refresh mode.
+
+        Checks all Gold views. Refreshes any that are:
+        - Past their TTL (always)
+        - Affected by Silver changes since last refresh (if trackable)
+        - All views (if force=True)
+
+        Returns a report: {refreshed: [...], skipped: [...], errors: [...], total_ms: N}
+        """
+        report: dict = {"refreshed": [], "skipped": [], "errors": [], "total_ms": 0}
+        start = time.perf_counter()
+        seen_views: set[str] = set()
+
+        for uc in self.registry.list_active():
+            if not uc.gold_view or uc.gold_view in seen_views:
+                continue
+            seen_views.add(uc.gold_view)
+
+            freshness = self.gold_manager.get_freshness(uc.gold_view)
+
+            if force or freshness.is_stale:
+                try:
+                    rows = self.gold_manager.refresh_gold(uc)
+                    report["refreshed"].append({
+                        "gold_view": uc.gold_view,
+                        "rows": rows,
+                        "was_stale": freshness.is_stale,
+                        "age_before_refresh": round(freshness.age_seconds, 1),
+                    })
+                except Exception as e:
+                    report["errors"].append({
+                        "gold_view": uc.gold_view,
+                        "error": str(e),
+                    })
+            else:
+                report["skipped"].append({
+                    "gold_view": uc.gold_view,
+                    "age_seconds": round(freshness.age_seconds, 1),
+                    "ttl_seconds": freshness.ttl_seconds,
+                    "next_refresh_in": round(freshness.ttl_seconds - freshness.age_seconds, 1),
+                })
+
+        report["total_ms"] = round((time.perf_counter() - start) * 1000, 1)
+        return report
+
+    # ------------------------------------------------------------------
+    # TTL-based refresh (legacy — prefer scheduled_refresh)
     # ------------------------------------------------------------------
 
     def check_and_refresh_stale(self) -> dict[str, int]:
@@ -47,6 +107,10 @@ class RefreshManager:
 
         Returns: {gold_view_name: rows_refreshed} for views that were refreshed.
         Only refreshes each view ONCE even if multiple UCs share it.
+
+        Note: prefer scheduled_refresh() which returns a richer report with
+        skipped views, errors, and timing. This method is kept for backward
+        compatibility with the /refresh/check endpoint.
         """
         refreshed: dict[str, int] = {}
         seen_views: set[str] = set()
@@ -142,14 +206,14 @@ class RefreshManager:
         return plan
 
     # ------------------------------------------------------------------
-    # Silver change detection (event-driven refresh)
+    # Silver change detection (event-driven / real-time refresh)
     # ------------------------------------------------------------------
 
     def on_silver_change(self, silver_table: str) -> dict[str, int]:
         """Handle a Silver table change. Find affected Gold views via lineage, refresh them.
 
-        This is the key advantage: CogniMesh knows which Gold views depend on which
-        Silver tables. Only the affected views are refreshed, not all of them.
+        This is used in real-time mode (optional). CogniMesh knows which Gold views
+        depend on which Silver tables. Only the affected views are refreshed.
 
         REST equivalent: refresh everything, or maintain a manual dependency map.
         """
@@ -189,11 +253,15 @@ class RefreshManager:
         return refreshed
 
     # ------------------------------------------------------------------
-    # Postgres LISTEN/NOTIFY listener
+    # Postgres LISTEN/NOTIFY listener (OPTIONAL — real-time mode)
     # ------------------------------------------------------------------
 
     def start_listener(self) -> None:
         """Start listening for Silver table changes via Postgres LISTEN/NOTIFY.
+
+        This is the optional real-time refresh mode. For most UCs, scheduled
+        refresh (scheduled_refresh()) is preferred. Use this only for
+        latency-critical use cases like fraud detection or live dashboards.
 
         Runs in a background daemon thread. When a notification arrives on the
         'silver_changes' channel, calls on_silver_change() for the affected table.

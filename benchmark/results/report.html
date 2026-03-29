@@ -212,7 +212,7 @@ code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var
     <div class="card c-teal">
       <div class="card-label">SMART INFRASTRUCTURE</div>
       <div class="card-title">65% fewer tables, smart refresh</div>
-      <p>20 UCs consolidated into 7 Gold views (measured). When Silver data changes, only affected views refresh — not all of them. 49% less storage. REST refreshes everything blindly. Supports incremental adoption — connect to existing Silver (Mode 1) or manage the full pipeline with SQLMesh (Mode 2).</p>
+      <p>20 UCs consolidated into 7 Gold views (measured). Scheduled refresh (primary mode) checks TTLs and rebuilds only stale views. Real-time mode (optional, Postgres LISTEN/NOTIFY) available for latency-critical UCs. 49% less storage. REST refreshes everything blindly. Supports incremental adoption — connect to existing Silver (Mode 1) or manage the full pipeline with SQLMesh (Mode 2).</p>
     </div>
     <div class="card c-amber">
       <div class="card-label">ZERO FRICTION</div>
@@ -684,7 +684,7 @@ Agent -> HTTP POST -> Gateway<br>
         <td>Only refresh Gold views whose Silver source actually changed — not all of them</td>
         <td><span class="badge badge-coral">NO</span></td>
         <td style="background:rgba(74,222,128,0.06)"><span class="badge badge-green">YES</span></td>
-        <td>POST /refresh/check</td>
+        <td>POST /refresh/scheduled (primary), POST /refresh/check (legacy)</td>
       </tr>
       <tr>
         <td><strong>12</strong></td>
@@ -1492,7 +1492,7 @@ Agent -> HTTP POST -> Gateway<br>
       <div class="card c-green">
         <div class="card-label">COGNIMESH APPROACH</div>
         <div class="card-title">Refresh only what changed</div>
-        <p>Postgres LISTEN/NOTIFY detects Silver changes. CogniMesh checks the dependency graph: <code>silver.customer_profiles</code> changed → refresh <code>customer_360</code> (1 view serving 10 UCs). Leave <code>product_catalog</code> and <code>order_analytics</code> alone. Result: 1 refresh instead of 20.</p>
+        <p>CogniMesh supports two refresh modes. <strong>Scheduled</strong> (primary): a periodic job checks all Gold views, refreshes stale ones, and reports changes &mdash; called via API (<code>POST /refresh/scheduled</code>), cron, or Airflow. <strong>Real-time</strong> (optional): Postgres LISTEN/NOTIFY triggers detect Silver changes and refresh affected views immediately. Most UCs use scheduled refresh. Real-time is for latency-critical use cases like fraud detection. Either way, CogniMesh checks the dependency graph: <code>silver.customer_profiles</code> changed &rarr; refresh <code>customer_360</code> (1 view serving 10 UCs). Leave <code>product_catalog</code> and <code>order_analytics</code> alone. Result: 1 refresh instead of 20.</p>
       </div>
     </div>
   </div>

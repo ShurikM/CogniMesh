@@ -16,6 +16,10 @@ class CogniMeshConfig(BaseSettings):
     t2_max_seconds: float = 5.0
     t2_max_cost_units: float = 100.0
 
+    # Refresh
+    refresh_mode: str = "scheduled"  # scheduled | realtime
+    refresh_schedule: str = "0 */4 * * *"  # cron expression: every 4 hours (for documentation)
+
     # Gateway
     default_agent_id: str = "benchmark"
 

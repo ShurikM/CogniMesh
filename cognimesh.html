@@ -1264,7 +1264,7 @@ mesh.register_uc(<br>
       <tr><td><strong>T3 Rejection</strong></td><td><code>gateway.py</code></td><td>Structured rejection with explanation and list of available UCs. Never returns a bare 404.</td></tr>
       <tr><td><strong>Audit Log</strong></td><td><code>audit.py</code></td><td>Every query logged with agent ID, UC, tier, latency, cost. Async (zero latency impact). Cost attribution per UC and agent.</td></tr>
       <tr><td><strong>Dependency Reporter</strong></td><td><code>dependency.py</code></td><td>Impact analysis, provenance, full graph, what-if queries. Traces Silver → Gold → UC dependencies.</td></tr>
-      <tr><td><strong>Refresh Manager</strong></td><td><code>refresh_manager.py</code></td><td>TTL-based refresh, Silver change detection via LISTEN/NOTIFY, dependency-aware cascading.</td></tr>
+      <tr><td><strong>Refresh Manager</strong></td><td><code>refresh_manager.py</code></td><td>Scheduled refresh (primary): periodic TTL check, rebuild stale views, return report. Real-time (optional): Postgres LISTEN/NOTIFY for immediate Silver change detection. Dependency-aware cascading in both modes.</td></tr>
       <tr><td><strong>Lineage Tracker</strong></td><td><code>lineage.py</code></td><td>Column-level lineage registration and query. Attached to every T0 response.</td></tr>
     </table>
   </div>
@@ -1429,7 +1429,7 @@ mesh.register_uc(<br>
   </div>
 
   <div class="callout">
-    <strong>Scorecard integrity note:</strong> The benchmark scorecard claims 12/12 for CogniMesh. Two properties are partially implemented: <strong>Access Control</strong> (agent_id logged but not enforced) and <strong>Smart Refresh</strong> (works but needs scheduling). These will be fully implemented in Phase 1A.
+    <strong>Scorecard integrity note:</strong> The benchmark scorecard claims 12/12 for CogniMesh. One property is partially implemented: <strong>Access Control</strong> (agent_id logged but not enforced). <strong>Smart Refresh</strong> now supports scheduled refresh as the primary mode (POST /refresh/scheduled) with a full report. Access control will be fully implemented in Phase 1A.
   </div>
 </div>
 
@@ -1520,7 +1520,7 @@ benchmark/tests/
 ├── test_lineage.py                 <span class="c"># Lineage registration + query</span>
 ├── test_audit.py                   <span class="c"># Audit logging + cost attribution</span>
 ├── test_query_composer.py          <span class="c"># T2 SQL composition</span>
-├── test_refresh_manager.py         <span class="c"># TTL refresh + Silver change handling</span>
+├── test_refresh_manager.py         <span class="c"># Scheduled + real-time refresh, Silver change handling</span>
 ├── test_dependency.py              <span class="c"># Impact analysis + provenance + graph</span>
 ├── test_access_control.py          <span class="c"># Agent scoping + permissions</span>
 │

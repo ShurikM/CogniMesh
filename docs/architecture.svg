@@ -127,7 +127,7 @@
   <circle cx="460" cy="324" r="2" fill="#4ade80" fill-opacity="0.6"/>
   <text x="468" y="328" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Introspects Silver schema</text>
   <circle cx="460" cy="344" r="2" fill="#4ade80" fill-opacity="0.6"/>
-  <text x="468" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Smart refresh + approval</text>
+  <text x="468" y="348" fill="#8a887f" font-size="10" font-family="system-ui,sans-serif">Scheduled + RT refresh</text>
   <text x="456" y="378" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic">"1 JSON, 12 lines --</text>
   <text x="456" y="390" fill="#86efac" font-size="9" font-family="system-ui,sans-serif" font-style="italic"> system derives the rest"</text>
 

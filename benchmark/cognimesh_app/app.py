@@ -150,9 +150,23 @@ def get_refresh_status():
     return app.state.refresh_mgr.get_refresh_status()
 
 
+@app.post("/refresh/scheduled")
+def run_scheduled_refresh(force: bool = False):
+    """Run a scheduled refresh cycle. Primary refresh mode.
+
+    Checks all Gold views, refreshes stale ones, returns a detailed report
+    with refreshed/skipped/errors lists and timing.
+    Call this from cron, Airflow, or manually.
+    """
+    return app.state.refresh_mgr.scheduled_refresh(force=force)
+
+
 @app.post("/refresh/check")
 def check_and_refresh():
-    """Check and refresh stale Gold views. Returns what was refreshed."""
+    """Check and refresh stale Gold views. Returns what was refreshed.
+
+    Legacy endpoint — prefer POST /refresh/scheduled for a richer report.
+    """
     return app.state.refresh_mgr.check_and_refresh_stale()
 
 
