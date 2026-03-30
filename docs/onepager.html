@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CogniMesh — Intelligent Data Mesh for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  line-height: 1.7;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== UTILITIES ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.text-gradient {
+  background: linear-gradient(135deg, #14b8a6, #0d9488, #2dd4bf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-amber {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.3); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes mesh-move {
+  0% { background-position: 0 0, 40px 40px; }
+  100% { background-position: 80px 80px, 120px 120px; }
+}
+@keyframes counter {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+.reveal-delay-6 { transition-delay: 0.6s; }
+.reveal-delay-7 { transition-delay: 0.7s; }
+
+/* ===== NAVIGATION ===== */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px 0;
+  transition: all 0.3s ease;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+nav.scrolled {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(20, 184, 166, 0.15);
+}
+nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-decoration: none;
+}
+.nav-logo span { color: #14b8a6; }
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: #14b8a6; }
+.nav-cta {
+  background: linear-gradient(135deg, #0d9488, #14b8a6) !important;
+  color: #fff !important;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600 !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+.nav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.4);
+}
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 24px 80px;
+  overflow: hidden;
+}
+.hero-mesh {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(20, 184, 166, 0.08) 1px, transparent 0),
+    radial-gradient(circle at 1px 1px, rgba(20, 184, 166, 0.04) 1px, transparent 0);
+  background-size: 60px 60px, 30px 30px;
+  animation: mesh-move 20s linear infinite;
+}
+.hero-glow {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+.hero-glow-1 {
+  top: -200px;
+  right: -200px;
+  background: #14b8a6;
+}
+.hero-glow-2 {
+  bottom: -300px;
+  left: -200px;
+  background: #f59e0b;
+  opacity: 0.06;
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2dd4bf;
+  margin-bottom: 32px;
+  animation: fadeIn 0.6s ease both;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.hero-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  animation: pulse-glow 2s infinite;
+}
+.hero h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.8s ease both;
+  animation-delay: 0.15s;
+}
+.hero p {
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  color: #94a3b8;
+  max-width: 680px;
+  margin: 0 auto 40px;
+  animation: fadeInUp 0.8s ease both;
+  animation-delay: 0.3s;
+  line-height: 1.7;
+}
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 0.8s ease both;
+  animation-delay: 0.45s;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(20, 184, 166, 0.4);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(20, 184, 166, 0.3);
+  transform: translateY(-2px);
+}
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  justify-content: center;
+  margin-top: 64px;
+  animation: fadeInUp 0.8s ease both;
+  animation-delay: 0.6s;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #14b8a6;
+}
+.hero-stat-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== SECTION STYLING ===== */
+section {
+  padding: 100px 0;
+  position: relative;
+}
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #14b8a6;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+.section-subtitle {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* ===== PROBLEM SECTION ===== */
+.problems {
+  background: linear-gradient(180deg, #0f172a 0%, #111827 50%, #0f172a 100%);
+}
+.problems-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.problems-header .section-subtitle {
+  margin: 0 auto;
+}
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.problem-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 28px 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.problem-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ef4444, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.problem-card:hover {
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.15);
+  transform: translateY(-4px);
+}
+.problem-card:hover::before { opacity: 1; }
+.problem-icon {
+  font-size: 1.8rem;
+  margin-bottom: 16px;
+  display: block;
+}
+.problem-card h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.problem-card p {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* ===== SOLUTION SECTION ===== */
+.solution {
+  background: #0f172a;
+  position: relative;
+}
+.solution::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 80px;
+  background: linear-gradient(180deg, transparent, #14b8a6, transparent);
+}
+.solution-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.solution-header .section-subtitle { margin: 0 auto; }
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.solution-card {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.04), rgba(20, 184, 166, 0.01));
+  border: 1px solid rgba(20, 184, 166, 0.1);
+  border-radius: 16px;
+  padding: 28px 24px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.solution-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #14b8a6, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.solution-card:hover {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(20, 184, 166, 0.03));
+  border-color: rgba(20, 184, 166, 0.25);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+.solution-card:hover::before { opacity: 1; }
+.solution-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(20, 184, 166, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 18px;
+}
+.solution-card h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 10px;
+}
+.solution-card p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+/* ===== COMPARISON TABLE ===== */
+.comparison {
+  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+}
+.comparison-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.comparison-header .section-subtitle { margin: 0 auto; }
+.comparison-table-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.comparison-table thead th {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 20px 28px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.comparison-table thead th:first-child {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+.comparison-table thead th:last-child {
+  color: #14b8a6;
+  background: rgba(20, 184, 166, 0.05);
+}
+.comparison-table tbody td {
+  padding: 16px 28px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.comparison-table tbody tr:last-child td { border-bottom: none; }
+.comparison-table tbody td:first-child {
+  color: #94a3b8;
+  position: relative;
+  padding-left: 44px;
+}
+.comparison-table tbody td:first-child::before {
+  content: '\2717';
+  position: absolute;
+  left: 28px;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.comparison-table tbody td:last-child {
+  color: #e2e8f0;
+  position: relative;
+  padding-left: 44px;
+  background: rgba(20, 184, 166, 0.02);
+}
+.comparison-table tbody td:last-child::before {
+  content: '\2713';
+  position: absolute;
+  left: 28px;
+  color: #14b8a6;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.comparison-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+.comparison-table tbody tr:hover td:last-child {
+  background: rgba(20, 184, 166, 0.06);
+}
+
+/* ===== TIER FLOW ===== */
+.tier-flow {
+  background: #0f172a;
+}
+.tier-flow-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.tier-flow-header .section-subtitle { margin: 0 auto; }
+.flow-diagram {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+.flow-entry {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.flow-entry-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: #fbbf24;
+}
+.flow-arrow {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #334155;
+  margin: 8px 0;
+}
+.flow-decision {
+  text-align: center;
+  margin: 8px 0;
+}
+.flow-decision-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2dd4bf;
+}
+.flow-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+.flow-branch {
+  text-align: center;
+}
+.flow-branch-arrow {
+  font-size: 1.2rem;
+  color: #334155;
+  margin-bottom: 12px;
+}
+.flow-branch-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.flow-branch:nth-child(1) .flow-branch-label { color: #14b8a6; }
+.flow-branch:nth-child(2) .flow-branch-label { color: #f59e0b; }
+.flow-branch:nth-child(3) .flow-branch-label { color: #94a3b8; }
+.flow-branch-box {
+  border-radius: 16px;
+  padding: 24px 20px;
+  transition: all 0.3s;
+}
+.flow-branch:nth-child(1) .flow-branch-box {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(20, 184, 166, 0.02));
+  border: 1px solid rgba(20, 184, 166, 0.15);
+}
+.flow-branch:nth-child(2) .flow-branch-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+.flow-branch:nth-child(3) .flow-branch-box {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.02));
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+.flow-branch-box h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.flow-branch:nth-child(1) h4 { color: #2dd4bf; }
+.flow-branch:nth-child(2) h4 { color: #fbbf24; }
+.flow-branch:nth-child(3) h4 { color: #94a3b8; }
+.flow-branch-box .flow-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+.flow-branch-box .flow-speed {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.flow-branch:nth-child(1) .flow-speed {
+  background: rgba(20, 184, 166, 0.1);
+  color: #2dd4bf;
+}
+.flow-branch:nth-child(2) .flow-speed {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+.flow-branch:nth-child(3) .flow-speed {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+
+/* ===== PROOF / BENCHMARKS ===== */
+.proof {
+  background: linear-gradient(180deg, #0f172a 0%, #111827 50%, #0f172a 100%);
+  text-align: center;
+}
+.proof-header { margin-bottom: 20px; }
+.proof-context {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 56px;
+  letter-spacing: 0.02em;
+}
+.proof-context span {
+  color: #94a3b8;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  margin: 0 4px;
+}
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.proof-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 40px 24px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.proof-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #14b8a6, #0d9488);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.proof-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(20, 184, 166, 0.2);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+}
+.proof-card:hover::after { opacity: 1; }
+.proof-number {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.proof-card:nth-child(1) .proof-number { color: #14b8a6; }
+.proof-card:nth-child(2) .proof-number { color: #2dd4bf; }
+.proof-card:nth-child(3) .proof-number { color: #f59e0b; }
+.proof-card:nth-child(4) .proof-number { color: #fbbf24; }
+.proof-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+.proof-detail {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #475569;
+  margin-top: 10px;
+}
+
+/* ===== HOW IT WORKS ===== */
+.how-it-works {
+  background: #0f172a;
+}
+.how-header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+.how-header .section-subtitle { margin: 0 auto; }
+.how-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+}
+.how-steps::before {
+  content: '';
+  position: absolute;
+  top: 32px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.3), rgba(245, 158, 11, 0.3), rgba(20, 184, 166, 0.3));
+}
+.how-step {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.how-step-number {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 auto 24px;
+  border: 2px solid;
+}
+.how-step:nth-child(1) .how-step-number {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.3);
+  color: #14b8a6;
+}
+.how-step:nth-child(2) .how-step-number {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+.how-step:nth-child(3) .how-step-number {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.3);
+  color: #14b8a6;
+}
+.how-step h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 12px;
+}
+.how-step p {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.how-json {
+  max-width: 520px;
+  margin: 64px auto 0;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.how-json-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.how-json-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.how-json-dot:nth-child(1) { background: #ef4444; }
+.how-json-dot:nth-child(2) { background: #f59e0b; }
+.how-json-dot:nth-child(3) { background: #22c55e; }
+.how-json-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-left: 8px;
+}
+.how-json pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  padding: 24px;
+  overflow-x: auto;
+  color: #e2e8f0;
+}
+.json-key { color: #14b8a6; }
+.json-string { color: #fbbf24; }
+.json-comment { color: #475569; font-style: italic; }
+
+/* ===== CTA SECTION ===== */
+.cta-section {
+  background: linear-gradient(180deg, #0f172a, #111827);
+  text-align: center;
+  padding: 120px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(20, 184, 166, 0.05) 1px, transparent 0);
+  background-size: 40px 40px;
+}
+.cta-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(20, 184, 166, 0.06);
+  filter: blur(80px);
+  pointer-events: none;
+}
+.cta-content {
+  position: relative;
+  z-index: 2;
+}
+.cta-content h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.cta-content p {
+  font-size: 1.15rem;
+  color: #94a3b8;
+  margin-bottom: 40px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.btn-github:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+}
+.btn-github svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  background: #0a0f1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 40px 24px;
+  text-align: center;
+}
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.footer-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #64748b;
+}
+.footer-logo span { color: #0d9488; }
+.footer-sep {
+  width: 1px;
+  height: 16px;
+  background: #1e293b;
+}
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.footer-badge svg { width: 14px; height: 14px; fill: #475569; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .problem-grid, .solution-grid { grid-template-columns: repeat(2, 1fr); }
+  .proof-grid { grid-template-columns: repeat(2, 1fr); }
+  .flow-branches { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+}
+@media (max-width: 768px) {
+  section { padding: 72px 0; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .problem-grid, .solution-grid { grid-template-columns: 1fr; gap: 12px; }
+  .proof-grid { grid-template-columns: 1fr 1fr; }
+  .how-steps {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .how-steps::before { display: none; }
+  .flow-branches {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .hero-stats {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .comparison-table thead th,
+  .comparison-table tbody td {
+    padding: 12px 16px;
+    font-size: 0.82rem;
+  }
+  .comparison-table tbody td:first-child { padding-left: 34px; }
+  .comparison-table tbody td:first-child::before { left: 16px; }
+  .comparison-table tbody td:last-child { padding-left: 34px; }
+  .comparison-table tbody td:last-child::before { left: 16px; }
+  .footer-sep { display: none; }
+  .footer-content { flex-direction: column; gap: 12px; }
+}
+@media (max-width: 480px) {
+  .proof-grid { grid-template-columns: 1fr; }
+  .hero { padding: 100px 16px 60px; }
+  .hero-ctas { flex-direction: column; align-items: center; }
+  .btn-primary, .btn-secondary, .btn-github { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav id="navbar">
+  <div class="container">
+    <a href="#" class="nav-logo">Cogni<span>Mesh</span></a>
+    <div class="nav-links">
+      <a href="#problems">Problems</a>
+      <a href="#solution">Solution</a>
+      <a href="#comparison">Compare</a>
+      <a href="#proof">Benchmarks</a>
+      <a href="#how" class="nav-cta">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="hero-mesh"></div>
+  <div class="hero-glow hero-glow-1"></div>
+  <div class="hero-glow hero-glow-2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Open Source &middot; Apache 2.0
+    </div>
+    <h1>Your AI agents deserve<br>better than <span class="text-gradient">REST</span></h1>
+    <p>CogniMesh is the governed, observable data layer between AI agents and your data platform. Discovery, lineage, freshness, and audit&nbsp;&mdash;&nbsp;out&nbsp;of&nbsp;the&nbsp;box.</p>
+    <div class="hero-ctas">
+      <a href="#how" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        See How It Works
+      </a>
+      <a href="https://github.com/shurikm/cognimesh" class="btn-secondary" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">12/12</div>
+        <div class="hero-stat-label">System Properties</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">&lt;10ms</div>
+        <div class="hero-stat-label">Query Latency</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">12 lines</div>
+        <div class="hero-stat-label">Per New Use Case</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROBLEM ===== -->
+<section class="problems" id="problems">
+  <div class="container">
+    <div class="problems-header reveal">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">What breaks when<br>agents <span class="text-gradient-amber">scale</span></h2>
+      <p class="section-subtitle">REST APIs were built for apps, not agents. Here are 8 things that go wrong when AI agents become your primary data consumers.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card reveal reveal-delay-1">
+        <span class="problem-icon">&#128269;</span>
+        <h3>No Discovery</h3>
+        <p>Agents don't know what questions your data platform can answer. They guess endpoints, get 404s, waste tokens.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-2">
+        <span class="problem-icon">&#128279;</span>
+        <h3>No Lineage</h3>
+        <p>A response says "health_status: at_risk" but nobody can trace where that came from, which tables, which transforms.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-3">
+        <span class="problem-icon">&#128202;</span>
+        <h3>No Audit Trail</h3>
+        <p>Who asked what? How often? At what cost? REST gives you access logs, not business intelligence about data consumption.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-4">
+        <span class="problem-icon">&#9888;&#65039;</span>
+        <h3>Stale Data, Silent Failures</h3>
+        <p>Gold tables go stale. REST serves them anyway. Agents make decisions on data that's hours or days old.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-5">
+        <span class="problem-icon">&#128165;</span>
+        <h3>Schema Drift Breaks Everything</h3>
+        <p>A Silver column gets renamed. Every downstream Gold table and API endpoint breaks. 500 errors. Agents crash.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-6">
+        <span class="problem-icon">&#128683;</span>
+        <h3>404 Is Not an Answer</h3>
+        <p>An agent asks a question the API doesn't cover. REST returns 404. No fallback, no explanation, no path forward.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-7">
+        <span class="problem-icon">&#128587;</span>
+        <h3>Gold Table Sprawl</h3>
+        <p>Every new use case = new endpoint + new Gold table + new SQL + new tests. Teams drown in boilerplate.</p>
+      </div>
+      <div class="problem-card reveal reveal-delay-7">
+        <span class="problem-icon">&#128064;</span>
+        <h3>No Impact Visibility</h3>
+        <p>"Can I rename this column?" Nobody knows what downstream views, APIs, or agents will break. So nothing changes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOLUTION ===== -->
+<section class="solution" id="solution">
+  <div class="container">
+    <div class="solution-header reveal">
+      <div class="section-label">The Solution</div>
+      <h2 class="section-title">Governed data serving<br>for <span class="text-gradient">AI agents</span></h2>
+      <p class="section-subtitle">Register use cases as JSON. CogniMesh handles discovery, routing, lineage, freshness, audit, and governance automatically.</p>
+    </div>
+    <div class="solution-grid">
+      <div class="solution-card reveal reveal-delay-1">
+        <div class="solution-icon">&#128161;</div>
+        <h3>Discovery API</h3>
+        <p>Agents ask "what can you answer?" and get a typed capability catalog. No guessing, no wasted tokens.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-2">
+        <div class="solution-icon">&#9889;</div>
+        <h3>Tiered Query Routing</h3>
+        <p>Known question? Serve from Gold in sub-10ms. Unknown? Compose from Silver. Impossible? Explain why&nbsp;&mdash;&nbsp;never a bare 404.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-3">
+        <div class="solution-icon">&#128279;</div>
+        <h3>Column-Level Lineage</h3>
+        <p>Every cell in every response traces back to its source table and column. Full provenance, automatic.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-4">
+        <div class="solution-icon">&#128202;</div>
+        <h3>Full Audit Trail</h3>
+        <p>Every query logged: agent_id, use case, timestamp, cost, latency, tier. Per-agent cost attribution out of the box.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-5">
+        <div class="solution-icon">&#9201;</div>
+        <h3>Freshness Awareness</h3>
+        <p>Every response includes data age. Stale data is flagged, not silently served. Smart refresh rebuilds only what's needed.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-6">
+        <div class="solution-icon">&#128737;</div>
+        <h3>Schema Drift Isolation</h3>
+        <p>Gold layer absorbs Silver changes. Agents never see a 500 from a renamed column. Zero downtime.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-7">
+        <div class="solution-icon">&#128300;</div>
+        <h3>Dependency Intelligence</h3>
+        <p>Before changing anything, ask "what breaks?" Full impact analysis, provenance queries, what-if scenarios.</p>
+      </div>
+      <div class="solution-card reveal reveal-delay-7">
+        <div class="solution-icon">&#9989;</div>
+        <h3>Approval Workflows</h3>
+        <p>Nothing changes in Gold without human approval. Governance built in, not bolted on.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COMPARISON TABLE ===== -->
+<section class="comparison" id="comparison">
+  <div class="container">
+    <div class="comparison-header reveal">
+      <div class="section-label">Before &amp; After</div>
+      <h2 class="section-title">REST vs. <span class="text-gradient">CogniMesh</span></h2>
+      <p class="section-subtitle">A side-by-side look at what changes when you add a governed data layer.</p>
+    </div>
+    <div class="comparison-table-wrapper reveal">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>What You Have Today (REST)</th>
+            <th>What CogniMesh Gives You</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Agents guess endpoints, get 404s</td>
+            <td>Agents discover capabilities automatically</td>
+          </tr>
+          <tr>
+            <td>No idea where numbers come from</td>
+            <td>Column-level lineage on every response</td>
+          </tr>
+          <tr>
+            <td>Access logs, no business insight</td>
+            <td>Full audit: who, what, cost, tier</td>
+          </tr>
+          <tr>
+            <td>Stale data served silently</td>
+            <td>Freshness-aware with smart refresh</td>
+          </tr>
+          <tr>
+            <td>Schema change = broken APIs</td>
+            <td>Gold isolates agents from drift</td>
+          </tr>
+          <tr>
+            <td>404 for unsupported questions</td>
+            <td>Tiered fallback: compose or explain</td>
+          </tr>
+          <tr>
+            <td>New UC = days of boilerplate</td>
+            <td>New UC = 12 lines of JSON</td>
+          </tr>
+          <tr>
+            <td>"Can I change this?" = nobody knows</td>
+            <td>Impact analysis before any change</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TIER FLOW ===== -->
+<section class="tier-flow" id="tiers">
+  <div class="container">
+    <div class="tier-flow-header reveal">
+      <div class="section-label">Intelligent Routing</div>
+      <h2 class="section-title">Every question gets the<br><span class="text-gradient">right answer</span></h2>
+      <p class="section-subtitle">Three tiers of query resolution. No question goes unanswered. No token goes wasted.</p>
+    </div>
+    <div class="flow-diagram reveal">
+      <div class="flow-entry">
+        <div class="flow-entry-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Agent sends query
+        </div>
+      </div>
+      <div class="flow-arrow">&#8595;</div>
+      <div class="flow-decision">
+        <div class="flow-decision-box">
+          &#9670;&ensp;Match against registered use cases&ensp;&#9670;
+        </div>
+      </div>
+      <div class="flow-branches">
+        <div class="flow-branch">
+          <div class="flow-branch-arrow">&#8595;</div>
+          <div class="flow-branch-label">Exact Match</div>
+          <div class="flow-branch-box">
+            <h4>T0 &mdash; Gold</h4>
+            <p class="flow-desc">Pre-computed, pre-governed. Instant answers from materialized Gold tables.</p>
+            <span class="flow-speed">&lt; 10ms</span>
+          </div>
+        </div>
+        <div class="flow-branch">
+          <div class="flow-branch-arrow">&#8595;</div>
+          <div class="flow-branch-label">Composable</div>
+          <div class="flow-branch-box">
+            <h4>T2 &mdash; Silver</h4>
+            <p class="flow-desc">No Gold table exists, but the answer can be composed from Silver metadata on the fly.</p>
+            <span class="flow-speed">~100ms</span>
+          </div>
+        </div>
+        <div class="flow-branch">
+          <div class="flow-branch-arrow">&#8595;</div>
+          <div class="flow-branch-label">Not Possible</div>
+          <div class="flow-branch-box">
+            <h4>T3 &mdash; Explain</h4>
+            <p class="flow-desc">The question can't be answered. CogniMesh explains why and suggests alternatives.</p>
+            <span class="flow-speed">Graceful</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROOF / BENCHMARKS ===== -->
+<section class="proof" id="proof">
+  <div class="container">
+    <div class="proof-header reveal">
+      <div class="section-label">Benchmarks</div>
+      <h2 class="section-title">Proven, not <span class="text-gradient-amber">promised</span></h2>
+    </div>
+    <div class="proof-context reveal">
+      Real Postgres &middot; <span>20 use cases</span> &middot; <span>200K orders</span> &middot; <span>Production schema</span>
+    </div>
+    <div class="proof-grid">
+      <div class="proof-card reveal reveal-delay-1">
+        <div class="proof-number">12/12</div>
+        <div class="proof-label">System properties satisfied</div>
+        <div class="proof-detail">vs 0/12 for REST</div>
+      </div>
+      <div class="proof-card reveal reveal-delay-2">
+        <div class="proof-number">65%</div>
+        <div class="proof-label">Fewer Gold tables needed</div>
+        <div class="proof-detail">7 vs 20 via consolidation</div>
+      </div>
+      <div class="proof-card reveal reveal-delay-3">
+        <div class="proof-number">85%</div>
+        <div class="proof-label">Less code per use case</div>
+        <div class="proof-detail">12 lines vs 78 lines</div>
+      </div>
+      <div class="proof-card reveal reveal-delay-4">
+        <div class="proof-number">&lt;10ms</div>
+        <div class="proof-label">T0 query latency</div>
+        <div class="proof-detail">Pre-computed Gold path</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="how-it-works" id="how">
+  <div class="container">
+    <div class="how-header reveal">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">From JSON to <span class="text-gradient">governed data</span><br>in three steps</h2>
+      <p class="section-subtitle">No boilerplate. No manual wiring. Define what agents need, CogniMesh builds the rest.</p>
+    </div>
+    <div class="how-steps">
+      <div class="how-step reveal reveal-delay-1">
+        <div class="how-step-number">1</div>
+        <h3>Register a Use Case</h3>
+        <p>Define the business question as a simple JSON object. Specify the entity, filters, and fields your agent needs.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-3">
+        <div class="how-step-number">2</div>
+        <h3>System Derives Everything</h3>
+        <p>CogniMesh auto-generates Gold tables, column-level lineage, freshness rules, and approval workflows.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-5">
+        <div class="how-step-number">3</div>
+        <h3>Agents Query with Governance</h3>
+        <p>Agents discover capabilities, get tiered responses, full provenance, and freshness metadata on every call.</p>
+      </div>
+    </div>
+    <div class="how-json reveal">
+      <div class="how-json-header">
+        <span class="how-json-dot"></span>
+        <span class="how-json-dot"></span>
+        <span class="how-json-dot"></span>
+        <span class="how-json-title">use_case.json &mdash; 12 lines, full governance</span>
+      </div>
+      <pre><code>{
+  <span class="json-key">"uc_id"</span>: <span class="json-string">"orders_at_risk"</span>,
+  <span class="json-key">"question"</span>: <span class="json-string">"Which orders are at risk of delay?"</span>,
+  <span class="json-key">"entity"</span>: <span class="json-string">"orders"</span>,
+  <span class="json-key">"filters"</span>: {
+    <span class="json-key">"risk_level"</span>: [<span class="json-string">"high"</span>, <span class="json-string">"critical"</span>]
+  },
+  <span class="json-key">"fields"</span>: [
+    <span class="json-string">"order_id"</span>, <span class="json-string">"customer"</span>,
+    <span class="json-string">"risk_level"</span>, <span class="json-string">"days_overdue"</span>
+  ],
+  <span class="json-key">"freshness"</span>: <span class="json-string">"1h"</span>
+}
+<span class="json-comment">// That's it. Gold table, lineage, audit &mdash; all automatic.</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section" id="cta">
+  <div class="cta-glow"></div>
+  <div class="cta-content reveal">
+    <div class="section-label">Get Started</div>
+    <h2>Built for data teams<br>who serve <span class="text-gradient">AI agents</span></h2>
+    <p>Stop building one-off REST endpoints. Start governing how agents consume your data.</p>
+    <div class="cta-buttons">
+      <a href="https://github.com/shurikm/cognimesh" class="btn-github" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        Star on GitHub
+      </a>
+      <a href="#how" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Quick Start Guide
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-logo">Cogni<span>Mesh</span></div>
+      <div class="footer-sep"></div>
+      <div class="footer-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        Apache 2.0 License
+      </div>
+      <div class="footer-sep"></div>
+      <div class="footer-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.25 2.26l-.08-.04-.01.02C13.46 2.09 12.74 2 12 2 6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10c0-4.75-3.31-8.72-7.75-9.74zM19.41 9h-3.5c-.31-1.36-.78-2.64-1.41-3.8 2.14.82 3.86 2.44 4.91 3.8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14c-.16-.64-.26-1.31-.26-2s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zM4.59 16h3.5c.31 1.36.78 2.64 1.41 3.8-2.14-.82-3.86-2.44-4.91-3.8zM8.09 8H4.59c1.05-1.36 2.77-2.98 4.91-3.8C8.87 5.36 8.4 6.64 8.09 8zm3.91 15.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.8c.63-1.16 1.1-2.44 1.41-3.8h3.5c-1.05 1.36-2.77 2.98-4.91 3.8zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+        Built with Python
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== SCROLL ANIMATIONS ===== -->
+<script>
+// Navbar scroll effect
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Intersection Observer for reveal animations
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+
+</body>
+</html>

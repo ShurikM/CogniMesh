@@ -12,3 +12,5 @@ benchmark/data/*.csv
 # SQLMesh generated files
 cognimesh_core/sqlmesh_project/.cache/
 cognimesh_core/sqlmesh_project/logs/
+.DS_Store
+.claude/

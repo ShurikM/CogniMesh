@@ -10,6 +10,8 @@ Teams register Use Cases (business questions agents need answered). CogniMesh de
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
+> **Project Status:** Parked — core architecture proven via benchmark (12/12 properties, 71 tests). Ready for production implementation when needed.
+
 ## Architecture
 
 <p align="center">
@@ -95,6 +97,7 @@ We built **two complete implementations** serving the same 20 business questions
 |----------|-----------------|
 | **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full benchmark report with charts, scorecards, measured results at 20 UCs. |
 | **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Architecture, design decisions, comparison, and implementation roadmap. |
+| **[One-Pager](https://shurikm.github.io/CogniMesh/docs/onepager.html)** | Single-page overview of CogniMesh — architecture, key results, value proposition. |
 
 ---
 
@@ -261,8 +264,10 @@ GET  /refresh/plan           — Preview what would be refreshed
 | Feature | Status | Why Skipped |
 |---------|--------|-------------|
 | MCP server | Deferred | REST API covers all agent integration needs. `GET /discover` returns capabilities, `POST /query` serves data. Every agent framework can make HTTP calls. MCP adds protocol complexity without adding capability. The existing REST API maps directly to MCP tools — adding MCP support is a weekend of work, not an architectural change. It can be added when a specific agent framework requires it. |
+| Access control & agent scoping | **Done** | Per-UC permissions, agent identity enforcement |
+| Approval queue | **Done** | Nothing changes in Gold without human approval |
 | LLM-based UC routing | Planned | Benchmark uses deterministic keyword matching for reproducibility |
-| SQLMesh integration | Planned | Benchmark uses template-based Gold derivation |
+| SQLMesh integration | **Done** | Managed Gold materialization with full DAG support |
 | Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
 | Production data volumes | Planned | 200K orders sufficient for latency comparison |
 
