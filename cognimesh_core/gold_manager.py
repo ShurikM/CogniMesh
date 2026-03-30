@@ -91,6 +91,15 @@ class GoldManager:
         if not uc.derivation_sql:
             raise ValueError(f"UC {uc.id} has no derivation_sql")
 
+        # Guard against placeholder derivation SQL (e.g. "-- populated by seed_scale.py").
+        # Running a comment-only SQL after TRUNCATE would leave the Gold table empty.
+        stripped = uc.derivation_sql.strip()
+        if all(line.strip().startswith("--") or not line.strip() for line in stripped.splitlines()):
+            raise ValueError(
+                f"UC {uc.id} has placeholder derivation_sql (comment only); "
+                "populate via seed_scale.py first"
+            )
+
         start_ms = time.perf_counter()
 
         with get_connection(self.config) as conn:

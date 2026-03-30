@@ -12,6 +12,7 @@ import logging
 import os
 
 from cognimesh_core.config import CogniMeshConfig
+from cognimesh_core.db import get_connection
 from cognimesh_core.gold_manager import GoldManager
 from cognimesh_core.lineage import LineageTracker
 from cognimesh_core.models import ColumnLineage, UseCase
@@ -72,13 +73,54 @@ def main() -> None:
         uc = UseCase(**data)
         uc_count += 1
 
+        # If the JSON has placeholder derivation_sql, preserve whatever real
+        # SQL is already stored in the registry (written by seed_scale.py).
+        if uc.derivation_sql and uc.derivation_sql.strip().startswith("--"):
+            existing = registry.get(uc.id)
+            if existing and existing.derivation_sql and not existing.derivation_sql.strip().startswith("--"):
+                uc.derivation_sql = existing.derivation_sql
+
         # 1. Register the UC in the capability index
         registry.register(uc)
 
-        # 2. Refresh Gold view — only once per consolidated view
+        # 2. Refresh Gold view — only once per consolidated view.
+        #    Skip when derivation_sql is a placeholder comment (data already
+        #    populated by seed_scale.py); refreshing would TRUNCATE the table
+        #    and re-insert nothing.
         row_count = 0
+        has_real_sql = (
+            uc.derivation_sql
+            and not uc.derivation_sql.strip().startswith("--")
+        )
         if uc.gold_view and uc.gold_view not in refreshed_views:
-            row_count = gold_mgr.refresh_gold(uc)
+            if has_real_sql:
+                row_count = gold_mgr.refresh_gold(uc)
+            else:
+                # Gold table already populated by seed_scale.py — just record
+                # the freshness metadata without truncating.
+                with get_connection(config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT count(*) AS cnt FROM {gv}".format(  # noqa: S608
+                                gv=uc.gold_view
+                            )
+                        )
+                        row_count = cur.fetchone()["cnt"]
+                        cur.execute(
+                            """
+                            INSERT INTO cognimesh_internal.freshness
+                                (gold_view, uc_id, last_refreshed_at, ttl_seconds,
+                                 row_count, refresh_duration_ms)
+                            VALUES (%s, %s, now(), %s, %s, 0)
+                            ON CONFLICT (gold_view) DO UPDATE SET
+                                last_refreshed_at = now(),
+                                ttl_seconds = EXCLUDED.ttl_seconds,
+                                row_count = EXCLUDED.row_count,
+                                refresh_duration_ms = EXCLUDED.refresh_duration_ms
+                            """,
+                            (uc.gold_view, uc.id, uc.freshness_ttl_seconds, row_count),
+                        )
+                    conn.commit()
             refreshed_views.add(uc.gold_view)
 
         # 3. Register column-level lineage

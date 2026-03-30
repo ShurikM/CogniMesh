@@ -30,7 +30,7 @@ class TestStaleness:
         sample_customer_id: str,
     ) -> None:
         """CogniMesh: Detects staleness when TTL expires."""
-        gold_view = "gold_cognimesh.customer_health"
+        gold_view = "gold_cognimesh.customer_360"
 
         # 1. Set UC-01 TTL to 1 second and backdate last_refreshed_at
         with db_conn.cursor() as cur:

@@ -54,7 +54,7 @@ class TestRESTProperties:
 
     def test_rest_no_fallback(self, rest_app: TestClient) -> None:
         """REST returns 404 for unsupported queries."""
-        r = rest_app.get("/api/v1/revenue/by-region")
+        r = rest_app.get("/api/v1/inventory/by-warehouse")
         assert r.status_code == 404  # noqa: S101
 
     def test_rest_no_drift_detection(self) -> None:
@@ -168,7 +168,7 @@ class TestCogniMeshProperties:
         """7/8: Unsupported query gets T2/T3 handling, not 404."""
         r = mesh_app.post(
             "/query",
-            json={"question": "What is the average order value by region?"},
+            json={"question": "What is the warehouse inventory turnover rate?"},
         )
         assert r.status_code == 200  # noqa: S101
         data = r.json()

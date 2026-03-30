@@ -910,6 +910,33 @@ def _fmt_bytes(b: int) -> str:
     return f"{b / (1024 * 1024):.1f} MB"
 
 
+def update_registry_derivation_sql(conn: psycopg.Connection) -> None:
+    """Store the real derivation SQL in the UC registry.
+
+    Without this, the registry holds placeholder comments
+    ("-- populated by seed_scale.py") which prevents the refresh
+    manager from re-deriving Gold tables.
+    """
+    # Build combined derivation SQL per Gold view
+    view_sql: dict[str, str] = {}
+    for table_name, insert_stmt in _COGNIMESH_TABLES:
+        if table_name in view_sql:
+            view_sql[table_name] += "\n;\n" + insert_stmt.strip()
+        else:
+            view_sql[table_name] = insert_stmt.strip()
+
+    with conn.cursor() as cur:
+        for gold_view, derivation_sql in view_sql.items():
+            cur.execute(
+                "UPDATE cognimesh_internal.uc_registry "  # noqa: S608
+                "SET derivation_sql = %(sql)s "
+                "WHERE gold_view = %(gv)s AND derivation_sql LIKE '--%%'",
+                {"sql": derivation_sql, "gv": gold_view},
+            )
+    conn.commit()
+    log.info("  Updated derivation_sql for %d Gold views in UC registry.", len(view_sql))
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -921,6 +948,7 @@ def main() -> None:
 
         rest_time = populate_rest_gold(conn)
         cm_time = populate_cognimesh_gold(conn)
+        update_registry_derivation_sql(conn)
 
         print_row_counts(conn)
         print_storage_sizes(conn)

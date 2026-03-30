@@ -11,7 +11,7 @@ class TestUnsupportedUC:
 
     def test_rest_unsupported_uc(self, rest_app: TestClient) -> None:
         """REST: No endpoint exists -> 404."""
-        r = rest_app.get("/api/v1/revenue/by-region")
+        r = rest_app.get("/api/v1/inventory/by-warehouse")
         assert r.status_code == 404  # noqa: S101
 
     def test_cognimesh_unsupported_uc(self, mesh_app: TestClient) -> None:
