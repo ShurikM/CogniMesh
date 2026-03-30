@@ -18,7 +18,7 @@ class CogniMeshConfig(BaseSettings):
 
     # Refresh
     refresh_mode: str = "scheduled"  # scheduled | realtime
-    refresh_schedule: str = "0 */4 * * *"  # cron expression: every 4 hours (for documentation)
+    refresh_schedule: str = "0 0 * * *"  # cron expression: daily at midnight
 
     # Gateway
     default_agent_id: str = "benchmark"
