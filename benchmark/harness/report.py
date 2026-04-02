@@ -39,7 +39,7 @@ def collect_results() -> dict:
 
     # Performance results (from pytest-benchmark JSON if exists)
     bench_json = RESULTS_DIR / "benchmark.json"
-    if bench_json.exists():
+    if bench_json.exists() and bench_json.stat().st_size > 0:
         with open(bench_json) as f:
             results["performance"] = json.load(f)
 
@@ -74,21 +74,22 @@ Generated: {r['meta']['timestamp']}
 ## Executive Summary
 
 Two approaches serving the same 3 use cases from the same Postgres Bronze/Silver data.
-REST wins on raw latency (~2-5ms faster). CogniMesh wins on everything else.
+REST with dbt tooling (audit, lineage, freshness, discovery) scores 5/8.
+CogniMesh scores 8/8. The gap is governance, intelligent fallback, and drift isolation.
 
 ## System Properties Scorecard
 
-| # | Property | REST | CogniMesh |
-|---|----------|------|-----------|
-| 1 | Discovery | No | **Yes** |
-| 2 | Lineage | No | **Yes** |
-| 3 | Audit Trail | No | **Yes** |
-| 4 | Cost Attribution | No | **Yes** |
-| 5 | Change Governance | No | **Yes** |
-| 6 | Freshness Awareness | No | **Yes** |
-| 7 | Tiered Fallback | No (404) | **Yes** (T2/T3) |
-| 8 | Schema Drift Detection | No (500) | **Yes** |
-| | **Score** | **0/8** | **8/8** |
+| # | Property | REST (dbt stack) | CogniMesh |
+|---|----------|-------------------|-----------|
+| 1 | Discovery | **Yes** (static endpoint list) | **Yes** (semantic UC matching) |
+| 2 | Lineage | **Yes** (dbt manifest) | **Yes** (column-level, live) |
+| 3 | Audit Trail | **Yes** (middleware logging) | **Yes** (per-query, per-UC) |
+| 4 | Cost Attribution | **Yes** (audit cost_units) | **Yes** (tiered cost model) |
+| 5 | Change Governance | No (dbt has no approval workflow) | **Yes** (approval queue) |
+| 6 | Freshness Awareness | **Yes** (dbt run_results) | **Yes** (TTL-based, live) |
+| 7 | Tiered Fallback | No (404 for unknown) | **Yes** (T2 Silver + T3 explain) |
+| 8 | Schema Drift Detection | No (Gold SQL fails) | **Yes** (materialized isolation) |
+| | **Score** | **5/8** | **8/8** |
 
 ## Developer Effort
 

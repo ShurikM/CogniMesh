@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "dbt_version": "1.7.0",
+    "generated_at": "2026-03-27T00:00:00Z"
+  },
+  "results": [
+    {
+      "unique_id": "model.cognimesh_bench.customer_health",
+      "status": "success",
+      "execution_time": 0.45,
+      "rows_affected": 10000,
+      "timing": [{"name": "execute", "started_at": "2026-03-27T00:00:00Z", "completed_at": "2026-03-27T00:00:00.450Z"}]
+    },
+    {
+      "unique_id": "model.cognimesh_bench.top_products",
+      "status": "success",
+      "execution_time": 0.12,
+      "rows_affected": 500,
+      "timing": [{"name": "execute", "started_at": "2026-03-27T00:00:01Z", "completed_at": "2026-03-27T00:00:01.120Z"}]
+    },
+    {
+      "unique_id": "model.cognimesh_bench.at_risk_customers",
+      "status": "success",
+      "execution_time": 0.23,
+      "rows_affected": 2960,
+      "timing": [{"name": "execute", "started_at": "2026-03-27T00:00:02Z", "completed_at": "2026-03-27T00:00:02.230Z"}]
+    }
+  ]
+}

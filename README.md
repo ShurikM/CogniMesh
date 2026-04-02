@@ -12,7 +12,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) for rich Sil
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
-> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 85 tests (12/12 properties, 14 dbook integration tests). Ready for production implementation when needed.
+> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 85 tests (8/8 properties, 14 dbook integration tests). Ready for production implementation when needed.
 
 ## Architecture
 
@@ -151,7 +151,7 @@ We built **two complete implementations** serving the same 20 business questions
 
 | Dimension | REST API | CogniMesh | Winner |
 |-----------|----------|-----------|--------|
-| System properties (12 checks) | **0 / 12** | **12 / 12** | CogniMesh |
+| System properties (8 checks) | **5 / 8** | **8 / 8** | CogniMesh |
 | Schema drift handling | SQL Error (500) | Isolated (serves from Gold) | CogniMesh |
 | Unsupported question | 404 Not Found | Composes query from metadata | CogniMesh |
 | Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
@@ -171,24 +171,39 @@ We built **two complete implementations** serving the same 20 business questions
 | UC-02 Top Products | 1.47ms | 3.22ms | +1.75ms |
 | UC-03 At-Risk Customers | 2.40ms | 5.75ms | +3.35ms |
 
-REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on everything else (12/12 system properties vs 0/12 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response.
+REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on everything else (8/8 system properties vs 5/8 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response.
 
-### The 12-Property Scorecard
+### The 8-Property Scorecard
 
-| Property | REST | CogniMesh |
-|----------|:----:|:---------:|
-| Discovery (agent asks "what can you answer?") | No | **Yes** |
-| Lineage (trace result to source columns) | No | **Yes** |
-| Audit Trail (every query logged) | No | **Yes** |
-| Cost Attribution (per-UC cost tracking) | No | **Yes** |
-| Change Governance (UC changes logged) | No | **Yes** |
-| Freshness Awareness (stale data flagged) | No | **Yes** |
-| Tiered Fallback (unsupported → T2/T3) | 404 | **Yes** |
-| Schema Drift Detection (Silver changes) | 500 | **Yes** |
-| Impact Analysis (what breaks if Silver changes?) | No | **Yes** |
-| Provenance (trace Gold column to Silver source) | No | **Yes** |
-| Smart Refresh (refresh only affected views) | No | **Yes** |
-| Access Control (agent scoping, per-UC permissions) | No | **Yes** |
+| # | Property | REST (dbt stack) | CogniMesh |
+|---|----------|-------------------|-----------|
+| 1 | Discovery | **Yes** (static endpoint list) | **Yes** (semantic UC matching) |
+| 2 | Lineage | **Yes** (dbt manifest) | **Yes** (column-level, live) |
+| 3 | Audit Trail | **Yes** (middleware logging) | **Yes** (per-query, per-UC) |
+| 4 | Cost Attribution | **Yes** (audit cost_units) | **Yes** (tiered cost model) |
+| 5 | Change Governance | No (dbt has no approval workflow) | **Yes** (approval queue) |
+| 6 | Freshness Awareness | **Yes** (dbt run_results) | **Yes** (TTL-based, live) |
+| 7 | Tiered Fallback | No (404 for unknown) | **Yes** (T2 Silver + T3 explain) |
+| 8 | Schema Drift Detection | No (Gold SQL fails) | **Yes** (materialized isolation) |
+| | **Score** | **5/8** | **8/8** |
+
+### What Makes This a Fair Comparison
+
+The REST baseline is not a strawman. It represents what a competent team builds with dbt:
+
+- **Audit middleware** — FastAPI middleware logging every request with latency and cost
+- **dbt manifest lineage** — Column-level lineage from `manifest.json`, served via API
+- **dbt freshness** — Model freshness from `run_results.json`, served via API
+- **Capability discovery** — Static endpoint listing via `/api/v1/discover`
+- **API key auth** — Basic authentication via `X-API-Key` header
+
+**Where CogniMesh still wins** (the 3 properties REST can't match):
+
+| Property | Why REST Can't | CogniMesh Approach |
+|---|---|---|
+| **Change Governance** | dbt has no approval workflow — changes deploy directly | Approval queue: nothing changes in Gold without human sign-off |
+| **Tiered Fallback** | Unknown query = 404. No intelligence. | T2 composes SQL from Silver with dbook metadata. T3 explains why it can't. |
+| **Schema Drift Isolation** | Gold SQL references Silver columns directly — rename breaks everything | Gold views are materialized snapshots. Drift in Silver doesn't break serving. |
 
 ### Documents
 
@@ -248,7 +263,7 @@ make report
 |------------|-------|-----------------|
 | `test_performance.py` | 6 | T0 latency per UC, both approaches (pytest-benchmark) |
 | `test_throughput.py` | 8 | Concurrent request throughput at 1/5/10/25 users |
-| `test_properties.py` | 16 | 12 binary assertions x 2 approaches (the scorecard) |
+| `test_properties.py` | 16 | 8 binary assertions x 2 approaches (the scorecard) |
 | `test_resilience_schema_drift.py` | 2 | Rename Silver column, observe both approaches |
 | `test_resilience_unsupported_uc.py` | 2 | Ask unsupported question, compare REST 404 vs CogniMesh T2 |
 | `test_resilience_staleness.py` | 2 | Expire TTL, check freshness metadata |
@@ -305,7 +320,7 @@ CogniMesh/
 │   ├── tests/                  # All benchmark tests (85 total)
 │   │   ├── test_performance.py
 │   │   ├── test_throughput.py
-│   │   ├── test_properties.py  #   ← The 12/12 scorecard
+│   │   ├── test_properties.py  #   ← The 8/8 vs 5/8 scorecard
 │   │   ├── test_resilience_*.py
 │   │   ├── test_marginal_cost.py
 │   │   ├── test_scale_benchmark.py    # 20-UC scale + infra metrics

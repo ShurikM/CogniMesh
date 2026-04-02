@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "dbt_version": "1.7.0",
+    "generated_at": "2026-03-27T00:00:00Z",
+    "project_name": "cognimesh_bench"
+  },
+  "nodes": {
+    "model.cognimesh_bench.customer_health": {
+      "unique_id": "model.cognimesh_bench.customer_health",
+      "name": "customer_health",
+      "schema": "gold_rest",
+      "description": "Customer health status derived from Silver profiles",
+      "columns": {
+        "customer_id": {"name": "customer_id", "description": "Primary key", "meta": {"source_table": "silver.customer_profiles", "source_column": "customer_id", "transformation": "direct"}},
+        "name": {"name": "name", "description": "Customer name", "meta": {"source_table": "silver.customer_profiles", "source_column": "name", "transformation": "direct"}},
+        "region": {"name": "region", "description": "Geographic region", "meta": {"source_table": "silver.customer_profiles", "source_column": "region", "transformation": "direct"}},
+        "total_orders": {"name": "total_orders", "description": "Lifetime order count", "meta": {"source_table": "silver.customer_profiles", "source_column": "total_orders", "transformation": "direct"}},
+        "total_spend": {"name": "total_spend", "description": "Lifetime spend", "meta": {"source_table": "silver.customer_profiles", "source_column": "total_spend", "transformation": "direct"}},
+        "days_since_last_order": {"name": "days_since_last_order", "description": "Recency metric", "meta": {"source_table": "silver.customer_profiles", "source_column": "days_since_last_order", "transformation": "direct"}},
+        "ltv_segment": {"name": "ltv_segment", "description": "LTV tier", "meta": {"source_table": "silver.customer_profiles", "source_column": "ltv_segment", "transformation": "direct"}},
+        "health_status": {"name": "health_status", "description": "Computed health", "meta": {"source_table": "silver.customer_profiles", "source_column": "health_status", "transformation": "computed"}}
+      },
+      "depends_on": {"nodes": ["source.cognimesh_bench.silver.customer_profiles"]}
+    },
+    "model.cognimesh_bench.top_products": {
+      "unique_id": "model.cognimesh_bench.top_products",
+      "name": "top_products",
+      "schema": "gold_rest",
+      "description": "Product rankings by revenue and order volume",
+      "columns": {
+        "product_id": {"name": "product_id", "description": "Primary key", "meta": {"source_table": "silver.product_metrics", "source_column": "product_id", "transformation": "direct"}},
+        "name": {"name": "name", "description": "Product name", "meta": {"source_table": "silver.product_metrics", "source_column": "name", "transformation": "direct"}},
+        "category": {"name": "category", "description": "Product category", "meta": {"source_table": "silver.product_metrics", "source_column": "category", "transformation": "direct"}},
+        "total_revenue": {"name": "total_revenue", "description": "Total revenue", "meta": {"source_table": "silver.product_metrics", "source_column": "total_revenue", "transformation": "aggregation:sum"}},
+        "total_orders": {"name": "total_orders", "description": "Order count", "meta": {"source_table": "silver.product_metrics", "source_column": "total_orders", "transformation": "aggregation:count"}}
+      },
+      "depends_on": {"nodes": ["source.cognimesh_bench.silver.product_metrics"]}
+    },
+    "model.cognimesh_bench.at_risk_customers": {
+      "unique_id": "model.cognimesh_bench.at_risk_customers",
+      "name": "at_risk_customers",
+      "schema": "gold_rest",
+      "description": "Customers at risk of churn",
+      "columns": {
+        "customer_id": {"name": "customer_id", "description": "Primary key", "meta": {"source_table": "silver.customer_profiles", "source_column": "customer_id", "transformation": "direct"}},
+        "name": {"name": "name", "description": "Customer name", "meta": {"source_table": "silver.customer_profiles", "source_column": "name", "transformation": "direct"}},
+        "health_status": {"name": "health_status", "description": "Must be at_risk or critical", "meta": {"source_table": "silver.customer_profiles", "source_column": "health_status", "transformation": "filter"}}
+      },
+      "depends_on": {"nodes": ["source.cognimesh_bench.silver.customer_profiles"]}
+    }
+  },
+  "sources": {
+    "source.cognimesh_bench.silver.customer_profiles": {
+      "unique_id": "source.cognimesh_bench.silver.customer_profiles",
+      "name": "customer_profiles",
+      "schema": "silver",
+      "description": "Enriched customer profiles"
+    },
+    "source.cognimesh_bench.silver.product_metrics": {
+      "unique_id": "source.cognimesh_bench.silver.product_metrics",
+      "name": "product_metrics",
+      "schema": "silver",
+      "description": "Aggregated product performance"
+    },
+    "source.cognimesh_bench.silver.orders_enriched": {
+      "unique_id": "source.cognimesh_bench.silver.orders_enriched",
+      "name": "orders_enriched",
+      "schema": "silver",
+      "description": "Enriched order data"
+    }
+  }
+}

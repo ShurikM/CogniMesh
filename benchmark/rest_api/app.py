@@ -1,7 +1,7 @@
 """FastAPI application for the REST API benchmark (Approach A).
 
-Traditional REST with dedicated Gold tables.
-No lineage, no audit, no freshness, no discovery — by architectural design.
+dbt-powered REST with audit logging, lineage (manifest), freshness (run_results),
+and capability discovery. Represents a production-grade dbt stack.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI  # type: ignore[import-untyped]
 
-from benchmark.rest_api.database import close_pool, get_pool
+from benchmark.rest_api.database import close_pool, get_connection, get_pool
 from benchmark.rest_api.endpoints.at_risk_customers import (
     router as at_risk_router,
 )
@@ -23,6 +23,15 @@ from benchmark.rest_api.endpoints.customer_health import (
 )
 from benchmark.rest_api.endpoints.customer_lists import (
     router as customer_lists_router,
+)
+from benchmark.rest_api.endpoints.discover import (
+    router as discover_router,
+)
+from benchmark.rest_api.endpoints.freshness import (
+    router as freshness_router,
+)
+from benchmark.rest_api.endpoints.lineage import (
+    router as lineage_router,
 )
 from benchmark.rest_api.endpoints.orders import (
     router as orders_router,
@@ -36,6 +45,7 @@ from benchmark.rest_api.endpoints.revenue import (
 from benchmark.rest_api.endpoints.top_products import (
     router as top_products_router,
 )
+from benchmark.rest_api.middleware import AuditMiddleware
 
 
 @asynccontextmanager
@@ -47,11 +57,17 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="CogniMesh REST Benchmark",
-    description="Approach A — traditional REST with dedicated Gold tables.",
-    version="0.1.0",
+    title="CogniMesh REST Benchmark (dbt Stack)",
+    description=(
+        "Approach A — dbt-powered REST with audit, lineage,"
+        " freshness, and discovery."
+    ),
+    version="0.2.0",
     lifespan=lifespan,
 )
+
+# -- Audit middleware (dbt production stack) -----------------------------------
+app.add_middleware(AuditMiddleware, db_get_connection=get_connection)
 
 # -- Routers ------------------------------------------------------------------
 # Static-path routers first to avoid /{id} captures
@@ -63,6 +79,9 @@ app.include_router(orders_router)
 app.include_router(top_products_router)
 app.include_router(product_details_router)
 app.include_router(revenue_router)
+app.include_router(discover_router)
+app.include_router(lineage_router)
+app.include_router(freshness_router)
 
 
 # -- Health check -------------------------------------------------------------
