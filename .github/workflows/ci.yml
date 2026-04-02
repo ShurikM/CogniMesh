@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check --output-format concise cognimesh_core/ benchmark/
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dbook]" 2>/dev/null || pip install -e .
+      - run: python -m py_compile cognimesh_core/config.py
+      - run: python -m py_compile cognimesh_core/gateway.py
+      - run: python -m py_compile cognimesh_core/query_composer.py
+      - run: python -m py_compile cognimesh_core/capability_index.py
+      - run: python -m py_compile cognimesh_core/dbook_bridge.py
+      - run: python -m py_compile cognimesh_core/mcp_server.py
+      - run: python -m py_compile cognimesh_core/refresh_manager.py
+
+  unit-tests:
+    name: Unit Tests (no DB)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dbook]" 2>/dev/null || pip install -e .
+      - run: pip install pytest pytest-benchmark pytest-asyncio
+      - name: Run non-DB tests
+        run: |
+          python -m pytest benchmark/tests/test_marginal_cost.py \
+            benchmark/tests/test_resilience_unsupported_uc.py \
+            -q --tb=short --no-header --benchmark-disable
+
+  integration-tests:
+    name: Integration Tests (with DB)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: cognimesh
+          POSTGRES_PASSWORD: cognimesh
+          POSTGRES_DB: cognimesh_bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://cognimesh:cognimesh@localhost:5432/cognimesh_bench
+      COGNIMESH_DATABASE_URL: postgresql://cognimesh:cognimesh@localhost:5432/cognimesh_bench
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dbook]" 2>/dev/null || pip install -e .
+          pip install pytest pytest-benchmark pytest-asyncio faker
+      - name: Seed database
+        run: |
+          python benchmark/data/seed.py
+          python benchmark/data/seed_scale.py
+      - name: Setup CogniMesh
+        run: python benchmark/cognimesh_app/setup.py
+      - name: Run full test suite
+        run: |
+          python -m pytest benchmark/tests/ \
+            -q --tb=short --no-header \
+            --benchmark-disable \
+            -x
+      - name: Generate report
+        if: always()
+        run: python benchmark/harness/report.py

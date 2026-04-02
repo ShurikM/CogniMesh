@@ -1,5 +1,7 @@
 # CogniMesh
 
+[![CI](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml)
+
 <p align="center">
   <img src="docs/logo.svg" alt="CogniMesh Logo" width="96">
 </p>
