@@ -197,3 +197,59 @@ class TestDbookSemanticDiscovery:
                 # At least some terms should map to columns
                 return
         pytest.fail("No concept terms mapped to columns")
+
+
+class TestT2ProductionGuards:
+    """T2 Silver fallback has production-grade safety guards."""
+
+    def test_explain_guard_config_exists(self, dbook_bridge) -> None:
+        """EXPLAIN cost guard is configured."""
+        from cognimesh_core.config import CogniMeshConfig
+        config = CogniMeshConfig()
+        assert hasattr(config, "t2_max_explain_cost")
+        assert config.t2_max_explain_cost > 0
+
+    def test_table_size_guard_config_exists(self, dbook_bridge) -> None:
+        """Table size guard is configured."""
+        from cognimesh_core.config import CogniMeshConfig
+        config = CogniMeshConfig()
+        assert hasattr(config, "t2_max_source_rows")
+        assert config.t2_max_source_rows > 0
+
+    def test_concurrency_guard_config_exists(self, dbook_bridge) -> None:
+        """T2 concurrency limit is configured."""
+        from cognimesh_core.config import CogniMeshConfig
+        config = CogniMeshConfig()
+        assert hasattr(config, "t2_max_concurrent")
+        assert config.t2_max_concurrent > 0
+
+    def test_t2_query_within_guards(self, mesh_app) -> None:
+        """T2 query on small Silver tables passes all guards."""
+        r = mesh_app.post("/query", json={
+            "question": "What is the total revenue by region?",
+            "agent_id": "benchmark",
+        })
+        assert r.status_code == 200
+        data = r.json()
+        # Should succeed (T0 match or T2 within guards) — not rejected by guards
+        assert data["tier"] in ("T0", "T2", "T3")
+        if data["tier"] == "T3":
+            # If T3, should NOT be because of explain_cost or source_table_too_large
+            reason = data.get("metadata", {}).get("reason", "")
+            assert reason not in ("explain_cost_exceeded", "source_table_too_large")
+
+    def test_gateway_has_semaphore(self) -> None:
+        """Gateway has T2 concurrency semaphore."""
+        from cognimesh_core.config import CogniMeshConfig
+        from cognimesh_core.gateway import Gateway
+        from cognimesh_core.audit import AuditLog
+        from cognimesh_core.capability_index import CapabilityIndex
+        from cognimesh_core.gold_manager import GoldManager
+        from cognimesh_core.lineage import LineageTracker
+        from cognimesh_core.registry import UCRegistry
+
+        config = CogniMeshConfig()
+        registry = UCRegistry(config)
+        gw = Gateway(config, registry, CapabilityIndex(registry),
+                     GoldManager(config), LineageTracker(config), AuditLog(config))
+        assert hasattr(gw, "_t2_semaphore")

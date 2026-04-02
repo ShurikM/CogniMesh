@@ -89,6 +89,9 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a databa
 | `COGNIMESH_DBOOK_ENABLED` | `true` | Enable/disable dbook integration |
 | `COGNIMESH_DBOOK_SAMPLE_ROWS` | `5` | Sample rows per table during introspection |
 | `COGNIMESH_DBOOK_INCLUDE_ROW_COUNT` | `true` | Include row counts (requires COUNT(*) query) |
+| `COGNIMESH_T2_MAX_EXPLAIN_COST` | `50000` | Max Postgres EXPLAIN cost before T2 query is rejected |
+| `COGNIMESH_T2_MAX_SOURCE_ROWS` | `10000000` | Max source table rows (from dbook) before T2 query is rejected |
+| `COGNIMESH_T2_MAX_CONCURRENT` | `3` | Max concurrent T2 queries (semaphore) |
 
 ### API Endpoints
 
@@ -99,6 +102,20 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a databa
 dbook is an **optional dependency** — CogniMesh runs without it, falling back to basic `information_schema` metadata.
 
 All 14 dbook integration tests pass in the benchmark: schema-aware T2 composition uses rich metadata (FKs, enums, sample data), drift detection works proactively via SHA256 hash comparison on every scheduled refresh, and semantic discovery via the concept index boosts UC matching for domain terms.
+
+### T2 Production Safety Guards
+
+T2 Silver fallback composes SQL dynamically — which is powerful but dangerous without proper guards. CogniMesh implements three production-grade safety mechanisms:
+
+| Guard | What it does | Config | Default |
+|-------|-------------|--------|---------|
+| **EXPLAIN cost check** | Runs `EXPLAIN (FORMAT JSON)` before execution. Rejects if Postgres cost estimate exceeds threshold. | `COGNIMESH_T2_MAX_EXPLAIN_COST` | 50,000 |
+| **Table size guard** | Uses dbook's actual row counts to reject queries against Silver tables larger than threshold. | `COGNIMESH_T2_MAX_SOURCE_ROWS` | 10,000,000 |
+| **Concurrency semaphore** | Limits concurrent T2 queries to prevent connection pool saturation. | `COGNIMESH_T2_MAX_CONCURRENT` | 3 |
+
+These complement the existing guards (statement timeout, result row limit) to prevent catastrophically expensive queries on large Silver tables.
+
+**T2 rejection flow:** If any guard triggers, the query is rejected to T3 with the specific reason (`explain_cost_exceeded`, `source_table_too_large`, `t2_concurrency_limit`) and actionable metadata (actual cost, row count, limits). The agent knows exactly why the query was rejected and what the limits are.
 
 ---
 

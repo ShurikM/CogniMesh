@@ -16,6 +16,11 @@ class CogniMeshConfig(BaseSettings):
     t2_max_seconds: float = 5.0
     t2_max_cost_units: float = 100.0
 
+    # T2 production guards
+    t2_max_explain_cost: float = 50_000.0  # Postgres EXPLAIN cost units
+    t2_max_source_rows: int = 10_000_000   # Max rows in source Silver table
+    t2_max_concurrent: int = 3             # Max concurrent T2 queries
+
     # Refresh
     refresh_mode: str = "scheduled"  # scheduled | realtime
     refresh_schedule: str = "0 0 * * *"  # cron expression: daily at midnight

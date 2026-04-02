@@ -48,6 +48,7 @@ class Gateway:
         self.audit = audit_log
         self.query_composer: QueryComposer = query_composer or TemplateComposer(config)
         self.dbook_bridge = dbook_bridge
+        self._t2_semaphore = threading.Semaphore(config.t2_max_concurrent)
 
     # ------------------------------------------------------------------
     # Public API
@@ -106,6 +107,15 @@ class Gateway:
         table_metadata = self.gold_manager.get_table_metadata()
         composed = self.query_composer.compose(question, table_metadata)
         if composed and composed.confidence >= 0.3:
+            # Table size guard (dbook row counts)
+            size_issue = self._table_size_guard(composed)
+            if size_issue:
+                result = self._reject_t3(question, composed, reason=size_issue["reason"])
+                result.metadata.update(size_issue)
+                elapsed_ms = (time.perf_counter() - start) * 1000
+                self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
+                return result
+
             # Check guardrails before executing
             if self._within_guardrails(composed):
                 # Validate composed SQL with dbook if available
@@ -119,6 +129,16 @@ class Gateway:
                     elapsed_ms = (time.perf_counter() - start) * 1000
                     self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
                     return result
+
+                # EXPLAIN-based cost guard
+                explain_issue = self._explain_guard(composed)
+                if explain_issue:
+                    result = self._reject_t3(question, composed, reason=explain_issue["reason"])
+                    result.metadata.update(explain_issue)
+                    elapsed_ms = (time.perf_counter() - start) * 1000
+                    self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
+                    return result
+
                 result = self._serve_t2(composed, question, agent_id)
                 elapsed_ms = (time.perf_counter() - start) * 1000
                 self._log_audit_async(
@@ -309,6 +329,56 @@ class Gateway:
     # T2: Silver fallback with guardrails
     # ------------------------------------------------------------------
 
+    def _explain_guard(self, composed: ComposedQuery) -> dict | None:
+        """Run EXPLAIN on composed SQL. Return rejection info if too expensive, None if OK."""
+        try:
+            with get_connection(self.config) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f"EXPLAIN (FORMAT JSON) {composed.sql}", composed.params)
+                    plan = cur.fetchone()
+                    if plan:
+                        # psycopg dict_row returns {"QUERY PLAN": [...]}
+                        plan_data = plan.get("QUERY PLAN", plan)
+                        if isinstance(plan_data, list) and plan_data:
+                            top = plan_data[0].get("Plan", {})
+                            total_cost = top.get("Total Cost", 0)
+                            plan_rows = top.get("Plan Rows", 0)
+
+                            if total_cost > self.config.t2_max_explain_cost:
+                                return {
+                                    "reason": "explain_cost_exceeded",
+                                    "total_cost": total_cost,
+                                    "plan_rows": plan_rows,
+                                    "limit": self.config.t2_max_explain_cost,
+                                }
+                            if plan_rows > self.config.t2_max_rows:
+                                return {
+                                    "reason": "explain_rows_exceeded",
+                                    "plan_rows": plan_rows,
+                                    "limit": self.config.t2_max_rows,
+                                }
+        except Exception as e:
+            logger.warning("EXPLAIN guard failed: %s", e)
+        return None  # OK or failed gracefully
+
+    def _table_size_guard(self, composed: ComposedQuery) -> dict | None:
+        """Reject if composed SQL targets tables larger than threshold."""
+        if not self.dbook_bridge or not self.dbook_bridge.available:
+            return None
+        tables = self.dbook_bridge.get_table_metadata_rich()
+        max_table_rows = self.config.t2_max_source_rows
+        for src in (composed.source_tables or []):
+            table_name = src.split(".")[-1] if "." in src else src
+            table_meta = tables.get(table_name)
+            if table_meta and table_meta.row_count and table_meta.row_count > max_table_rows:
+                return {
+                    "reason": "source_table_too_large",
+                    "table": src,
+                    "row_count": table_meta.row_count,
+                    "limit": max_table_rows,
+                }
+        return None
+
     def _validate_composed_sql(self, composed: ComposedQuery) -> dict | None:
         """Validate composed SQL against dbook schema. Returns None if valid or dbook unavailable."""
         if not self.dbook_bridge or not self.dbook_bridge.available:
@@ -356,70 +426,87 @@ class Gateway:
     def _serve_t2(
         self, composed: ComposedQuery, question: str, agent_id: str
     ) -> QueryResult:
-        """Execute T2 Silver fallback with timeout guardrail.
+        """Execute T2 Silver fallback with timeout and concurrency guardrails.
 
         Uses SET LOCAL statement_timeout to enforce the time limit.
+        Uses a semaphore to limit concurrent T2 queries.
         The query is wrapped in a try/except for graceful timeout handling.
         """
-        timeout_ms = int(self.config.t2_max_seconds * 1000)
-
-        try:
-            with get_connection(self.config) as conn:
-                with conn.cursor() as cur:
-                    # SET LOCAL scopes the timeout to this transaction
-                    cur.execute(
-                        "SET LOCAL statement_timeout = %s", (timeout_ms,)  # noqa: S608
-                    )
-                    cur.execute(composed.sql, composed.params if composed.params else None)
-                    rows = cur.fetchall()
-
-            data = [self._serialize_row(r) for r in rows]
-
-            return QueryResult(
-                data=data,
-                tier="T2",
-                composed_sql=composed.sql,
-                metadata={
-                    "source_tables": composed.source_tables,
-                    "confidence": composed.confidence,
-                    "estimated_rows": composed.estimated_rows,
-                    "actual_rows": len(data),
-                    "note": (
-                        "This was served via Silver fallback. "
-                        "Consider promoting to a UC for optimal performance."
-                    ),
-                },
-            )
-        except Exception as exc:
-            error_msg = str(exc)
-            is_timeout = "canceling statement due to statement timeout" in error_msg
-
-            logger.warning(
-                "T2 query failed (%s): %s",
-                "timeout" if is_timeout else "error",
-                error_msg,
-            )
-
-            reason = "query_timeout" if is_timeout else "query_execution_error"
+        if not self._t2_semaphore.acquire(timeout=1.0):
+            # All T2 slots busy
             return QueryResult(
                 tier="T3",
                 composed_sql=composed.sql,
                 metadata={
-                    "reason": reason,
-                    "error": error_msg,
+                    "reason": "t2_concurrency_limit",
+                    "message": f"All {self.config.t2_max_concurrent} T2 slots busy. Try again.",
                     "source_tables": composed.source_tables,
                     "confidence": composed.confidence,
-                    "estimated_rows": composed.estimated_rows,
-                    "estimated_cost_units": composed.estimated_cost_units,
-                    "suggestion": (
-                        "Register this as a UC for optimal performance, "
-                        "or adjust T2 guardrails if the cost is acceptable."
-                    ),
-                    "available_capabilities": [
-                        d.uc_id for d in self.capability_index.discover()
-                    ],
                 },
             )
+
+        try:
+            timeout_ms = int(self.config.t2_max_seconds * 1000)
+
+            try:
+                with get_connection(self.config) as conn:
+                    with conn.cursor() as cur:
+                        # SET LOCAL scopes the timeout to this transaction
+                        cur.execute(
+                            "SET LOCAL statement_timeout = %s", (timeout_ms,)  # noqa: S608
+                        )
+                        cur.execute(composed.sql, composed.params if composed.params else None)
+                        rows = cur.fetchall()
+
+                data = [self._serialize_row(r) for r in rows]
+
+                return QueryResult(
+                    data=data,
+                    tier="T2",
+                    composed_sql=composed.sql,
+                    metadata={
+                        "source_tables": composed.source_tables,
+                        "confidence": composed.confidence,
+                        "estimated_rows": composed.estimated_rows,
+                        "actual_rows": len(data),
+                        "note": (
+                            "This was served via Silver fallback. "
+                            "Consider promoting to a UC for optimal performance."
+                        ),
+                    },
+                )
+            except Exception as exc:
+                error_msg = str(exc)
+                is_timeout = "canceling statement due to statement timeout" in error_msg
+
+                logger.warning(
+                    "T2 query failed (%s): %s",
+                    "timeout" if is_timeout else "error",
+                    error_msg,
+                )
+
+                reason = "query_timeout" if is_timeout else "query_execution_error"
+                return QueryResult(
+                    tier="T3",
+                    composed_sql=composed.sql,
+                    metadata={
+                        "reason": reason,
+                        "error": error_msg,
+                        "source_tables": composed.source_tables,
+                        "confidence": composed.confidence,
+                        "estimated_rows": composed.estimated_rows,
+                        "estimated_cost_units": composed.estimated_cost_units,
+                        "suggestion": (
+                            "Register this as a UC for optimal performance, "
+                            "or adjust T2 guardrails if the cost is acceptable."
+                        ),
+                        "available_capabilities": [
+                            d.uc_id for d in self.capability_index.discover()
+                        ],
+                    },
+                )
+        finally:
+            self._t2_semaphore.release()
 
     # ------------------------------------------------------------------
     # T3: Structured rejection
