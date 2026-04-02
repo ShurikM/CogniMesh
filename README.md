@@ -215,6 +215,39 @@ The REST baseline is not a strawman. It represents what a competent team builds 
 
 ---
 
+## MCP Server
+
+CogniMesh exposes all capabilities as MCP tools for direct agent integration:
+
+```bash
+# Run the MCP server
+python -m cognimesh_core.mcp_server
+```
+
+Configure in Claude Desktop (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "cognimesh": {
+      "command": "python",
+      "args": ["-m", "cognimesh_core.mcp_server"],
+      "env": {"COGNIMESH_DATABASE_URL": "postgresql://..."}
+    }
+  }
+}
+```
+
+| Tool | Description |
+|------|-------------|
+| `cognimesh_query` | Route questions through T0/T2/T3 with lineage and freshness |
+| `cognimesh_discover` | List available data capabilities |
+| `cognimesh_check_drift` | Detect Silver schema drift via dbook hashing |
+| `cognimesh_refresh` | Trigger Gold view refresh |
+| `cognimesh_impact_analysis` | What breaks if Silver changes? |
+| `cognimesh_provenance` | Trace Gold columns to Silver sources |
+
+---
+
 ## Run the Benchmark Yourself
 
 ### Prerequisites
@@ -296,7 +329,8 @@ CogniMesh/
 │   ├── audit.py                #   Audit log + cost attribution
 │   ├── query_composer.py       #   T2 SQL composition from metadata
 │   ├── dependency.py           #   Dependency graph + impact analysis + provenance
-│   └── refresh_manager.py      #   Scheduled + real-time refresh (only affected Gold views)
+│   ├── refresh_manager.py      #   Scheduled + real-time refresh (only affected Gold views)
+│   └── mcp_server.py           #   MCP server — 6 tools wrapping the Gateway
 │
 ├── benchmark/
 │   ├── data/
@@ -380,7 +414,7 @@ GET  /schema/drift            — Check Silver schema for structural changes (db
 
 | Feature | Status | Why Skipped |
 |---------|--------|-------------|
-| MCP server | Deferred | REST API covers all agent integration needs. `GET /discover` returns capabilities, `POST /query` serves data. Every agent framework can make HTTP calls. MCP adds protocol complexity without adding capability. The existing REST API maps directly to MCP tools — adding MCP support is a weekend of work, not an architectural change. It can be added when a specific agent framework requires it. |
+| MCP server | **Done** | 6 MCP tools wrapping the Gateway: query, discover, check_drift, refresh, impact_analysis, provenance. See [MCP Server](#mcp-server) section. |
 | Access control & agent scoping | **Done** | Per-UC permissions, agent identity enforcement |
 | Approval queue | **Done** | Nothing changes in Gold without human approval |
 | LLM-based UC routing | Planned | Benchmark uses deterministic keyword matching for reproducibility |
@@ -402,7 +436,7 @@ GET  /schema/drift            — Check Silver schema for structural changes (db
 | Package manager | uv |
 | LLM (production) | Pluggable: OpenAI / Anthropic / Ollama |
 | Schema intelligence | [dbook](https://github.com/ShurikM/dbook) >=0.1.0 — database metadata compiler (optional, for rich schema introspection) |
-| Agent interface | REST API (FastAPI). MCP deferred — REST covers all use cases. Can be added as a thin wrapper when needed. |
+| Agent interface | REST API (FastAPI) + MCP server (mcp Python SDK) |
 
 ## License
 
