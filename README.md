@@ -180,6 +180,18 @@ We built **two complete implementations** serving the same 20 business questions
 | Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15% of REST) | CogniMesh |
 | Initial setup simplicity | 286 lines | 1,952 lines | REST |
 
+### Honest caveat: the crossover requires packaging
+
+The SLOC crossover at UC-22 assumes CogniMesh is installed as a dependency (`pip install cognimesh-core`), not copied into your repo. Without packaging, every team bears the full ~3,800 SLOC platform cost — and the crossover never arrives for small teams.
+
+| Adoption model | Platform cost | Per-UC cost | Crossover vs REST |
+|---|---|---|---|
+| `pip install cognimesh-core` | 0 SLOC (dependency) | 12 SLOC (1 JSON) | UC-22 |
+| Single team, one repo | ~3,800 SLOC (one-time) | 12 SLOC (1 JSON) | UC-22 within that team |
+| Copy entire repo per team | ~3,800 SLOC per team | 12 SLOC (1 JSON) | Never favorable for small teams |
+
+CogniMesh is pip-installable (`pip install -e .` from the repo). We recommend installing it as a dependency, not vendoring it.
+
 ### Latency Results (median, 100 iterations)
 
 | Use Case | REST API | CogniMesh | Delta |
@@ -262,6 +274,20 @@ Configure in Claude Desktop (`claude_desktop_config.json`):
 | `cognimesh_refresh` | Trigger Gold view refresh |
 | `cognimesh_impact_analysis` | What breaks if Silver changes? |
 | `cognimesh_provenance` | Trace Gold columns to Silver sources |
+
+---
+
+## Installation
+
+```bash
+# From the repo
+pip install -e ".[dbook]"
+
+# Then create your app
+from cognimesh_core.config import CogniMeshConfig
+from cognimesh_core.gateway import Gateway
+# ... configure and run
+```
 
 ---
 
