@@ -160,6 +160,74 @@ dbook and CogniMesh are complementary, not contradictory. dbook shrinks the Gold
 
 ---
 
+### Change Governance: How the Approval Queue Works
+
+CogniMesh enforces a simple invariant: **nothing changes in Gold without human approval.** This is implemented as a DB-backed approval workflow, not a checkbox.
+
+**Flow:**
+
+```
+Register/Update UC ──→ UC status: "pending_approval"
+                              │
+                              ▼
+                    approval_queue table (status: "pending")
+                              │
+                    ┌─────────┴─────────┐
+                    ▼                   ▼
+              POST /approve        POST /reject
+                    │                   │
+                    ▼                   ▼
+            UC activated           UC stays inactive
+            Gold refreshed         No Gold changes
+```
+
+**API Endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/approvals` | GET | List all pending approval requests |
+| `/approvals/history` | GET | Approval history (filterable by UC, with limit) |
+| `/approvals/{id}` | GET | Get details of a specific approval request |
+| `/approvals/{id}/approve` | POST | Approve — activates UC + triggers Gold refresh |
+| `/approvals/{id}/reject` | POST | Reject — UC stays inactive, Gold unchanged |
+
+**Example: Approve a UC change**
+
+```bash
+# List pending approvals
+curl -s localhost:8000/approvals | jq '.[].id'
+
+# Review a specific approval
+curl -s localhost:8000/approvals/1 | jq
+
+# Approve it (triggers Gold refresh)
+curl -X POST "localhost:8000/approvals/1/approve?reviewed_by=alice&note=LGTM"
+
+# Or reject it
+curl -X POST "localhost:8000/approvals/1/reject?reviewed_by=alice&reason=needs+schema+review"
+```
+
+**What gets stored** (in `cognimesh_internal.approval_queue`):
+
+| Column | Description |
+|--------|-------------|
+| `uc_id` | Which UC is being changed |
+| `action` | What's happening: `register`, `update`, `deactivate`, `refresh` |
+| `status` | `pending` → `approved` or `rejected` |
+| `request_data` | Full UC definition at time of submission (JSONB) |
+| `requested_by` / `reviewed_by` | Who submitted / who approved |
+| `reviewed_at` | When the decision was made |
+| `review_note` | Optional comment explaining the decision |
+
+**What this is NOT:**
+- No UI (API-only — integrate with your existing review tooling)
+- No Slack/email notifications (add a webhook in your deployment)
+- No multi-stage approval (single approver, not a committee)
+
+This is deliberately minimal. The goal is enforcing the invariant (no unreviewed Gold changes), not replacing your organization's review process. Wire the API into Slack, PagerDuty, or a custom dashboard as needed.
+
+---
+
 ## Benchmark: dbt REST Stack vs CogniMesh
 
 We built **two complete implementations** serving the same 20 business questions from the same Postgres database (10K customers, 500 products, 200K orders). Then we measured everything.
