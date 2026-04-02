@@ -277,12 +277,15 @@
   <text x="640" y="710" text-anchor="middle" fill="#fda4af" font-size="8.5" font-family="system-ui,sans-serif">Concepts</text>
   <rect x="720" y="678" width="120" height="16" rx="4" fill="rgba(251,113,133,0.08)" stroke="#fb7185" stroke-width="0.8" stroke-opacity="0.5"/>
   <text x="780" y="690" text-anchor="middle" fill="#fda4af" font-size="8.5" font-family="system-ui,sans-serif">SHA256 Hashes</text>
+  <rect x="720" y="698" width="120" height="16" rx="4" fill="rgba(251,113,133,0.08)" stroke="#fb7185" stroke-width="0.8" stroke-opacity="0.5"/>
+  <text x="780" y="710" text-anchor="middle" fill="#fda4af" font-size="8.5" font-family="system-ui,sans-serif">PII Metadata</text>
 
   <!-- Arrow: DbookBridge outputs -->
   <line x1="538" y1="693" x2="578" y2="688" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowRose)"/>
   <line x1="538" y1="698" x2="578" y2="704" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowRose)"/>
   <line x1="538" y1="690" x2="554" y2="688" stroke="#fb7185" stroke-width="0.8"/>
   <line x1="700" y1="688" x2="718" y2="688" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowRose)"/>
+  <line x1="700" y1="708" x2="718" y2="708" stroke="#fb7185" stroke-width="1" marker-end="url(#arrowRose)"/>
 
   <!-- Consumers (arrows going UP into CogniMesh components) -->
   <!-- TemplateComposer -->

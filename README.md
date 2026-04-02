@@ -71,6 +71,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a databa
 | **Enum Validation** | None — raw string matching | dbook detects enum-like columns, validates/corrects filter values |
 | **SQL Validation** | Execute and catch errors | Pre-flight validation via SQLGlot (table/column/FK/enum checks) |
 | **Schema Drift** | Detected reactively when Gold refresh fails | Proactive SHA256 hash comparison on every scheduled refresh |
+| **PII Awareness** | None — no sensitivity detection | dbook scans column names + sample data via Presidio, marks sensitivity levels |
 | **UC Discovery** | Keyword overlap scoring | Semantic concept index boosts matches for domain terms |
 
 ### How It Works
@@ -78,7 +79,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a databa
 1. **Startup**: `DbookBridge` creates a read-only SQLAlchemy connection and runs `introspect_all(schemas=["silver"])` — capturing columns, FKs, enums, row counts, and sample data.
 2. **Concept Index**: `generate_concepts(book)` builds a term→table/column mapping (e.g., "customer" → customer_profiles, orders.customer_id).
 3. **Injection**: Rich metadata is injected into `TemplateComposer` and `CapabilityIndex` at startup.
-4. **T2 Path**: Composed SQL is validated against the dbook schema before execution. Invalid queries are rejected to T3 with actionable suggestions.
+4. **T2 Path**: Composed SQL is validated against the dbook schema before execution. Invalid queries are rejected to T3 with actionable suggestions. PII-marked columns (email, phone, SSN, credit card) are respected — T2 avoids selecting sensitive columns in ad-hoc results.
 5. **Refresh Cycle**: `scheduled_refresh()` calls `check_drift()` — re-introspects Silver and compares SHA256 hashes. Drift events are logged with affected Gold views.
 
 ### Configuration
