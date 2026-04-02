@@ -143,7 +143,7 @@ dbook and CogniMesh are complementary, not contradictory. dbook shrinks the Gold
 
 ---
 
-## Benchmark: REST API vs CogniMesh
+## Benchmark: dbt REST Stack vs CogniMesh
 
 We built **two complete implementations** serving the same 20 business questions from the same Postgres database (10K customers, 500 products, 200K orders). Then we measured everything.
 
