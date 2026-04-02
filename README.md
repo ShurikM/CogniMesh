@@ -12,7 +12,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) for rich Sil
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
-> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 85 tests (8/8 properties, 14 dbook integration tests). Ready for production implementation when needed.
+> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 90 tests (8/8 properties, 19 dbook integration tests including T2 production guards). Ready for production implementation when needed.
 
 ## Architecture
 
@@ -101,7 +101,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a databa
 
 dbook is an **optional dependency** — CogniMesh runs without it, falling back to basic `information_schema` metadata.
 
-All 14 dbook integration tests pass in the benchmark: schema-aware T2 composition uses rich metadata (FKs, enums, sample data), drift detection works proactively via SHA256 hash comparison on every scheduled refresh, and semantic discovery via the concept index boosts UC matching for domain terms.
+All 19 dbook integration tests pass in the benchmark: schema-aware T2 composition uses rich metadata (FKs, enums, sample data), drift detection works proactively via SHA256 hash comparison on every scheduled refresh, semantic discovery via the concept index boosts UC matching for domain terms, and T2 production guards (EXPLAIN cost check, table size guard, concurrency semaphore) are verified.
 
 ### T2 Production Safety Guards
 
@@ -326,7 +326,7 @@ make seed
 # 3. Register CogniMesh UCs + derive Gold views
 make setup-cognimesh
 
-# 4. Run all 85 benchmark tests
+# 4. Run all 90 benchmark tests
 make bench
 
 # 5. Generate the report
@@ -346,8 +346,8 @@ make report
 | `test_marginal_cost.py` | 5 | UC-04 file count + LOC comparison |
 | `test_scale_benchmark.py` | 16 | Latency at scale + infrastructure metrics (storage, table count) |
 | `test_refresh_and_deps.py` | 14 | Dependency graph, impact analysis, smart refresh |
-| `test_dbook_integration.py` | 14 | dbook introspection, concept index, SQL validation, drift detection |
-| **Total** | **85** | **All pass** |
+| `test_dbook_integration.py` | 19 | dbook introspection, concept index, SQL validation, drift detection, T2 production guards |
+| **Total** | **90** | **All pass** |
 
 ---
 
@@ -394,7 +394,7 @@ CogniMesh/
 │   │   ├── setup.py            #   Register UCs + derive Gold + register lineage
 │   │   └── use_cases/          #   20 UC JSON definitions (~12 lines each)
 │   │
-│   ├── tests/                  # All benchmark tests (85 total)
+│   ├── tests/                  # All benchmark tests (90 total)
 │   │   ├── test_performance.py
 │   │   ├── test_throughput.py
 │   │   ├── test_properties.py  #   ← The 8/8 vs 5/8 scorecard
