@@ -38,6 +38,7 @@ class Gateway:
         lineage_tracker: LineageTracker,
         audit_log: AuditLog,
         query_composer: QueryComposer | None = None,
+        dbook_bridge=None,  # DbookBridge | None — optional dbook integration
     ):
         self.config = config
         self.registry = registry
@@ -46,6 +47,7 @@ class Gateway:
         self.lineage = lineage_tracker
         self.audit = audit_log
         self.query_composer: QueryComposer = query_composer or TemplateComposer(config)
+        self.dbook_bridge = dbook_bridge
 
     # ------------------------------------------------------------------
     # Public API
@@ -106,6 +108,17 @@ class Gateway:
         if composed and composed.confidence >= 0.3:
             # Check guardrails before executing
             if self._within_guardrails(composed):
+                # Validate composed SQL with dbook if available
+                validation_issues = self._validate_composed_sql(composed)
+                if validation_issues:
+                    result = self._reject_t3(
+                        question, composed, reason="validation_failed",
+                    )
+                    result.metadata["validation_errors"] = validation_issues["errors"]
+                    result.metadata["validation_suggestions"] = validation_issues.get("suggestions", [])
+                    elapsed_ms = (time.perf_counter() - start) * 1000
+                    self._log_audit_async(None, "T3", question, result, elapsed_ms, agent_id)
+                    return result
                 result = self._serve_t2(composed, question, agent_id)
                 elapsed_ms = (time.perf_counter() - start) * 1000
                 self._log_audit_async(
@@ -295,6 +308,36 @@ class Gateway:
     # ------------------------------------------------------------------
     # T2: Silver fallback with guardrails
     # ------------------------------------------------------------------
+
+    def _validate_composed_sql(self, composed: ComposedQuery) -> dict | None:
+        """Validate composed SQL against dbook schema. Returns None if valid or dbook unavailable."""
+        if not self.dbook_bridge or not self.dbook_bridge.available:
+            return None
+        try:
+            from dbook.validator import QueryValidator  # type: ignore[import-not-found]
+
+            book = self.dbook_bridge.get_book()
+            if not book:
+                return None
+            validator = QueryValidator(book)
+            # Strip schema prefix for validation (dbook indexes by unqualified table name)
+            sql = composed.sql
+            silver_schema = self.config.silver_schema
+            sql_for_validation = sql.replace(f"{silver_schema}.", "")
+            result = validator.validate(sql_for_validation)
+            if not result.valid:
+                return {
+                    "valid": False,
+                    "errors": result.errors,
+                    "warnings": result.warnings,
+                    "suggestions": result.suggestions,
+                }
+            return None  # Valid
+        except ImportError:
+            return None
+        except Exception as e:
+            logger.warning("dbook SQL validation failed: %s", e)
+            return None
 
     def _within_guardrails(self, composed: ComposedQuery) -> bool:
         """Check T2 guardrails: max_rows, max_cost_units."""

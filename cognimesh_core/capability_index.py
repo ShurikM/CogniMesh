@@ -39,7 +39,20 @@ class CapabilityIndex:
         self._registry: UCRegistry = registry
         self._uc_index: dict[str, UseCase] = {}       # UC ID -> UC
         self._field_index: dict[str, list[str]] = {}   # field -> list of gold_views
+        self._concepts: dict[str, dict[str, list[str]]] = {}
         self.rebuild()
+
+    # ------------------------------------------------------------------
+    # Concept injection
+    # ------------------------------------------------------------------
+
+    def set_concepts(self, concepts: dict[str, dict[str, list[str]]]) -> None:
+        """Inject dbook concept index for semantic matching boost.
+
+        Args:
+            concepts: mapping of term -> {tables: [...], columns: [...], aliases: [...]}
+        """
+        self._concepts = concepts
 
     # ------------------------------------------------------------------
     # Index lifecycle
@@ -64,19 +77,25 @@ class CapabilityIndex:
     # ------------------------------------------------------------------
 
     def match_question(self, question: str) -> tuple[UseCase | None, float]:
-        """Deterministic keyword matching.
+        """Deterministic keyword matching with optional concept boosting.
 
         Tokenise the question, match against each UC's question tokens
-        plus its required_field names.  Return (best_match, confidence).
+        plus its required_field names.  When a dbook concept index has
+        been injected via :meth:`set_concepts`, an IDF-weighted bonus is
+        added for UCs whose required_fields overlap with concept columns.
+
+        Returns (best_match, confidence).
         """
+        if not self._uc_index:
+            self.rebuild()
+
         q_tokens = _tokenize(question)
         if not q_tokens:
             return None, 0.0
 
-        best_uc: UseCase | None = None
-        best_score: float = 0.0
-
-        for uc in self._uc_index.values():
+        # Phase 1: keyword overlap scoring (per-UC)
+        uc_scores: dict[str, float] = {}
+        for uc_id, uc in self._uc_index.items():
             uc_tokens = set(_tokenize(uc.question))
             # Also match against field name parts (e.g. "customer_id" -> {"customer", "id"})
             for field in uc.required_fields:
@@ -86,14 +105,37 @@ class CapabilityIndex:
                         uc_tokens.add(cleaned)
 
             matched = sum(1 for t in q_tokens if t in uc_tokens)
-            score = matched / len(q_tokens) if q_tokens else 0.0
-            if score > best_score:
-                best_score = score
-                best_uc = uc
+            uc_scores[uc_id] = matched / len(q_tokens) if q_tokens else 0.0
 
-        if best_score <= 0.0:
+        # Phase 2: concept boost (IDF-weighted) — only when concepts available
+        if self._concepts:
+            for token in q_tokens:
+                if token in self._concepts:
+                    concept = self._concepts[token]
+                    concept_columns = concept.get("columns", [])
+                    n_tables = max(len(concept.get("tables", [])), 1)
+                    idf_weight = 1.0 / n_tables  # inverse document frequency
+
+                    for uc_id, uc in self._uc_index.items():
+                        # Check if UC's required_fields overlap with concept columns
+                        overlap = sum(
+                            1 for field in uc.required_fields
+                            if any(field in col for col in concept_columns)
+                        )
+                        if overlap > 0:
+                            bonus = overlap * 0.1 * idf_weight
+                            uc_scores[uc_id] = uc_scores.get(uc_id, 0.0) + bonus
+
+        # Pick best
+        if not uc_scores:
             return None, 0.0
-        return best_uc, best_score
+
+        best_uc_id = max(uc_scores, key=uc_scores.get)  # type: ignore[arg-type]
+        best_score = min(uc_scores[best_uc_id], 1.0)  # cap at 1.0
+
+        if best_score > 0:
+            return self._uc_index[best_uc_id], best_score
+        return None, 0.0
 
     def match_by_id(self, uc_id: str) -> UseCase | None:
         """Direct UC lookup by ID."""

@@ -41,10 +41,12 @@ class RefreshManager:
         config: CogniMeshConfig,
         gold_manager: GoldManager,
         registry: UCRegistry,
+        dbook_bridge=None,
     ):
         self.config = config
         self.gold_manager = gold_manager
         self.registry = registry
+        self.dbook_bridge = dbook_bridge
         self._listener_thread: threading.Thread | None = None
         self._listener_stop = threading.Event()
 
@@ -62,8 +64,37 @@ class RefreshManager:
 
         Returns a report: {refreshed: [...], skipped: [...], errors: [...], total_ms: N}
         """
-        report: dict = {"refreshed": [], "skipped": [], "errors": [], "total_ms": 0}
+        report: dict = {"refreshed": [], "skipped": [], "errors": [], "drift": [], "total_ms": 0}
         start = time.perf_counter()
+
+        # Schema drift detection via dbook
+        drift_events = []
+        if self.dbook_bridge and self.dbook_bridge.available:
+            try:
+                raw_drift = self.dbook_bridge.check_drift()
+                # Enrich drift events with affected Gold views
+                active_ucs = self.registry.list_active()
+                for event in raw_drift:
+                    affected = set()
+                    for uc in active_ucs:
+                        if uc.source_tables:
+                            # Check if drift table matches any UC source table
+                            # Source tables are like "silver.customer_profiles"
+                            for src in uc.source_tables:
+                                table_part = src.split(".")[-1] if "." in src else src
+                                if table_part == event.table_name or src == event.table_name:
+                                    if uc.gold_view:
+                                        affected.add(uc.gold_view)
+                    event.affected_gold_views = sorted(affected)
+                    drift_events.append(event)
+                    logger.warning(
+                        "Schema drift detected: %s (affects %s)",
+                        event.table_name,
+                        ", ".join(event.affected_gold_views) or "none",
+                    )
+            except Exception as e:
+                logger.warning("dbook drift detection failed: %s", e)
+
         seen_views: set[str] = set()
 
         for uc in self.registry.list_active():
@@ -95,6 +126,16 @@ class RefreshManager:
                     "next_refresh_in": round(freshness.ttl_seconds - freshness.age_seconds, 1),
                 })
 
+        report["drift"] = [
+            {
+                "table": ev.table_name,
+                "old_hash": ev.old_hash[:12],
+                "new_hash": ev.new_hash[:12],
+                "detected_at": ev.detected_at.isoformat(),
+                "affected_gold_views": ev.affected_gold_views,
+            }
+            for ev in drift_events
+        ]
         report["total_ms"] = round((time.perf_counter() - start) * 1000, 1)
         return report
 

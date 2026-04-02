@@ -38,11 +38,29 @@ def mesh_app() -> Generator[TestClient, None, None]:
 
 
 # ---------------------------------------------------------------------------
+# dbook bridge fixture (optional — None if dbook not installed)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+def dbook_bridge():
+    """Optional dbook bridge for tests. Returns None if dbook not installed."""
+    try:
+        from cognimesh_core.config import CogniMeshConfig  # type: ignore[import-not-found]
+        from cognimesh_core.dbook_bridge import DbookBridge  # type: ignore[import-not-found]
+        config = CogniMeshConfig()
+        bridge = DbookBridge(config)
+        bridge.introspect()
+        return bridge
+    except (ImportError, Exception):
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Gateway fixture (for direct Python access, bypassing HTTP)
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
-def gateway() -> Any:
+def gateway(dbook_bridge) -> Any:
     """CogniMesh Gateway instance for direct testing."""
     from cognimesh_core.audit import AuditLog  # type: ignore[import-not-found]
     from cognimesh_core.capability_index import CapabilityIndex  # type: ignore[import-not-found]
@@ -58,7 +76,18 @@ def gateway() -> Any:
     gold_mgr = GoldManager(config)
     lineage = LineageTracker(config)
     audit = AuditLog(config)
-    return Gateway(config, registry, cap_index, gold_mgr, lineage, audit)
+
+    gw = Gateway(config, registry, cap_index, gold_mgr, lineage, audit, dbook_bridge=dbook_bridge)
+
+    # Inject dbook metadata if available
+    if dbook_bridge and dbook_bridge.available:
+        from cognimesh_core.query_composer import TemplateComposer  # type: ignore[import-not-found]
+        if isinstance(gw.query_composer, TemplateComposer):
+            gw.query_composer.set_rich_metadata(dbook_bridge.get_table_metadata_rich())
+            gw.query_composer.set_concepts(dbook_bridge.get_concepts())
+        cap_index.set_concepts(dbook_bridge.get_concepts())
+
+    return gw
 
 
 # ---------------------------------------------------------------------------

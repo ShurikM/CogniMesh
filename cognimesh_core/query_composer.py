@@ -7,6 +7,7 @@ by inspecting Silver table metadata and composing safe, bounded SQL.
 
 from __future__ import annotations
 
+import math
 import re
 from typing import Protocol, runtime_checkable
 
@@ -105,6 +106,28 @@ class TemplateComposer:
 
     def __init__(self, config: CogniMeshConfig):
         self.config = config
+        self._rich_tables: dict = {}  # table_name -> dbook TableMeta (injected via set_rich_metadata)
+        self._concepts: dict = {}     # term -> {tables, columns} (injected via set_concepts)
+
+    # ------------------------------------------------------------------
+    # Public: dbook metadata injection
+    # ------------------------------------------------------------------
+
+    def set_rich_metadata(self, tables: dict) -> None:
+        """Inject dbook TableMeta objects for enhanced T2 composition.
+
+        Args:
+            tables: dict mapping table_name -> dbook TableMeta objects
+        """
+        self._rich_tables = tables
+
+    def set_concepts(self, concepts: dict) -> None:
+        """Inject dbook concept index for better column matching.
+
+        Args:
+            concepts: dict mapping term -> {tables: [...], columns: [...], aliases: [...]}
+        """
+        self._concepts = concepts
 
     def compose(self, question: str, table_metadata: list[dict]) -> ComposedQuery | None:
         """Compose SQL from question + metadata.
@@ -181,6 +204,10 @@ class TemplateComposer:
 
         Returns:
             {table_name: {schema, columns: [{name, type, ordinal}], column_names: set}}
+
+        When dbook rich metadata is available (via set_rich_metadata), each
+        table entry is enriched with foreign_keys, enum_values, row_count,
+        and primary_key.
         """
         tables: dict[str, dict] = {}
         for row in table_metadata:
@@ -197,6 +224,33 @@ class TemplateComposer:
                 "ordinal": row["ordinal_position"],
             })
             tables[tname]["column_names"].add(row["column_name"])
+
+        # Enrich with dbook rich metadata when available
+        if self._rich_tables:
+            for tname, tinfo in tables.items():
+                rich_table = self._rich_tables.get(tname)
+                if rich_table is None:
+                    continue
+
+                # Foreign keys
+                fk_list = []
+                for fk in getattr(rich_table, "foreign_keys", []):
+                    fk_list.append({
+                        "columns": getattr(fk, "columns", []),
+                        "referred_table": getattr(fk, "referred_table", ""),
+                        "referred_columns": getattr(fk, "referred_columns", []),
+                    })
+                tinfo["foreign_keys"] = fk_list
+
+                # Enum values
+                tinfo["enum_values"] = dict(getattr(rich_table, "enum_values", {}))
+
+                # Row count
+                tinfo["row_count"] = getattr(rich_table, "row_count", None)
+
+                # Primary key
+                tinfo["primary_key"] = getattr(rich_table, "primary_key", None)
+
         return tables
 
     # ------------------------------------------------------------------
@@ -242,6 +296,10 @@ class TemplateComposer:
 
         Uses fuzzy matching: token "revenue" matches column "revenue_30d",
         token "region" matches column "customer_region".
+
+        When dbook concepts are available (via set_concepts), applies an
+        IDF-weighted concept boost to tables whose columns overlap with
+        concept-mapped columns.
         """
         results: dict[str, dict] = {}
 
@@ -271,6 +329,35 @@ class TemplateComposer:
                     "matched_columns": matched,
                     "total_meaningful_tokens": len(tokens),
                 }
+
+        # Concept boost (IDF-weighted)
+        if self._concepts:
+            for token in tokens:
+                if token in self._concepts:
+                    concept = self._concepts[token]
+                    concept_tables = concept.get("tables", [])
+                    concept_columns = concept.get("columns", [])
+                    # IDF: less boost if concept maps to many tables
+                    idf_weight = 1.0 / max(len(concept_tables), 1)
+                    for table_name, table_info in tables.items():
+                        col_names = table_info.get("column_names", set())
+                        overlap = sum(
+                            1 for col in concept_columns
+                            if any(c in col for c in col_names)
+                        )
+                        if overlap > 0:
+                            bonus = overlap * 0.15 * idf_weight
+                            if table_name in results:
+                                results[table_name]["score"] = (
+                                    results[table_name].get("score", 0) + bonus
+                                )
+                            else:
+                                # Concept match creates a new entry for this table
+                                results[table_name] = {
+                                    "score": bonus,
+                                    "matched_columns": {},
+                                    "total_meaningful_tokens": len(tokens),
+                                }
 
         return results
 
@@ -357,17 +444,37 @@ class TemplateComposer:
                 break
 
         # --- Value filtering: "category {value}" or "{column} {value}" ---
+        table_enums = table_info.get("enum_values", {})
         for col_info in columns:
             col = col_info["name"]
             # Look for pattern: column_name followed by a value
             pattern = rf"\b{re.escape(col)}\s+['\"]?(\w+)['\"]?"
             val_match = re.search(pattern, q_lower)
             if val_match:
-                value = val_match.group(1)
+                filter_value = val_match.group(1)
                 # Don't treat aggregation keywords or stop words as values
-                if value not in _AGG_KEYWORDS and len(value) > 1:
+                if filter_value not in _AGG_KEYWORDS and len(filter_value) > 1:
+                    # If we have enum values for this column, validate/correct
+                    if col in table_enums:
+                        known_values = table_enums[col]
+                        # Try exact match first (case-insensitive)
+                        matched_enum = next(
+                            (v for v in known_values if v.lower() == filter_value.lower()),
+                            None,
+                        )
+                        if matched_enum:
+                            filter_value = matched_enum  # Use correctly-cased value
+                        else:
+                            # Try fuzzy: partial match
+                            matched_enum = next(
+                                (v for v in known_values if filter_value.lower() in v.lower()),
+                                None,
+                            )
+                            if matched_enum:
+                                filter_value = matched_enum
+
                     intent["where_clauses"].append(f"{col} = %s")
-                    intent["where_params"].append(value)
+                    intent["where_params"].append(filter_value)
 
         # --- Sorting ---
         for keyword, direction in _SORT_KEYWORDS.items():
@@ -479,11 +586,11 @@ class TemplateComposer:
     # Internal: Row estimation
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _estimate_rows(table_info: dict, intent: dict) -> int:
+    def _estimate_rows(self, table_info: dict, intent: dict) -> int:
         """Estimate result row count based on intent.
 
-        Heuristics:
+        When dbook provides actual row_count, uses it for better estimation.
+        Otherwise falls back to heuristics:
         - Pure aggregation without GROUP BY: 1 row
         - GROUP BY with N groups: estimate N (default 10-50)
         - With WHERE filter: reduce by ~10x
@@ -491,6 +598,18 @@ class TemplateComposer:
         - No aggregation on large table: could be many rows
         """
         limit = intent.get("limit", 100)
+
+        # If dbook provides actual row count, use it for better estimation
+        actual_count = table_info.get("row_count")
+        if actual_count is not None:
+            if intent.get("agg_func") in ("COUNT", "SUM", "AVG", "MAX", "MIN"):
+                return 1  # scalar aggregation
+            if intent.get("group_by"):
+                # Estimate groups as sqrt of total rows, capped
+                return min(int(math.sqrt(actual_count)), intent.get("limit", 100))
+            if intent.get("limit"):
+                return min(intent["limit"], actual_count)
+            return min(actual_count, self.config.t2_max_rows)
 
         if intent["agg_func"] and not intent["group_by"]:
             # Scalar aggregation — always 1 row

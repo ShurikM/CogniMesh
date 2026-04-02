@@ -8,9 +8,11 @@
 
 Teams register Use Cases (business questions agents need answered). CogniMesh derives optimal Gold views, exposes them via REST API, tracks lineage, monitors freshness, logs every query, and handles unsupported questions gracefully — all from day one.
 
+CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) for rich Silver schema intelligence — foreign keys, enums, sample data, column semantics — enabling SQL validation of composed queries, proactive schema drift detection via structural hashing, and a semantic concept index for enhanced UC discovery.
+
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
-> **Project Status:** Parked — core architecture proven via benchmark (12/12 properties, 71 tests). Ready for production implementation when needed.
+> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 85 tests (12/12 properties, 14 dbook integration tests). Ready for production implementation when needed.
 
 ## Architecture
 
@@ -56,6 +58,90 @@ Both configurations get the same CogniMesh capabilities: UC registry, lineage, o
 
 ---
 
+## dbook Integration
+
+CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a database metadata compiler that extracts schema intelligence for AI agent consumption. This replaces the shallow `information_schema.columns` introspection with rich structural metadata.
+
+### What dbook Provides
+
+| Capability | Before (vanilla) | After (with dbook) |
+|---|---|---|
+| **T2 Column Matching** | Fuzzy keyword match on column names | Concept-boosted scoring with IDF weighting |
+| **T2 Row Estimation** | Heuristic defaults (1-50 rows) | Actual `row_count` from dbook introspection |
+| **Enum Validation** | None — raw string matching | dbook detects enum-like columns, validates/corrects filter values |
+| **SQL Validation** | Execute and catch errors | Pre-flight validation via SQLGlot (table/column/FK/enum checks) |
+| **Schema Drift** | Detected reactively when Gold refresh fails | Proactive SHA256 hash comparison on every scheduled refresh |
+| **UC Discovery** | Keyword overlap scoring | Semantic concept index boosts matches for domain terms |
+
+### How It Works
+
+1. **Startup**: `DbookBridge` creates a read-only SQLAlchemy connection and runs `introspect_all(schemas=["silver"])` — capturing columns, FKs, enums, row counts, and sample data.
+2. **Concept Index**: `generate_concepts(book)` builds a term→table/column mapping (e.g., "customer" → customer_profiles, orders.customer_id).
+3. **Injection**: Rich metadata is injected into `TemplateComposer` and `CapabilityIndex` at startup.
+4. **T2 Path**: Composed SQL is validated against the dbook schema before execution. Invalid queries are rejected to T3 with actionable suggestions.
+5. **Refresh Cycle**: `scheduled_refresh()` calls `check_drift()` — re-introspects Silver and compares SHA256 hashes. Drift events are logged with affected Gold views.
+
+### Configuration
+
+| Env Var | Default | Description |
+|---|---|---|
+| `COGNIMESH_DBOOK_ENABLED` | `true` | Enable/disable dbook integration |
+| `COGNIMESH_DBOOK_SAMPLE_ROWS` | `5` | Sample rows per table during introspection |
+| `COGNIMESH_DBOOK_INCLUDE_ROW_COUNT` | `true` | Include row counts (requires COUNT(*) query) |
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/schema/drift` | GET | Check Silver schema for structural changes |
+
+dbook is an **optional dependency** — CogniMesh runs without it, falling back to basic `information_schema` metadata.
+
+All 14 dbook integration tests pass in the benchmark: schema-aware T2 composition uses rich metadata (FKs, enums, sample data), drift detection works proactively via SHA256 hash comparison on every scheduled refresh, and semantic discovery via the concept index boosts UC matching for domain terms.
+
+---
+
+## Why Gold Still Matters (dbook + CogniMesh)
+
+If dbook gives agents schema intelligence, doesn't that make the Gold layer unnecessary? No — Gold layers exist for two different reasons:
+
+| Reason | Who solves it | Still needed? |
+|---|---|---|
+| "Consumers can't understand Silver" — don't know what tables exist, what columns mean, what values are valid | dbook | **No** — dbook gives agents this understanding |
+| "Queries need to be fast, governed, audited" — sub-10ms response, access control, freshness tracking, approval workflows | CogniMesh T0 | **Yes** — can't get this from metadata alone |
+
+**dbook eliminates Gold for understanding. CogniMesh keeps Gold for performance and governance.**
+
+### Before dbook
+
+- **T0 (Gold):** works great for known queries
+- **T2 (Silver fallback):** weak — keyword matching, wrong SQL, low confidence
+- **Result:** You MUST pre-build Gold views for almost every question. Miss a use case? Agent gets T3 rejection.
+
+### After dbook
+
+- **T0 (Gold):** same — fast, governed, audited for critical queries
+- **T2 (Silver fallback):** STRONG — enum values, FK semantics, validated SQL
+- **Result:** Only build Gold views for performance-critical queries. T2 handles the long tail of ad-hoc questions correctly. Fewer Gold views to maintain, better coverage.
+
+### The combined pitch
+
+> CogniMesh + dbook: Build Gold views for your top 20 critical queries (T0). Let dbook-powered T2 handle the other 80% of ad-hoc questions directly from Silver — correctly, with enum values, validated SQL, and PII awareness. No more "we don't have a Gold table for that."
+
+### Claim refinement
+
+| Claim | Accurate? |
+|---|---|
+| "No Gold needed for agent DISCOVERY" | Yes — dbook |
+| "No Gold needed for agent UNDERSTANDING" | Yes — dbook |
+| "No Gold needed for PERFORMANCE" | No — T0 Gold is still fastest |
+| "No Gold needed for GOVERNANCE" | No — audit, access control, freshness need infrastructure |
+| "FEWER Gold views needed" | Yes — T2 + dbook handles what used to require pre-built Gold |
+
+dbook and CogniMesh are complementary, not contradictory. dbook shrinks the Gold layer from "everything must be pre-built" to "only performance-critical queries need Gold."
+
+---
+
 ## Benchmark: REST API vs CogniMesh
 
 We built **two complete implementations** serving the same 20 business questions from the same Postgres database (10K customers, 500 products, 200K orders). Then we measured everything.
@@ -70,9 +156,21 @@ We built **two complete implementations** serving the same 20 business questions
 | Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
 | Dependency intelligence | None | Full graph + impact analysis | CogniMesh |
 | Smart refresh | Cron (all tables) | Scheduled + real-time, only affected views | CogniMesh |
-| Gold tables at 20 UCs | 20 tables | 7 views (65% fewer) | CogniMesh |
-| Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15%) | CogniMesh |
+| Gold tables at 20 UCs | 17 tables | 4 views serving 20 UCs | CogniMesh |
+| Gold refresh time | 1.19s | 0.92s (1.30x faster) | CogniMesh |
+| Gold storage | Larger (17 tables) | 6.1 MB total (4 views) | CogniMesh |
+| Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15% of REST) | CogniMesh |
 | Initial setup simplicity | 286 lines | 1,952 lines | REST |
+
+### Latency Results (median, 100 iterations)
+
+| Use Case | REST API | CogniMesh | Delta |
+|----------|----------|-----------|-------|
+| UC-01 Customer Health | 1.64ms | 2.85ms | +1.21ms |
+| UC-02 Top Products | 1.47ms | 3.22ms | +1.75ms |
+| UC-03 At-Risk Customers | 2.40ms | 5.75ms | +3.35ms |
+
+REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on everything else (12/12 system properties vs 0/12 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response.
 
 ### The 12-Property Scorecard
 
@@ -136,7 +234,7 @@ make seed
 # 3. Register CogniMesh UCs + derive Gold views
 make setup-cognimesh
 
-# 4. Run all 71 benchmark tests
+# 4. Run all 85 benchmark tests
 make bench
 
 # 5. Generate the report
@@ -156,7 +254,8 @@ make report
 | `test_marginal_cost.py` | 5 | UC-04 file count + LOC comparison |
 | `test_scale_benchmark.py` | 16 | Latency at scale + infrastructure metrics (storage, table count) |
 | `test_refresh_and_deps.py` | 14 | Dependency graph, impact analysis, smart refresh |
-| **Total** | **71** | **All pass** |
+| `test_dbook_integration.py` | 14 | dbook introspection, concept index, SQL validation, drift detection |
+| **Total** | **85** | **All pass** |
 
 ---
 
@@ -202,7 +301,7 @@ CogniMesh/
 │   │   ├── setup.py            #   Register UCs + derive Gold + register lineage
 │   │   └── use_cases/          #   20 UC JSON definitions (~12 lines each)
 │   │
-│   ├── tests/                  # All benchmark tests (71 total)
+│   ├── tests/                  # All benchmark tests (85 total)
 │   │   ├── test_performance.py
 │   │   ├── test_throughput.py
 │   │   ├── test_properties.py  #   ← The 12/12 scorecard
@@ -255,6 +354,8 @@ GET  /refresh/status         — Freshness of all Gold views
 POST /refresh/scheduled      — Run scheduled refresh cycle (primary mode)
 POST /refresh/check          — Auto-refresh stale views (legacy)
 GET  /refresh/plan           — Preview what would be refreshed
+
+GET  /schema/drift            — Check Silver schema for structural changes (dbook)
 ```
 
 ---
@@ -284,6 +385,7 @@ GET  /refresh/plan           — Preview what would be refreshed
 | Test framework | pytest + pytest-benchmark |
 | Package manager | uv |
 | LLM (production) | Pluggable: OpenAI / Anthropic / Ollama |
+| Schema intelligence | [dbook](https://github.com/ShurikM/dbook) >=0.1.0 — database metadata compiler (optional, for rich schema introspection) |
 | Agent interface | REST API (FastAPI). MCP deferred — REST covers all use cases. Can be added as a thin wrapper when needed. |
 
 ## License

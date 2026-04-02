@@ -117,3 +117,12 @@ class CapabilityDescriptor(BaseModel):
     freshness_guarantee_seconds: int = 0
     access_pattern: str = ""
     available_fields: list[str] = []
+
+
+class DriftEvent(BaseModel):
+    """Schema drift detected by dbook hash comparison."""
+    table_name: str
+    old_hash: str
+    new_hash: str
+    detected_at: datetime
+    affected_gold_views: list[str] = Field(default_factory=list)

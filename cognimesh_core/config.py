@@ -23,4 +23,9 @@ class CogniMeshConfig(BaseSettings):
     # Gateway
     default_agent_id: str = "benchmark"
 
+    # dbook integration
+    dbook_enabled: bool = True
+    dbook_sample_rows: int = 5
+    dbook_include_row_count: bool = True
+
     model_config = {"env_prefix": "COGNIMESH_"}

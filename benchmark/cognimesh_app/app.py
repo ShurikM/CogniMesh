@@ -51,6 +51,22 @@ async def lifespan(application: FastAPI):
     lineage_tracker = LineageTracker(config)
     audit_log = AuditLog(config)
 
+    # dbook integration (optional — graceful fallback if not installed)
+    dbook_bridge = None
+    if config.dbook_enabled:
+        try:
+            from cognimesh_core.dbook_bridge import DbookBridge
+            dbook_bridge = DbookBridge(config)
+            book = dbook_bridge.introspect()
+            if book:
+                logger.info("dbook: introspected Silver schema (%d tables, %d concepts)",
+                           len(dbook_bridge.get_table_metadata_rich()),
+                           len(dbook_bridge.get_concepts()))
+        except ImportError:
+            logger.info("dbook not installed — running without rich metadata")
+        except Exception:
+            logger.warning("dbook initialization failed", exc_info=True)
+
     gateway = Gateway(
         config=config,
         registry=registry,
@@ -58,10 +74,19 @@ async def lifespan(application: FastAPI):
         gold_manager=gold_manager,
         lineage_tracker=lineage_tracker,
         audit_log=audit_log,
+        dbook_bridge=dbook_bridge,
     )
 
+    # Inject dbook metadata into composer and capability index
+    if dbook_bridge and dbook_bridge.available:
+        from cognimesh_core.query_composer import TemplateComposer
+        if isinstance(gateway.query_composer, TemplateComposer):
+            gateway.query_composer.set_rich_metadata(dbook_bridge.get_table_metadata_rich())
+            gateway.query_composer.set_concepts(dbook_bridge.get_concepts())
+        capability_index.set_concepts(dbook_bridge.get_concepts())
+
     dep_reporter = DependencyReporter(config, lineage_tracker, registry)
-    refresh_mgr = RefreshManager(config, gold_manager, registry)
+    refresh_mgr = RefreshManager(config, gold_manager, registry, dbook_bridge=dbook_bridge)
 
     application.state.gateway = gateway
     application.state.registry = registry
@@ -70,6 +95,7 @@ async def lifespan(application: FastAPI):
     application.state.capability_index = capability_index
     application.state.dep_reporter = dep_reporter
     application.state.refresh_mgr = refresh_mgr
+    application.state.dbook_bridge = dbook_bridge
 
     yield
 
@@ -174,6 +200,34 @@ def check_and_refresh():
 def get_refresh_plan():
     """Preview what would be refreshed without doing it."""
     return app.state.refresh_mgr.get_refresh_plan()
+
+
+# ------------------------------------------------------------------
+# Schema drift endpoint
+# ------------------------------------------------------------------
+
+@app.get("/schema/drift")
+def check_schema_drift():
+    """Check for Silver schema drift using dbook hash comparison."""
+    bridge = app.state.dbook_bridge
+    if not bridge or not bridge.available:
+        return {"available": False, "message": "dbook not enabled"}
+    try:
+        events = bridge.check_drift()
+        return {
+            "drift_detected": len(events) > 0,
+            "events": [
+                {
+                    "table": ev.table_name,
+                    "old_hash": ev.old_hash[:12],
+                    "new_hash": ev.new_hash[:12],
+                    "detected_at": ev.detected_at.isoformat(),
+                }
+                for ev in events
+            ],
+        }
+    except Exception as e:
+        return {"available": True, "error": str(e)}
 
 
 # ------------------------------------------------------------------
