@@ -63,7 +63,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U cognimesh"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -89,6 +89,16 @@ jobs:
           python benchmark/data/seed_scale.py
       - name: Setup CogniMesh
         run: python benchmark/cognimesh_app/setup.py
+      - name: Update derivation SQL in registry
+        run: |
+          python -c "
+          import sys, os, psycopg, importlib.util
+          spec = importlib.util.spec_from_file_location('seed_scale', 'benchmark/data/seed_scale.py')
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          with psycopg.connect(os.environ['DATABASE_URL']) as conn:
+              mod.update_registry_derivation_sql(conn)
+          "
       - name: Run full test suite
         run: |
           python -m pytest benchmark/tests/ \
