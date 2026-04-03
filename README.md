@@ -14,7 +14,7 @@ CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) for rich Sil
 
 > REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
 
-> **Project Status:** Core architecture proven and dbook integration complete — benchmark passes 90 tests (8/8 properties, 19 dbook integration tests including T2 production guards). Ready for production implementation when needed.
+> **Project Status:** Architecture validated and dbook integration complete — benchmark passes 90 tests (8/8 properties, 19 dbook integration tests including T2 production guards). Design validated at toy scale (10K rows, localhost); production-scale testing not yet done. See [What This Benchmark Proves](#what-this-benchmark-proves-and-what-it-doesnt).
 
 ## Architecture
 
@@ -232,7 +232,7 @@ This is deliberately minimal. The goal is enforcing the invariant (no unreviewed
 
 ## Benchmark: dbt REST Stack vs CogniMesh
 
-We built **two complete implementations** serving the same 20 business questions from the same Postgres database (10K customers, 500 products, 200K orders). Then we measured everything.
+We built **two complete implementations** serving the same 20 business questions from the same local Postgres database (10K customers, 500 products, 200K orders — toy scale). Then we measured architectural properties. See [scale limitations](#what-this-benchmark-proves-and-what-it-doesnt) for what this does and does not prove.
 
 ### Key Results
 
@@ -270,7 +270,7 @@ CogniMesh is pip-installable (`pip install -e .` from the repo). We recommend in
 | UC-02 Top Products | 1.47ms | 3.22ms | +1.75ms |
 | UC-03 At-Risk Customers | 2.40ms | 5.75ms | +3.35ms |
 
-REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on everything else (8/8 system properties vs 5/8 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response.
+REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on architectural properties (8/8 system properties vs 5/8 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response. Note: all latency numbers are from localhost with 10K rows; production latency at scale will differ significantly.
 
 ### The 8-Property Scorecard
 
@@ -523,6 +523,36 @@ GET  /schema/drift            — Check Silver schema for structural changes (db
 
 ---
 
+## What This Benchmark Proves (and What It Doesn't)
+
+**This benchmark proves architectural properties, not production performance.**
+
+| What it proves | What it does NOT prove |
+|---|---|
+| CogniMesh has lineage, audit, freshness, governance | That these work at 50M rows or 500 concurrent agents |
+| T2 fallback composes correct SQL from Silver | That T2 composition is fast on large Silver tables |
+| Schema drift is detected and isolated | That drift detection scales to 1000-table schemas |
+| dbt REST stack gets 5/8 properties with effort | That either approach handles network-attached Postgres latency |
+| Adding a UC is 12 SLOC vs 78 SLOC | That operational cost follows the same ratio |
+
+**Scale reality check:**
+
+- **Dataset:** 10K customers, 200K orders, local Postgres. This is a toy. Sub-10ms latency at this scale is trivially achievable with `SELECT * FROM table WHERE id = $1`.
+- **Concurrency:** Throughput tests run 1/5/10/25 concurrent requests. Production agents may run 500+.
+- **Network:** All tests run against localhost. Production Postgres adds 1-5ms network RTT.
+- **Lineage overhead:** Attaching lineage metadata to every response is cheap at 10K rows. At 50M rows with column-level tracking across 1000 tables, the lineage lookup itself becomes a performance concern.
+
+**What would a production-scale benchmark look like:**
+
+- 50M+ rows in Silver, 1000+ columns across 50+ tables
+- Network-attached Postgres (or Postgres on a separate machine/cloud)
+- 100-500 concurrent agent connections
+- Sustained load over hours (not seconds)
+- Memory profiling under concurrent T2 composition
+- Lineage lookup latency at scale
+
+We haven't built this yet. The current benchmark is a **proof of architecture**, not a **proof of scale**. If you're evaluating CogniMesh for production, run the benchmark against your own data at your own scale — the `make all` command works with any Postgres instance.
+
 ## What's NOT in the Benchmark (Yet)
 
 | Feature | Status | Why Skipped |
@@ -533,7 +563,7 @@ GET  /schema/drift            — Check Silver schema for structural changes (db
 | LLM-based UC routing | Planned | Benchmark uses deterministic keyword matching for reproducibility |
 | SQLMesh integration | **Done** | Managed Gold materialization with full DAG support |
 | Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
-| Production data volumes | Planned | 200K orders sufficient for latency comparison |
+| Production data volumes | Planned | 200K orders sufficient for architectural comparison, not scale validation |
 
 ---
 
