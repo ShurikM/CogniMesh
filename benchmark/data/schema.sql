@@ -80,6 +80,8 @@ CREATE TABLE silver.orders_enriched (
 CREATE INDEX idx_enriched_region ON silver.orders_enriched(customer_region);
 CREATE INDEX idx_enriched_category ON silver.orders_enriched(product_category);
 CREATE INDEX idx_enriched_created ON silver.orders_enriched(created_at);
+CREATE INDEX idx_enriched_customer ON silver.orders_enriched(customer_id);
+CREATE INDEX idx_enriched_customer_status ON silver.orders_enriched(customer_id, status);
 
 -- ============================================================
 -- GOLD (REST): Hand-designed, dedicated tables

@@ -327,27 +327,26 @@ _REST_TABLES: list[tuple[str, str]] = [
         INSERT INTO gold_rest.cross_sell
             (product_category, co_category, co_purchase_count,
              co_purchase_pct)
+        WITH category_customers AS (
+            SELECT product_category, COUNT(DISTINCT customer_id) AS total_customers
+            FROM silver.orders_enriched
+            WHERE status IN ('completed', 'pending')
+            GROUP BY product_category
+        )
         SELECT
             a.product_category,
             b.product_category AS co_category,
             COUNT(DISTINCT a.customer_id) AS co_purchase_count,
-            ROUND(
-                100.0 * COUNT(DISTINCT a.customer_id)
-                / GREATEST(
-                    (SELECT COUNT(DISTINCT customer_id)
-                     FROM silver.orders_enriched
-                     WHERE product_category = a.product_category
-                       AND status IN ('completed', 'pending')),
-                    1
-                ), 2
-            ) AS co_purchase_pct
+            ROUND(100.0 * COUNT(DISTINCT a.customer_id)
+                / GREATEST(cc.total_customers, 1), 2) AS co_purchase_pct
         FROM silver.orders_enriched a
         JOIN silver.orders_enriched b
             ON a.customer_id = b.customer_id
             AND a.product_category < b.product_category
             AND b.status IN ('completed', 'pending')
+        JOIN category_customers cc ON cc.product_category = a.product_category
         WHERE a.status IN ('completed', 'pending')
-        GROUP BY a.product_category, b.product_category
+        GROUP BY a.product_category, b.product_category, cc.total_customers
         """,
     ),
     # UC-19: Regional Revenue Comparison
@@ -730,28 +729,27 @@ _COGNIMESH_TABLES: list[tuple[str, str]] = [
         INSERT INTO gold_cognimesh.order_analytics
             (dimension_type, dimension_value, dimension_value_2,
              co_purchase_count, co_purchase_pct)
+        WITH category_customers AS (
+            SELECT product_category, COUNT(DISTINCT customer_id) AS total_customers
+            FROM silver.orders_enriched
+            WHERE status IN ('completed', 'pending')
+            GROUP BY product_category
+        )
         SELECT
             'cross_sell' AS dimension_type,
             a.product_category AS dimension_value,
             b.product_category AS dimension_value_2,
             COUNT(DISTINCT a.customer_id) AS co_purchase_count,
-            ROUND(
-                100.0 * COUNT(DISTINCT a.customer_id)
-                / GREATEST(
-                    (SELECT COUNT(DISTINCT customer_id)
-                     FROM silver.orders_enriched
-                     WHERE product_category = a.product_category
-                       AND status IN ('completed', 'pending')),
-                    1
-                ), 2
-            ) AS co_purchase_pct
+            ROUND(100.0 * COUNT(DISTINCT a.customer_id)
+                / GREATEST(cc.total_customers, 1), 2) AS co_purchase_pct
         FROM silver.orders_enriched a
         JOIN silver.orders_enriched b
             ON a.customer_id = b.customer_id
             AND a.product_category < b.product_category
             AND b.status IN ('completed', 'pending')
+        JOIN category_customers cc ON cc.product_category = a.product_category
         WHERE a.status IN ('completed', 'pending')
-        GROUP BY a.product_category, b.product_category
+        GROUP BY a.product_category, b.product_category, cc.total_customers
         """,
     ),
     # customer_orders: serves UC-17
