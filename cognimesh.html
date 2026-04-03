@@ -906,7 +906,7 @@ bronze.products                 silver.product_metrics<br>
     <p>The gateway exposes a <strong>REST API</strong> (FastAPI). Consuming agents discover capabilities via <code>GET /discover</code> and query data via <code>POST /query</code> — they do not hardcode column names or join keys. Any agent on any LLM framework that can make HTTP calls can consume data through CogniMesh without schema knowledge.</p>
     <p>REST is the right interface because: any HTTP client works (Python, JavaScript, curl, LangChain, CrewAI, custom agents), inputs and outputs are typed (Pydantic models), the agent gets structured data back (not a string to parse), and new capabilities auto-appear in the discovery endpoint when a UC is materialized.</p>
     <div class="callout" style="margin-top:16px;">
-      <strong>Why not MCP?</strong> MCP (Model Context Protocol) was originally planned as the agent interface. We deferred it because REST does everything MCP does for our use case — <code>GET /discover</code> returns capabilities, <code>POST /query</code> serves data. MCP adds protocol complexity without adding capability. REST is more universally supported, easier to debug (curl, browser), and the existing REST API maps directly to MCP tools. Adding MCP support is a weekend of work, not an architectural change. It can be added when a specific agent framework requires it.
+      <strong>REST + MCP:</strong> CogniMesh exposes both a REST API and an MCP server. The REST API (<code>GET /discover</code>, <code>POST /query</code>) works with any HTTP client. The MCP server (<code>cognimesh_core/mcp_server.py</code>) provides 6 tools — query, discover, check_drift, refresh, impact_analysis, provenance — for agent frameworks that speak MCP natively. Both interfaces share the same governance layer.
     </div>
   </div>
 
@@ -1318,9 +1318,9 @@ mesh.register_uc(<br>
       </tr>
       <tr>
         <td><strong>MCP Server</strong></td>
-        <td>Model Context Protocol server. <strong>Deferred</strong> — REST API covers all agent integration needs. GET /discover returns capabilities, POST /query serves data. Every agent framework can make HTTP calls. MCP can be added as a thin wrapper when a specific framework requires it.</td>
-        <td><span class="badge badge-purple">DEFERRED</span></td>
-        <td>—</td>
+        <td>Model Context Protocol server with 6 tools: query, discover, check_drift, refresh, impact_analysis, provenance. Implemented in <code>cognimesh_core/mcp_server.py</code>. Works alongside the REST API.</td>
+        <td><span class="badge badge-green">DONE</span></td>
+        <td>v0.1.0</td>
       </tr>
       <tr>
         <td><strong>T1 Tier</strong></td>
@@ -1391,7 +1391,7 @@ mesh.register_uc(<br>
       <tr>
         <td><strong>Phase 1B</strong></td>
         <td>T1 tier, CLI</td>
-        <td>Full tier coverage. Management tooling. MCP: Deferred — REST API covers all agent integration needs. MCP can be added as a thin wrapper when a specific framework requires it.</td>
+        <td>Full tier coverage. Management tooling. MCP server implemented with 6 tools.</td>
       </tr>
       <tr>
         <td><strong>Phase 2</strong></td>
@@ -1594,9 +1594,9 @@ benchmark/tests/
         <td>SQLMesh model validation tests. Incremental refresh tests. Lineage auto-derivation tests.</td>
       </tr>
       <tr>
-        <td><strong>MCP added (if needed)</strong></td>
-        <td>All scorecard and contract tests continue to pass via REST. MCP would be an additional transport, not a replacement.</td>
-        <td>MCP protocol compliance tests. MCP discovery tests. Transport-agnostic contract tests. <em>Deferred — REST API covers all current agent integration needs.</em></td>
+        <td><strong>MCP server implemented</strong></td>
+        <td>All scorecard and contract tests continue to pass via REST. MCP server provides an additional transport with 6 tools.</td>
+        <td>MCP protocol compliance tests. MCP discovery tests. Transport-agnostic contract tests.</td>
       </tr>
       <tr>
         <td><strong>LLM routing replaces keyword matching</strong></td>
