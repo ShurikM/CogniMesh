@@ -26,7 +26,7 @@ def get_pool() -> ConnectionPool:
         _pool = ConnectionPool(
             DATABASE_URL,
             min_size=2,
-            max_size=10,
+            max_size=30,
             kwargs={"row_factory": dict_row},
         )
     return _pool

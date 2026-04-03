@@ -79,6 +79,6 @@ class AuditMiddleware(BaseHTTPMiddleware):
                         )
                     conn.commit()
             except Exception as e:
-                logger.warning("Audit log failed: %s", e)
+                logger.debug("Audit log skipped: %s", e)
 
         return response
