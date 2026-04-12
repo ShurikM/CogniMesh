@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient  # type: ignore[import-not-found]
 
-UNSUPPORTED_QUESTION = "What is the total revenue by region for the last quarter?"
+UNSUPPORTED_QUESTION = "What is the average delivery time by shipping carrier?"
 
 
 class TestUnsupportedUC:

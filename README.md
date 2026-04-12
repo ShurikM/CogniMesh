@@ -36,7 +36,7 @@ This inversion matters because it moves intelligence from the endpoint layer (wh
 
 ## Three-Tier Query Architecture
 
-<p align="center"><img src="docs/tier-routing.svg" width="800" alt="Three-tier query routing"></p>
+<p align="center"><img src="docs/tier-routing.svg" width="700" alt="Three-tier query routing"></p>
 
 CogniMesh doesn't just serve pre-built answers. It handles the full spectrum of agent questions through a tiered routing system:
 
@@ -72,13 +72,34 @@ These are the cross-cutting concerns that CogniMesh moves from per-endpoint resp
 
 CogniMesh sits between your existing data pipeline and your agents:
 
-<p align="center"><img src="docs/architecture.svg" width="1000" alt="CogniMesh Architecture"></p>
+<p align="center"><img src="docs/architecture.svg" width="880" alt="CogniMesh Architecture"></p>
 
 **Connect mode** — Point CogniMesh at your existing Silver layer. It introspects the schema, derives optimized views from Use Case definitions, and starts serving. Your pipeline stays untouched. Start here.
 
 **Manage mode** — CogniMesh manages the full pipeline from raw data through to agent-ready views, with lineage at every stage.
 
 The serving layer must be a database optimized for point lookups — Postgres, DuckDB, StarRocks, or ClickHouse. Your source data can live anywhere.
+
+---
+
+## CogniMesh + dbt
+
+If you already run dbt, you have a well-modeled Silver layer. CogniMesh doesn't replace dbt — it picks up where dbt stops.
+
+dbt transforms raw data into clean, modeled tables. But dbt doesn't serve agents. It doesn't track which agent queried which table, doesn't enforce freshness contracts on responses, doesn't handle questions that weren't pre-modeled, and doesn't require approval before changing what agents see.
+
+That's the gap CogniMesh fills:
+
+| | dbt | CogniMesh |
+|---|---|---|
+| **Owns** | Bronze → Silver transforms | Silver → Gold serving |
+| **Optimized for** | Analysts and dashboards | AI agents at low latency |
+| **Handles unknown questions** | No — only what's modeled | Yes — composes from Silver metadata |
+| **Freshness** | Schedule-based rebuilds | Per-response TTL contracts |
+| **Lineage** | Build-time manifest | Live, per-response, queryable |
+| **Governance** | Git PR on model changes | Approval queue on what agents see |
+
+In Connect mode, CogniMesh reads your dbt-built Silver tables, derives Gold views for agent access, and adds the governance and observability layer on top. Your dbt pipeline doesn't change. You get agent-grade serving without rebuilding your data stack.
 
 ---
 
