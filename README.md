@@ -36,6 +36,8 @@ This inversion matters because it moves intelligence from the endpoint layer (wh
 
 ## Three-Tier Query Architecture
 
+<p align="center"><img src="docs/tier-routing.svg" width="800" alt="Three-tier query routing"></p>
+
 CogniMesh doesn't just serve pre-built answers. It handles the full spectrum of agent questions through a tiered routing system:
 
 **Pre-built and fresh** — The question matches a registered Use Case and the data view is current. Serve directly. Sub-10ms. Every response carries column-level lineage (which source table and column produced each field) and freshness metadata (how old the data is, whether it's within the declared TTL).
@@ -70,18 +72,7 @@ These are the cross-cutting concerns that CogniMesh moves from per-endpoint resp
 
 CogniMesh sits between your existing data pipeline and your agents:
 
-```
-Your pipeline (dbt, Spark, Airflow, ...) 
-        |
-        v
-   Silver layer (cleaned, modeled data)
-        |
-        v
-   CogniMesh (Use Case registry + governed serving layer)
-        |
-        v
-   AI agents (via MCP or REST)
-```
+<p align="center"><img src="docs/architecture.svg" width="1000" alt="CogniMesh Architecture"></p>
 
 **Connect mode** — Point CogniMesh at your existing Silver layer. It introspects the schema, derives optimized views from Use Case definitions, and starts serving. Your pipeline stays untouched. Start here.
 
