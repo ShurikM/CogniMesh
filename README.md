@@ -2,585 +2,147 @@
 
 [![CI](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml)
 
-<p align="center">
-  <img src="docs/logo.svg" alt="CogniMesh Logo" width="96">
-</p>
+<p align="center"><img src="docs/logo.svg" width="360" alt="CogniMesh"></p>
 
-**An intelligent data mesh layer between AI agents and structured data platforms.**
-
-Teams register Use Cases (business questions agents need answered). CogniMesh derives optimal Gold views, exposes them via REST API, tracks lineage, monitors freshness, logs every query, and handles unsupported questions gracefully — all from day one.
-
-CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) for rich Silver schema intelligence — foreign keys, enums, sample data, column semantics — enabling SQL validation of composed queries, proactive schema drift detection via structural hashing, and a semantic concept index for enhanced UC discovery.
-
-> REST API gives you a fast pipe. CogniMesh gives you a **governed, observable, self-documenting data serving platform**.
-
-> **Project Status:** Architecture validated and dbook integration complete — benchmark passes 90 tests (8/8 properties, 19 dbook integration tests including T2 production guards). Design validated at toy scale (10K rows, localhost); production-scale testing not yet done. See [What This Benchmark Proves](#what-this-benchmark-proves-and-what-it-doesnt).
-
-## Architecture
-
-<p align="center">
-  <img src="docs/architecture.svg" alt="CogniMesh Architecture" width="700">
-</p>
-
-CogniMesh is an intelligent serving layer for AI agents with two deployment modes:
-
-### Mode 1: Connect (start here)
-Connect to your existing Silver layer. CogniMesh introspects the schema, builds Gold views from UC definitions, and serves agents with lineage, observability, and access control. Your existing dbt/Spark/Airflow pipeline stays untouched.
-
-### Mode 2: Manage (full platform)
-CogniMesh + SQLMesh manages the entire Bronze→Silver→Gold pipeline. Full lineage from raw source to agent response. Complete schema knowledge across all layers. Intelligent refresh based on the full DAG.
-
-### Migration path
-Start with Mode 1 — zero disruption. Migrate Silver tables into SQLMesh models one at a time. Each migrated table gains full Bronze→Silver→Gold lineage. Eventually, CogniMesh has complete observation of all layers needed to support current and future UCs.
-
-### Why Gold must be a serving database
-
-Agents do individual lookups — "health of customer X", "orders for product Y." That needs sub-10ms latency. Open table formats (Iceberg/Delta) on object storage take 100-1000ms per lookup.
-
-CogniMesh separates **transformation storage** from **serving storage**:
-- **Bronze/Silver**: can live on a lakehouse (Iceberg, Delta, Spark) — cheap, batch-optimized
-- **Gold**: must be a serving database — OLTP (Postgres, DuckDB, MongoDB) or OLAP (StarRocks, ClickHouse, Druid) — fast, agent-optimized
-
-SQLMesh manages transformations across all layers. CogniMesh materializes Gold into the serving DB and serves agents from there.
-
-### Engine configurations
-
-**Single-engine** — All layers on one database (Postgres, StarRocks, DuckDB). SQLMesh manages Bronze→Silver→Gold in the same engine. Simple setup, ideal for small/medium teams or getting started.
-
-**Multi-engine** — Silver on a lakehouse (Spark + Iceberg/Delta), Gold on a serving database (Postgres, StarRocks, ClickHouse). SQLMesh manages transformations on each engine natively. CogniMesh orchestrates cross-engine materialization — reads Silver from the lakehouse, materializes Gold into the serving DB. This is the enterprise configuration for teams with existing lakehouse infrastructure.
-
-Both configurations get the same CogniMesh capabilities: UC registry, lineage, observability, smart refresh, dependency intelligence, security.
-
-**Five pillars across both modes:**
-- **Explainability** — Every response traces back to source data. Full lineage in Mode 2, Gold→Silver lineage in Mode 1.
-- **Observability** — Every query logged: who asked, what it cost, how fresh the data is.
-- **Self-service** — Register a UC with a 12-line JSON. System derives Gold, consolidates overlapping views. Scheduled refresh is the primary mode: check TTLs, rebuild only stale views, report what changed. Real-time mode (Postgres LISTEN/NOTIFY) available for UCs that need immediate freshness.
-- **Flexibility** — Unknown questions composed from metadata (T2), not 404s. T2 patterns auto-promoted to Gold UCs.
-- **Security** — Agent identity and scoping, per-UC access control, row-level data isolation.
+### The governed data layer for AI agents.
 
 ---
 
-## dbook Integration
+## The Architectural Problem
 
-CogniMesh integrates with [dbook](https://github.com/ShurikM/dbook) — a database metadata compiler that extracts schema intelligence for AI agent consumption. This replaces the shallow `information_schema.columns` introspection with rich structural metadata.
+Every team building AI agents hits the same wall: the agent needs data.
 
-### What dbook Provides
+The default answer is REST endpoints. Someone writes a `/customer-health` endpoint, then `/top-products`, then `/revenue-by-region`. Each one is ~80 lines across multiple files. At 20 endpoints you have a maintenance problem. At 100, you have a platform problem. And every question the agent asks that you *didn't* pre-build returns a 404.
 
-| Capability | Before (vanilla) | After (with dbook) |
-|---|---|---|
-| **T2 Column Matching** | Fuzzy keyword match on column names | Concept-boosted scoring with IDF weighting |
-| **T2 Row Estimation** | Heuristic defaults (1-50 rows) | Actual `row_count` from dbook introspection |
-| **Enum Validation** | None — raw string matching | dbook detects enum-like columns, validates/corrects filter values |
-| **SQL Validation** | Execute and catch errors | Pre-flight validation via SQLGlot (table/column/FK/enum checks) |
-| **Schema Drift** | Detected reactively when Gold refresh fails | Proactive SHA256 hash comparison on every scheduled refresh |
-| **PII Awareness** | None — no sensitivity detection | dbook scans column names + sample data via Presidio, marks sensitivity levels |
-| **UC Discovery** | Keyword overlap scoring | Semantic concept index boosts matches for domain terms |
-
-### How It Works
-
-1. **Startup**: `DbookBridge` creates a read-only SQLAlchemy connection and runs `introspect_all(schemas=["silver"])` — capturing columns, FKs, enums, row counts, and sample data.
-2. **Concept Index**: `generate_concepts(book)` builds a term→table/column mapping (e.g., "customer" → customer_profiles, orders.customer_id).
-3. **Injection**: Rich metadata is injected into `TemplateComposer` and `CapabilityIndex` at startup.
-4. **T2 Path**: Composed SQL is validated against the dbook schema before execution. Invalid queries are rejected to T3 with actionable suggestions. PII-marked columns (email, phone, SSN, credit card) are respected — T2 avoids selecting sensitive columns in ad-hoc results.
-5. **Refresh Cycle**: `scheduled_refresh()` calls `check_drift()` — re-introspects Silver and compares SHA256 hashes. Drift events are logged with affected Gold views.
-
-### Configuration
-
-| Env Var | Default | Description |
-|---|---|---|
-| `COGNIMESH_DBOOK_ENABLED` | `true` | Enable/disable dbook integration |
-| `COGNIMESH_DBOOK_SAMPLE_ROWS` | `5` | Sample rows per table during introspection |
-| `COGNIMESH_DBOOK_INCLUDE_ROW_COUNT` | `true` | Include row counts (requires COUNT(*) query) |
-| `COGNIMESH_T2_MAX_EXPLAIN_COST` | `50000` | Max Postgres EXPLAIN cost before T2 query is rejected |
-| `COGNIMESH_T2_MAX_SOURCE_ROWS` | `10000000` | Max source table rows (from dbook) before T2 query is rejected |
-| `COGNIMESH_T2_MAX_CONCURRENT` | `3` | Max concurrent T2 queries (semaphore) |
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/schema/drift` | GET | Check Silver schema for structural changes |
-
-dbook is an **optional dependency** — CogniMesh runs without it, falling back to basic `information_schema` metadata.
-
-All 19 dbook integration tests pass in the benchmark: schema-aware T2 composition uses rich metadata (FKs, enums, sample data), drift detection works proactively via SHA256 hash comparison on every scheduled refresh, semantic discovery via the concept index boosts UC matching for domain terms, and T2 production guards (EXPLAIN cost check, table size guard, concurrency semaphore) are verified.
-
-### T2 Production Safety Guards
-
-T2 Silver fallback composes SQL dynamically — which is powerful but dangerous without proper guards. CogniMesh implements three production-grade safety mechanisms:
-
-| Guard | What it does | Config | Default |
-|-------|-------------|--------|---------|
-| **EXPLAIN cost check** | Runs `EXPLAIN (FORMAT JSON)` before execution. Rejects if Postgres cost estimate exceeds threshold. | `COGNIMESH_T2_MAX_EXPLAIN_COST` | 50,000 |
-| **Table size guard** | Uses dbook's actual row counts to reject queries against Silver tables larger than threshold. | `COGNIMESH_T2_MAX_SOURCE_ROWS` | 10,000,000 |
-| **Concurrency semaphore** | Limits concurrent T2 queries to prevent connection pool saturation. | `COGNIMESH_T2_MAX_CONCURRENT` | 3 |
-
-These complement the existing guards (statement timeout, result row limit) to prevent catastrophically expensive queries on large Silver tables.
-
-**T2 rejection flow:** If any guard triggers, the query is rejected to T3 with the specific reason (`explain_cost_exceeded`, `source_table_too_large`, `t2_concurrency_limit`) and actionable metadata (actual cost, row count, limits). The agent knows exactly why the query was rejected and what the limits are.
+This is the wrong abstraction. You're encoding business questions as code, one at a time, with no shared infrastructure for the concerns that matter most: Where did this number come from? Is it fresh? Who accessed it? What happens when the schema changes?
 
 ---
 
-## Why Gold Still Matters (dbook + CogniMesh)
+## The Core Insight
 
-If dbook gives agents schema intelligence, doesn't that make the Gold layer unnecessary? No — Gold layers exist for two different reasons:
+**Register the question, not the endpoint.**
 
-| Reason | Who solves it | Still needed? |
-|---|---|---|
-| "Consumers can't understand Silver" — don't know what tables exist, what columns mean, what values are valid | dbook | **No** — dbook gives agents this understanding |
-| "Queries need to be fast, governed, audited" — sub-10ms response, access control, freshness tracking, approval workflows | CogniMesh T0 | **Yes** — can't get this from metadata alone |
+A Use Case in CogniMesh is a declaration of intent — a business question that an agent needs answered:
 
-**dbook eliminates Gold for understanding. CogniMesh keeps Gold for performance and governance.**
+> *"What is the current health status of customer X?"*
+> *"What are the best-selling products in category Y?"*
+> *"What is the total revenue by region for the last 30 days?"*
 
-### Before dbook
+From this declaration, CogniMesh derives everything else: the optimized data view, the lineage graph, the freshness contract, the access policy, and the audit trail. You define *what agents need to know*. The system figures out *how to serve it*.
 
-- **T0 (Gold):** works great for known queries
-- **T2 (Silver fallback):** weak — keyword matching, wrong SQL, low confidence
-- **Result:** You MUST pre-build Gold views for almost every question. Miss a use case? Agent gets T3 rejection.
-
-### After dbook
-
-- **T0 (Gold):** same — fast, governed, audited for critical queries
-- **T2 (Silver fallback):** STRONG — enum values, FK semantics, validated SQL
-- **Result:** Only build Gold views for performance-critical queries. T2 handles the long tail of ad-hoc questions correctly. Fewer Gold views to maintain, better coverage.
-
-### The combined pitch
-
-> CogniMesh + dbook: Build Gold views for your top 20 critical queries (T0). Let dbook-powered T2 handle the other 80% of ad-hoc questions directly from Silver — correctly, with enum values, validated SQL, and PII awareness. No more "we don't have a Gold table for that."
-
-### Claim refinement
-
-| Claim | Accurate? |
-|---|---|
-| "No Gold needed for agent DISCOVERY" | Yes — dbook |
-| "No Gold needed for agent UNDERSTANDING" | Yes — dbook |
-| "No Gold needed for PERFORMANCE" | No — T0 Gold is still fastest |
-| "No Gold needed for GOVERNANCE" | No — audit, access control, freshness need infrastructure |
-| "FEWER Gold views needed" | Yes — T2 + dbook handles what used to require pre-built Gold |
-
-dbook and CogniMesh are complementary, not contradictory. dbook shrinks the Gold layer from "everything must be pre-built" to "only performance-critical queries need Gold."
+This inversion matters because it moves intelligence from the endpoint layer (where it's duplicated per question) to the platform layer (where it's shared across all questions).
 
 ---
 
-### Change Governance: How the Approval Queue Works
+## Three-Tier Query Architecture
 
-CogniMesh enforces a simple invariant: **nothing changes in Gold without human approval.** This is implemented as a DB-backed approval workflow, not a checkbox.
+CogniMesh doesn't just serve pre-built answers. It handles the full spectrum of agent questions through a tiered routing system:
 
-**Flow:**
+**Pre-built and fresh** — The question matches a registered Use Case and the data view is current. Serve directly. Sub-10ms. Every response carries column-level lineage (which source table and column produced each field) and freshness metadata (how old the data is, whether it's within the declared TTL).
+
+**Unknown but answerable** — The question doesn't match any Use Case, but the system has enough metadata about the underlying tables to compose a safe query on the fly. Six layers of guardrails prevent expensive or dangerous operations: row limits, cost estimation, query plan analysis, table size checks, concurrency control, and execution timeouts. This is what REST *cannot* do — it turns 404s into governed, auditable answers.
+
+**Cannot answer safely** — The question exceeds safety guardrails or the available metadata isn't sufficient. Instead of a silent failure, return a structured explanation: why the query was rejected, what was attempted, and which existing Use Cases might answer a related question.
+
+The key architectural property: **no request goes unhandled.** Every question gets an answer, a composed attempt, or a meaningful explanation — and every interaction is audited regardless of which tier serves it.
+
+---
+
+## What the Platform Handles
+
+These are the cross-cutting concerns that CogniMesh moves from per-endpoint responsibility to platform responsibility:
+
+**Lineage.** Every field in every response is traceable to its source table and column. Not documentation — live metadata, queryable and verifiable.
+
+**Freshness.** Every data view has a TTL contract. Every response reports the data age and whether it's stale. The platform refreshes only what's stale, not everything on a cron schedule.
+
+**Audit.** Every query is logged: which agent, which question, which tier served it, how long it took, what it cost. Built-in cost attribution makes chargebacks possible without instrumentation.
+
+**Governance.** Nothing in the serving layer changes without human approval. New questions, modified views, access policy changes — all go through a review queue before they take effect.
+
+**Drift detection.** When upstream tables change structure, the platform detects it proactively via structural hashing — before queries start failing.
+
+**View consolidation.** Overlapping Use Cases are automatically served by shared views. In our benchmark, 20 Use Cases are served by 4 views. The system derives the minimal set of materialized views needed, not one per question.
+
+---
+
+## Where It Fits
+
+CogniMesh sits between your existing data pipeline and your agents:
 
 ```
-Register/Update UC ──→ UC status: "pending_approval"
-                              │
-                              ▼
-                    approval_queue table (status: "pending")
-                              │
-                    ┌─────────┴─────────┐
-                    ▼                   ▼
-              POST /approve        POST /reject
-                    │                   │
-                    ▼                   ▼
-            UC activated           UC stays inactive
-            Gold refreshed         No Gold changes
+Your pipeline (dbt, Spark, Airflow, ...) 
+        |
+        v
+   Silver layer (cleaned, modeled data)
+        |
+        v
+   CogniMesh (Use Case registry + governed serving layer)
+        |
+        v
+   AI agents (via MCP or REST)
 ```
 
-**API Endpoints:**
+**Connect mode** — Point CogniMesh at your existing Silver layer. It introspects the schema, derives optimized views from Use Case definitions, and starts serving. Your pipeline stays untouched. Start here.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/approvals` | GET | List all pending approval requests |
-| `/approvals/history` | GET | Approval history (filterable by UC, with limit) |
-| `/approvals/{id}` | GET | Get details of a specific approval request |
-| `/approvals/{id}/approve` | POST | Approve — activates UC + triggers Gold refresh |
-| `/approvals/{id}/reject` | POST | Reject — UC stays inactive, Gold unchanged |
+**Manage mode** — CogniMesh manages the full pipeline from raw data through to agent-ready views, with lineage at every stage.
 
-**Example: Approve a UC change**
+The serving layer must be a database optimized for point lookups — Postgres, DuckDB, StarRocks, or ClickHouse. Your source data can live anywhere.
+
+---
+
+## Evidence
+
+We built two implementations of the same 20 business questions — one with a conventional dbt + REST stack, one with CogniMesh — and compared them on 8 architectural properties:
+
+| Property | REST | CogniMesh |
+|---|---|---|
+| Agents can discover available data | Yes | Yes |
+| Responses traceable to source | Yes | Yes |
+| Queries audited | Yes | Yes |
+| Cost attribution | Yes | Yes |
+| Changes require approval | No | **Yes** |
+| Freshness tracked in responses | Yes | Yes |
+| Unknown questions handled | No | **Yes** |
+| Schema drift detected proactively | No | **Yes** |
+
+REST achieves 5 of 8. CogniMesh achieves 8 of 8. The three properties REST cannot match — change governance, graceful degradation for unknown questions, and proactive drift detection — are architectural, not incremental. You can't bolt them onto a REST stack without rebuilding the abstraction layer.
+
+**Marginal cost:** Adding a new Use Case is 12 lines (1 JSON file). The REST equivalent is ~78 lines across 4 files. CogniMesh consolidated 20 Use Cases into 4 materialized views; the REST stack required 17 separate tables.
+
+**Honest caveat:** This benchmark runs at toy scale — 10K rows, localhost, single node. It validates architectural properties, not production throughput. Full methodology: [docs/benchmark.md](docs/benchmark.md).
+
+---
+
+## Try It
 
 ```bash
-# List pending approvals
-curl -s localhost:8000/approvals | jq '.[].id'
-
-# Review a specific approval
-curl -s localhost:8000/approvals/1 | jq
-
-# Approve it (triggers Gold refresh)
-curl -X POST "localhost:8000/approvals/1/approve?reviewed_by=alice&note=LGTM"
-
-# Or reject it
-curl -X POST "localhost:8000/approvals/1/reject?reviewed_by=alice&reason=needs+schema+review"
+git clone https://github.com/ShurikM/CogniMesh.git && cd CogniMesh
+pip install -e ".[bench]"
+docker compose up -d --wait && make seed && make setup-cognimesh
 ```
 
-**What gets stored** (in `cognimesh_internal.approval_queue`):
-
-| Column | Description |
-|--------|-------------|
-| `uc_id` | Which UC is being changed |
-| `action` | What's happening: `register`, `update`, `deactivate`, `refresh` |
-| `status` | `pending` → `approved` or `rejected` |
-| `request_data` | Full UC definition at time of submission (JSONB) |
-| `requested_by` / `reviewed_by` | Who submitted / who approved |
-| `reviewed_at` | When the decision was made |
-| `review_note` | Optional comment explaining the decision |
-
-**What this is NOT:**
-- No UI (API-only — integrate with your existing review tooling)
-- No Slack/email notifications (add a webhook in your deployment)
-- No multi-stage approval (single approver, not a committee)
-
-This is deliberately minimal. The goal is enforcing the invariant (no unreviewed Gold changes), not replacing your organization's review process. Wire the API into Slack, PagerDuty, or a custom dashboard as needed.
+Run the benchmark: [docs/running-the-benchmark.md](docs/running-the-benchmark.md)
 
 ---
 
-## Benchmark: dbt REST Stack vs CogniMesh
+## Current State
 
-We built **two complete implementations** serving the same 20 business questions from the same local Postgres database (10K customers, 500 products, 200K orders — toy scale). Then we measured architectural properties. See [scale limitations](#what-this-benchmark-proves-and-what-it-doesnt) for what this does and does not prove.
+**v0.1.0** — Architecture validated, not production-hardened.
 
-### Key Results
+90 tests. 8/8 system properties. Tiered query routing with safety guardrails. Column-level lineage. Freshness-aware smart refresh. Approval-based governance. MCP server for direct agent integration. Optional [schema intelligence](docs/dbook-integration.md) via dbook for richer metadata.
 
-| Dimension | REST API | CogniMesh | Winner |
-|-----------|----------|-----------|--------|
-| System properties (8 checks) | **5 / 8** | **8 / 8** | CogniMesh |
-| Schema drift handling | SQL Error (500) | Isolated (serves from Gold) | CogniMesh |
-| Unsupported question | 404 Not Found | Composes query from metadata | CogniMesh |
-| Freshness awareness | None | Built-in (is_stale flag) | CogniMesh |
-| Dependency intelligence | None | Full graph + impact analysis | CogniMesh |
-| Smart refresh | Cron (all tables) | Scheduled + real-time, only affected views | CogniMesh |
-| Gold tables at 20 UCs | 17 tables | 4 views serving 20 UCs | CogniMesh |
-| Gold refresh time | 1.19s | 0.92s (1.30x faster) | CogniMesh |
-| Gold storage | Larger (17 tables) | 6.1 MB total (4 views) | CogniMesh |
-| Cost to add new use case | 4 files, 78 lines | 1 JSON, 12 lines (15% of REST) | CogniMesh |
-| Initial setup simplicity | 286 lines | 1,952 lines | REST |
-
-### Honest caveat: the crossover requires packaging
-
-The SLOC crossover at UC-22 assumes CogniMesh is installed as a dependency (`pip install cognimesh-core`), not copied into your repo. Without packaging, every team bears the full ~3,800 SLOC platform cost — and the crossover never arrives for small teams.
-
-| Adoption model | Platform cost | Per-UC cost | Crossover vs REST |
-|---|---|---|---|
-| `pip install cognimesh-core` | 0 SLOC (dependency) | 12 SLOC (1 JSON) | UC-22 |
-| Single team, one repo | ~3,800 SLOC (one-time) | 12 SLOC (1 JSON) | UC-22 within that team |
-| Copy entire repo per team | ~3,800 SLOC per team | 12 SLOC (1 JSON) | Never favorable for small teams |
-
-CogniMesh is pip-installable (`pip install -e .` from the repo). We recommend installing it as a dependency, not vendoring it.
-
-### Latency Results (median, 100 iterations)
-
-| Use Case | REST API | CogniMesh | Delta |
-|----------|----------|-----------|-------|
-| UC-01 Customer Health | 1.64ms | 2.85ms | +1.21ms |
-| UC-02 Top Products | 1.47ms | 3.22ms | +1.75ms |
-| UC-03 At-Risk Customers | 2.40ms | 5.75ms | +3.35ms |
-
-REST wins on raw latency (~1-3ms faster per query). CogniMesh wins on architectural properties (8/8 system properties vs 5/8 for REST). The latency overhead buys lineage, audit, freshness awareness, drift detection, and tiered fallback — all included in every response. Note: all latency numbers are from localhost with 10K rows; production latency at scale will differ significantly.
-
-### The 8-Property Scorecard
-
-| # | Property | REST (dbt stack) | CogniMesh |
-|---|----------|-------------------|-----------|
-| 1 | Discovery | **Yes** (static endpoint list) | **Yes** (semantic UC matching) |
-| 2 | Lineage | **Yes** (dbt manifest) | **Yes** (column-level, live) |
-| 3 | Audit Trail | **Yes** (middleware logging) | **Yes** (per-query, per-UC) |
-| 4 | Cost Attribution | **Yes** (audit cost_units) | **Yes** (tiered cost model) |
-| 5 | Change Governance | No (dbt has no approval workflow) | **Yes** (approval queue) |
-| 6 | Freshness Awareness | **Yes** (dbt run_results) | **Yes** (TTL-based, live) |
-| 7 | Tiered Fallback | No (404 for unknown) | **Yes** (T2 Silver + T3 explain) |
-| 8 | Schema Drift Detection | No (Gold SQL fails) | **Yes** (materialized isolation) |
-| | **Score** | **5/8** | **8/8** |
-
-### What Makes This a Fair Comparison
-
-The REST baseline is not a strawman. It represents what a competent team builds with dbt:
-
-- **Audit middleware** — FastAPI middleware logging every request with latency and cost
-- **dbt manifest lineage** — Column-level lineage from `manifest.json`, served via API
-- **dbt freshness** — Model freshness from `run_results.json`, served via API
-- **Capability discovery** — Static endpoint listing via `/api/v1/discover`
-- **API key auth** — Basic authentication via `X-API-Key` header
-
-**Where CogniMesh still wins** (the 3 properties REST can't match):
-
-| Property | Why REST Can't | CogniMesh Approach |
-|---|---|---|
-| **Change Governance** | dbt has no approval workflow — changes deploy directly | Approval queue: nothing changes in Gold without human sign-off |
-| **Tiered Fallback** | Unknown query = 404. No intelligence. | T2 composes SQL from Silver with dbook metadata. T3 explains why it can't. |
-| **Schema Drift Isolation** | Gold SQL references Silver columns directly — rename breaks everything | Gold views are materialized snapshots. Drift in Silver doesn't break serving. |
-
-### Documents
-
-| Document | What It Contains |
-|----------|-----------------|
-| **[Visual Benchmark Report](https://shurikm.github.io/CogniMesh/benchmark/results/report.html)** | Full benchmark report with charts, scorecards, measured results at 20 UCs. |
-| **[Design Document](https://shurikm.github.io/CogniMesh/cognimesh.html)** | Architecture, design decisions, comparison, and implementation roadmap. |
-| **[One-Pager](https://shurikm.github.io/CogniMesh/docs/onepager.html)** | Single-page overview of CogniMesh — architecture, key results, value proposition. |
+**What's next:** Usage-based intelligence (mine query logs to auto-promote ad-hoc questions into pre-built Use Cases) and semantic validation (natural-language rules that check whether results make business sense).
 
 ---
 
-## MCP Server
+## Further Reading
 
-CogniMesh exposes all capabilities as MCP tools for direct agent integration:
-
-```bash
-# Run the MCP server
-python -m cognimesh_core.mcp_server
-```
-
-Configure in Claude Desktop (`claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "cognimesh": {
-      "command": "python",
-      "args": ["-m", "cognimesh_core.mcp_server"],
-      "env": {"COGNIMESH_DATABASE_URL": "postgresql://..."}
-    }
-  }
-}
-```
-
-| Tool | Description |
-|------|-------------|
-| `cognimesh_query` | Route questions through T0/T2/T3 with lineage and freshness |
-| `cognimesh_discover` | List available data capabilities |
-| `cognimesh_check_drift` | Detect Silver schema drift via dbook hashing |
-| `cognimesh_refresh` | Trigger Gold view refresh |
-| `cognimesh_impact_analysis` | What breaks if Silver changes? |
-| `cognimesh_provenance` | Trace Gold columns to Silver sources |
+- [Architecture and deployment details](docs/architecture.md)
+- [Benchmark methodology and results](docs/benchmark.md)
+- [Schema intelligence via dbook](docs/dbook-integration.md)
+- [Governance and approval workflow](docs/approval-queue.md)
 
 ---
 
-## Installation
-
-```bash
-# From the repo
-pip install -e ".[dbook]"
-
-# Then create your app
-from cognimesh_core.config import CogniMeshConfig
-from cognimesh_core.gateway import Gateway
-# ... configure and run
-```
-
----
-
-## Run the Benchmark Yourself
-
-### Prerequisites
-- Docker (for Postgres)
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
-
-### Quick Start
-
-```bash
-git clone https://github.com/ShurikM/CogniMesh.git
-cd CogniMesh
-
-# Install dependencies
-uv sync --all-extras
-
-# Start Postgres, seed data, run all tests, generate report
-make all
-
-# View the visual report
-open benchmark/results/report.html
-```
-
-### Step by Step
-
-```bash
-# 1. Start Postgres (creates schemas automatically)
-make up
-
-# 2. Seed Bronze/Silver/Gold data (10K customers, 200K orders)
-make seed
-
-# 3. Register CogniMesh UCs + derive Gold views
-make setup-cognimesh
-
-# 4. Run all 90 benchmark tests
-make bench
-
-# 5. Generate the report
-make report
-```
-
-### What `make bench` Runs
-
-| Test Suite | Tests | What It Measures |
-|------------|-------|-----------------|
-| `test_performance.py` | 6 | T0 latency per UC, both approaches (pytest-benchmark) |
-| `test_throughput.py` | 8 | Concurrent request throughput at 1/5/10/25 users |
-| `test_properties.py` | 16 | 8 binary assertions x 2 approaches (the scorecard) |
-| `test_resilience_schema_drift.py` | 2 | Rename Silver column, observe both approaches |
-| `test_resilience_unsupported_uc.py` | 2 | Ask unsupported question, compare REST 404 vs CogniMesh T2 |
-| `test_resilience_staleness.py` | 2 | Expire TTL, check freshness metadata |
-| `test_marginal_cost.py` | 5 | UC-04 file count + LOC comparison |
-| `test_scale_benchmark.py` | 16 | Latency at scale + infrastructure metrics (storage, table count) |
-| `test_refresh_and_deps.py` | 14 | Dependency graph, impact analysis, smart refresh |
-| `test_dbook_integration.py` | 19 | dbook introspection, concept index, SQL validation, drift detection, T2 production guards |
-| **Total** | **90** | **All pass** |
-
----
-
-## Project Structure
-
-```
-CogniMesh/
-├── cognimesh.html              # Design document (full architecture)
-├── docker-compose.yml          # Postgres 15 for benchmark
-├── Makefile                    # One-command runner (make all)
-├── pyproject.toml              # Python project config
-│
-├── cognimesh_core/             # Minimal CogniMesh library (11 modules)
-│   ├── models.py               #   Pydantic v2 data models
-│   ├── config.py               #   Configuration from env vars
-│   ├── db.py                   #   Postgres connection pool
-│   ├── registry.py             #   UC CRUD + change logging
-│   ├── capability_index.py     #   UC discovery + keyword matching
-│   ├── gateway.py              #   T0/T2/T3 query routing engine
-│   ├── gold_manager.py         #   Gold table refresh + freshness
-│   ├── lineage.py              #   Column-level lineage tracking
-│   ├── audit.py                #   Audit log + cost attribution
-│   ├── query_composer.py       #   T2 SQL composition from metadata
-│   ├── dependency.py           #   Dependency graph + impact analysis + provenance
-│   ├── refresh_manager.py      #   Scheduled + real-time refresh (only affected Gold views)
-│   └── mcp_server.py           #   MCP server — 6 tools wrapping the Gateway
-│
-├── benchmark/
-│   ├── data/
-│   │   ├── schema.sql          #   Postgres DDL (5 schemas, 17 tables)
-│   │   ├── seed.py             #   Deterministic data generator
-│   │   ├── schema_scale.sql    #   DDL for 20-UC scale benchmark
-│   │   ├── seed_scale.py       #   Data generator for scale benchmark
-│   │   └── schema_triggers.sql #   Postgres triggers for change detection
-│   │
-│   ├── rest_api/               # Approach A: Traditional REST
-│   │   ├── app.py              #   FastAPI app (3 endpoints)
-│   │   ├── endpoints/          #   customer_health, top_products, at_risk
-│   │   ├── models.py           #   Response models
-│   │   └── gold_tables.sql     #   Hand-written Gold derivation SQL
-│   │
-│   ├── cognimesh_app/          # Approach B: CogniMesh
-│   │   ├── app.py              #   Gateway wrapper (all API endpoints)
-│   │   ├── setup.py            #   Register UCs + derive Gold + register lineage
-│   │   └── use_cases/          #   20 UC JSON definitions (~12 lines each)
-│   │
-│   ├── tests/                  # All benchmark tests (90 total)
-│   │   ├── test_performance.py
-│   │   ├── test_throughput.py
-│   │   ├── test_properties.py  #   ← The 8/8 vs 5/8 scorecard
-│   │   ├── test_resilience_*.py
-│   │   ├── test_marginal_cost.py
-│   │   ├── test_scale_benchmark.py    # 20-UC scale + infra metrics
-│   │   └── test_refresh_and_deps.py   # Dependency graph + smart refresh
-│   │
-│   ├── uc04/                   # Marginal cost demo
-│   │   ├── rest_changes/       #   4 files, 78 SLOC (endpoint + Gold SQL + model + test)
-│   │   └── cognimesh_changes/  #   1 file, 12 SLOC (JSON UC definition)
-│   │
-│   ├── harness/                # Report generation
-│   │   ├── metrics.py
-│   │   └── report.py
-│   │
-│   └── results/                # Generated output
-│       └── report.html         #   ← Visual report with charts
-│
-└── LICENSE                     # Apache 2.0
-```
-
----
-
-## How CogniMesh Works (in 30 seconds)
-
-1. **Register a Use Case** — write a JSON file: "What is the health status of customer X?" + required fields + freshness TTL
-2. **System derives Gold** — CogniMesh creates an optimized Gold table from Silver, registers column-level lineage, sets up freshness tracking, and builds the dependency graph
-3. **Agent queries** — `POST /query {"question": "..."}` → Gateway matches UC → serves from Gold (T0) with lineage + freshness + audit
-4. **Unsupported question?** — Gateway composes SQL from Silver metadata (T2) or explains why it can't (T3). No 404s.
-5. **Schema changes?** — Gold layer isolates agents from Silver drift. System detects and flags changes.
-6. **Dependency intelligence** — impact analysis shows which Gold views and UCs break if a Silver table changes. Provenance traces any Gold column back to its Silver source.
-7. **Smart refresh** — Scheduled refresh is the primary mode: check TTLs, rebuild only stale views, report what changed. Real-time mode (Postgres LISTEN/NOTIFY) available for UCs that need immediate freshness. At 20 UCs, this means refreshing 3 views instead of 20.
-
----
-
-## CogniMesh API Endpoints
-
-```
-POST /query                  — Query with UC routing (T0/T2/T3)
-GET  /discover               — List all capabilities
-GET  /health                 — Health check
-
-GET  /dependencies           — Full dependency graph (Silver → Gold → UCs)
-GET  /dependencies/impact    — What breaks if a Silver table changes?
-GET  /dependencies/provenance — Where does this Gold column come from?
-GET  /dependencies/what-if   — Change impact estimation
-
-GET  /refresh/status         — Freshness of all Gold views
-POST /refresh/scheduled      — Run scheduled refresh cycle (primary mode)
-POST /refresh/check          — Auto-refresh stale views (legacy)
-GET  /refresh/plan           — Preview what would be refreshed
-
-GET  /schema/drift            — Check Silver schema for structural changes (dbook)
-```
-
----
-
-## What This Benchmark Proves (and What It Doesn't)
-
-**This benchmark proves architectural properties, not production performance.**
-
-| What it proves | What it does NOT prove |
-|---|---|
-| CogniMesh has lineage, audit, freshness, governance | That these work at 50M rows or 500 concurrent agents |
-| T2 fallback composes correct SQL from Silver | That T2 composition is fast on large Silver tables |
-| Schema drift is detected and isolated | That drift detection scales to 1000-table schemas |
-| dbt REST stack gets 5/8 properties with effort | That either approach handles network-attached Postgres latency |
-| Adding a UC is 12 SLOC vs 78 SLOC | That operational cost follows the same ratio |
-
-**Scale reality check:**
-
-- **Dataset:** 10K customers, 200K orders, local Postgres. This is a toy. Sub-10ms latency at this scale is trivially achievable with `SELECT * FROM table WHERE id = $1`.
-- **Concurrency:** Throughput tests run 1/5/10/25 concurrent requests. Production agents may run 500+.
-- **Network:** All tests run against localhost. Production Postgres adds 1-5ms network RTT.
-- **Lineage overhead:** Attaching lineage metadata to every response is cheap at 10K rows. At 50M rows with column-level tracking across 1000 tables, the lineage lookup itself becomes a performance concern.
-
-**What would a production-scale benchmark look like:**
-
-- 50M+ rows in Silver, 1000+ columns across 50+ tables
-- Network-attached Postgres (or Postgres on a separate machine/cloud)
-- 100-500 concurrent agent connections
-- Sustained load over hours (not seconds)
-- Memory profiling under concurrent T2 composition
-- Lineage lookup latency at scale
-
-We haven't built this yet. The current benchmark is a **proof of architecture**, not a **proof of scale**. If you're evaluating CogniMesh for production, run the benchmark against your own data at your own scale — the `make all` command works with any Postgres instance.
-
-## What's NOT in the Benchmark (Yet)
-
-| Feature | Status | Why Skipped |
-|---------|--------|-------------|
-| MCP server | **Done** | 6 MCP tools wrapping the Gateway: query, discover, check_drift, refresh, impact_analysis, provenance. See [MCP Server](#mcp-server) section. |
-| Access control & agent scoping | **Done** | Per-UC permissions, agent identity enforcement |
-| Approval queue | **Done** | Nothing changes in Gold without human approval |
-| LLM-based UC routing | Planned | Benchmark uses deterministic keyword matching for reproducibility |
-| SQLMesh integration | **Done** | Managed Gold materialization with full DAG support |
-| Multi-agent load testing | Planned | Single-agent sufficient to prove the architecture |
-| Production data volumes | Planned | 200K orders sufficient for architectural comparison, not scale validation |
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Data models | Pydantic v2 |
-| API framework | FastAPI |
-| Database | Gold: Postgres / DuckDB / MongoDB / StarRocks / ClickHouse (serving DB — OLTP or OLAP) · Silver/Bronze: any (Iceberg, Delta, Spark, Snowflake) |
-| DB driver | psycopg 3 + connection pool |
-| Test framework | pytest + pytest-benchmark |
-| Package manager | uv |
-| LLM (production) | Pluggable: OpenAI / Anthropic / Ollama |
-| Schema intelligence | [dbook](https://github.com/ShurikM/dbook) >=0.1.0 — database metadata compiler (optional, for rich schema introspection) |
-| Agent interface | REST API (FastAPI) + MCP server (mcp Python SDK) |
-
-## License
-
-Apache 2.0
+Apache 2.0 — see [LICENSE](LICENSE).
