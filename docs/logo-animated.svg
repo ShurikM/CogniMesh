@@ -37,9 +37,27 @@
       }
       .text-b { animation: textB 12s ease infinite; }
 
-      /* DB label switching: Gold in Act 1, Silver in Act 2 */
-      .db-label-gold { animation: textA 12s ease infinite; }
-      .db-label-silver { animation: textB 12s ease infinite; }
+      /* DB label switching: Gold until request hits CogniMesh (~7.5s), then Silver */
+      @keyframes dbGold {
+        0% { opacity: 1; }
+        62% { opacity: 1; }    /* stays "Gold" until request hits CogniMesh in Act 2 (~7.5s/12s) */
+        63% { opacity: 0; }    /* then hides */
+        92% { opacity: 0; }    /* stays hidden until end of Act 2 */
+        93% { opacity: 1; }    /* back to Gold for next loop */
+        100% { opacity: 1; }
+      }
+
+      @keyframes dbSilver {
+        0% { opacity: 0; }
+        62% { opacity: 0; }    /* hidden until request hits CogniMesh */
+        63% { opacity: 1; }    /* appears when CogniMesh decides to compose from Silver */
+        92% { opacity: 1; }    /* visible through Act 2 */
+        93% { opacity: 0; }    /* hides for Act 1 restart */
+        100% { opacity: 0; }
+      }
+
+      .db-label-gold { animation: dbGold 12s infinite; }
+      .db-label-silver { animation: dbSilver 12s infinite; }
 
       /* Bottom row text with 0.2s offset = 1.67% */
       .text-a-bot { animation: textA 12s ease infinite; animation-delay: 0.2s; }
