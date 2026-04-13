@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ShurikM/CogniMesh/actions/workflows/ci.yml)
 
-<p align="center"><img src="docs/logo.svg" width="360" alt="CogniMesh"></p>
+<p align="center"><img src="docs/logo-animated.svg" alt="CogniMesh"></p>
 
 ### The governed data layer for AI agents.
 

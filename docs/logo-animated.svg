@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="gw" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b7cf8"/>
+      <stop offset="100%" stop-color="#6d5fd6"/>
+    </linearGradient>
+    <linearGradient id="gt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b7cf8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8b7cf8" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      /* Center node pulse */
+      @keyframes centerPulse {
+        0% { transform: translate(150px, 100px) scale(1); }
+        50% { transform: translate(150px, 100px) scale(1.08); }
+        100% { transform: translate(150px, 100px) scale(1); }
+      }
+      .center-node {
+        transform-origin: 0 0;
+        animation: centerPulse 2s ease-in-out infinite;
+      }
+
+      /* Center glow pulse */
+      @keyframes glowPulse {
+        0% { opacity: 0.4; transform: translate(150px, 100px) scale(1); }
+        50% { opacity: 0.7; transform: translate(150px, 100px) scale(1.15); }
+        100% { opacity: 0.4; transform: translate(150px, 100px) scale(1); }
+      }
+      .center-glow {
+        transform-origin: 0 0;
+        animation: glowPulse 2s ease-in-out infinite;
+      }
+
+      /* Data pulse dot animations — outer nodes to center (150,100) */
+
+      /* Node 1: top-left (70, 10) → center */
+      @keyframes dot1 {
+        0% { transform: translate(70px, 10px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      /* Node 2: top-right (230, 10) → center */
+      @keyframes dot2 {
+        0% { transform: translate(230px, 10px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      /* Node 3: right (250, 100) → center */
+      @keyframes dot3 {
+        0% { transform: translate(250px, 100px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      /* Node 4: bottom-right (230, 190) → center */
+      @keyframes dot4 {
+        0% { transform: translate(230px, 190px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      /* Node 5: bottom-left (70, 190) → center */
+      @keyframes dot5 {
+        0% { transform: translate(70px, 190px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      /* Node 6: left (50, 100) → center */
+      @keyframes dot6 {
+        0% { transform: translate(50px, 100px); opacity: 0; }
+        8% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(150px, 100px); opacity: 0; }
+      }
+
+      .dot1 { animation: dot1 3s ease-in-out infinite; animation-delay: 0s; }
+      .dot2 { animation: dot2 3s ease-in-out infinite; animation-delay: 0.7s; }
+      .dot3 { animation: dot3 3s ease-in-out infinite; animation-delay: 1.4s; }
+      .dot4 { animation: dot4 3s ease-in-out infinite; animation-delay: 2.1s; }
+      .dot5 { animation: dot5 3s ease-in-out infinite; animation-delay: 0.5s; }
+      .dot6 { animation: dot6 3s ease-in-out infinite; animation-delay: 1.8s; }
+
+      /* Text fade-in */
+      @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+      .text-group {
+        animation: fadeIn 1.5s ease-out forwards;
+      }
+    </style>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="800" height="200" fill="#0d0f12" rx="8"/>
+
+  <!-- === MESH NETWORK (left side, centered at 150,100) === -->
+
+  <!-- Connection lines: center to outer nodes -->
+  <g stroke="#8b7cf8" stroke-width="1.5" stroke-opacity="0.3">
+    <!-- Center (150,100) to each outer node -->
+    <line x1="150" y1="100" x2="70" y2="10"/>
+    <line x1="150" y1="100" x2="230" y2="10"/>
+    <line x1="150" y1="100" x2="250" y2="100"/>
+    <line x1="150" y1="100" x2="230" y2="190"/>
+    <line x1="150" y1="100" x2="70" y2="190"/>
+    <line x1="150" y1="100" x2="50" y2="100"/>
+    <!-- Outer hexagonal connections -->
+    <line x1="70" y1="10" x2="230" y2="10"/>
+    <line x1="230" y1="10" x2="250" y2="100"/>
+    <line x1="250" y1="100" x2="230" y2="190"/>
+    <line x1="230" y1="190" x2="70" y2="190"/>
+    <line x1="70" y1="190" x2="50" y2="100"/>
+    <line x1="50" y1="100" x2="70" y2="10"/>
+  </g>
+
+  <!-- Outer nodes -->
+  <!-- Node 1: top-left — teal -->
+  <circle cx="70" cy="10" r="10" fill="url(#gt)"/>
+  <!-- Node 2: top-right — teal -->
+  <circle cx="230" cy="10" r="10" fill="url(#gt)"/>
+  <!-- Node 3: right — green -->
+  <circle cx="250" cy="100" r="9" fill="#4ade80"/>
+  <!-- Node 4: bottom-right — teal -->
+  <circle cx="230" cy="190" r="10" fill="url(#gt)"/>
+  <!-- Node 5: bottom-left — green -->
+  <circle cx="70" cy="190" r="9" fill="#4ade80"/>
+  <!-- Node 6: left — teal -->
+  <circle cx="50" cy="100" r="10" fill="url(#gt)"/>
+
+  <!-- Center glow effect -->
+  <circle cx="0" cy="0" r="38" fill="url(#glow)" class="center-glow"/>
+
+  <!-- Center gateway node -->
+  <circle cx="0" cy="0" r="22" fill="url(#gw)" stroke="#8b7cf8" stroke-width="2" stroke-opacity="0.6" class="center-node"/>
+
+  <!-- Center icon: mesh/brain symbol -->
+  <g class="center-node" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round">
+    <path d="M-8 -4 L0 -10 L8 -4"/>
+    <path d="M-8 4 L0 10 L8 4"/>
+    <path d="M-8 -4 L-8 4"/>
+    <path d="M8 -4 L8 4"/>
+    <path d="M0 -10 L0 10"/>
+  </g>
+
+  <!-- === DATA PULSE DOTS === -->
+  <!-- Dot 1: teal, from node 1 (top-left) -->
+  <circle cx="0" cy="0" r="3.5" fill="#2dd4bf" opacity="0" class="dot1"/>
+  <!-- Dot 2: green, from node 2 (top-right) -->
+  <circle cx="0" cy="0" r="3" fill="#4ade80" opacity="0" class="dot2"/>
+  <!-- Dot 3: amber, from node 3 (right) -->
+  <circle cx="0" cy="0" r="3.5" fill="#fbbf24" opacity="0" class="dot3"/>
+  <!-- Dot 4: teal, from node 4 (bottom-right) -->
+  <circle cx="0" cy="0" r="3" fill="#2dd4bf" opacity="0" class="dot4"/>
+  <!-- Dot 5: amber, from node 5 (bottom-left) -->
+  <circle cx="0" cy="0" r="3.5" fill="#fbbf24" opacity="0" class="dot5"/>
+  <!-- Dot 6: green, from node 6 (left) -->
+  <circle cx="0" cy="0" r="3" fill="#4ade80" opacity="0" class="dot6"/>
+
+  <!-- === TEXT (right side) === -->
+  <g class="text-group" opacity="0">
+    <text x="320" y="92" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="42" font-weight="700" fill="white">CogniMesh</text>
+    <text x="320" y="115" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="14" fill="#9ca3af">The governed data layer for AI agents</text>
+  </g>
+</svg>
