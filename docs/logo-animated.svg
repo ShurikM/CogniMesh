@@ -37,6 +37,10 @@
       }
       .text-b { animation: textB 12s ease infinite; }
 
+      /* DB label switching: Gold in Act 1, Silver in Act 2 */
+      .db-label-gold { animation: textA 12s ease infinite; }
+      .db-label-silver { animation: textB 12s ease infinite; }
+
       /* Bottom row text with 0.2s offset = 1.67% */
       .text-a-bot { animation: textA 12s ease infinite; animation-delay: 0.2s; }
       .text-b-bot { animation: textB 12s ease infinite; animation-delay: 0.2s; }
@@ -374,7 +378,8 @@
   <line x1="766" y1="124" x2="766" y2="154" stroke="#2dd4bf" stroke-width="1.2"/>
   <line x1="814" y1="124" x2="814" y2="154" stroke="#2dd4bf" stroke-width="1.2"/>
   <ellipse cx="790" cy="138" rx="24" ry="10" fill="none" stroke="#2dd4bf" stroke-width="0.5" stroke-opacity="0.3"/>
-  <text x="790" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Gold</text>
+  <text x="790" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle" class="db-label-gold">Gold</text>
+  <text x="790" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle" class="db-label-silver">Silver</text>
 
   <!-- === ANIMATED DOTS — ACT 1 TOP === -->
   <!-- Blue request: agent -> hub -->
@@ -447,14 +452,14 @@
   <!-- "no endpoint" label (Act 2 only) -->
   <text x="450" y="356" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#6b7280" text-anchor="middle" class="bot-404-2">no endpoint</text>
 
-  <!-- === DATABASE (bottom row, dim) === -->
-  <ellipse cx="790" cy="294" rx="24" ry="10" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <rect x="766" y="294" width="48" height="30" fill="#4b5563" fill-opacity="0.05" stroke="none"/>
-  <ellipse cx="790" cy="324" rx="24" ry="10" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <line x1="766" y1="294" x2="766" y2="324" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <line x1="814" y1="294" x2="814" y2="324" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <ellipse cx="790" cy="308" rx="24" ry="10" fill="none" stroke="#4b5563" stroke-width="0.5" stroke-opacity="0.2"/>
-  <text x="790" y="346" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4b5563" text-anchor="middle">Gold</text>
+  <!-- === DATABASE (bottom row, same teal as top) === -->
+  <ellipse cx="790" cy="294" rx="24" ry="10" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
+  <rect x="766" y="294" width="48" height="30" fill="#2dd4bf" fill-opacity="0.08" stroke="none"/>
+  <ellipse cx="790" cy="324" rx="24" ry="10" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
+  <line x1="766" y1="294" x2="766" y2="324" stroke="#2dd4bf" stroke-width="1.2"/>
+  <line x1="814" y1="294" x2="814" y2="324" stroke="#2dd4bf" stroke-width="1.2"/>
+  <ellipse cx="790" cy="308" rx="24" ry="10" fill="none" stroke="#2dd4bf" stroke-width="0.5" stroke-opacity="0.3"/>
+  <text x="790" y="346" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Gold</text>
 
   <!-- === ANIMATED DOTS — ACT 1 BOTTOM === -->
   <!-- Blue request: agent -> REST -->
