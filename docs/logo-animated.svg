@@ -1,425 +1,490 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420">
   <defs>
-    <linearGradient id="gw" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8b7cf8"/>
-      <stop offset="100%" stop-color="#6d5fd6"/>
-    </linearGradient>
-    <linearGradient id="gt" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2dd4bf"/>
-      <stop offset="100%" stop-color="#14b8a6"/>
-    </linearGradient>
     <radialGradient id="glowPurple" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#8b7cf8" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#8b7cf8" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="glowPurpleBright" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b7cf8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8b7cf8" stop-opacity="0"/>
+    </radialGradient>
     <style>
-      /* ============================================
-         TOP ROW — "With CogniMesh" animations
-         ============================================ */
+      /* =============================================
+         12s CYCLE: Act 1 (0-5s), transition (5-6s),
+         Act 2 (6-11s), transition (11-12s)
+         ============================================= */
 
-      /* Request dot: Agent (80) → CogniMesh (450) → DB (800)
-         Then response dot: DB (800) → CogniMesh (450) → Agent (80)
-         6s total cycle */
+      /* --- Speech bubble text switching --- */
 
-      /* Phase 1: Blue request dot travels Agent → CogniMesh (0-1s) */
-      @keyframes topRequestOut {
-        0%   { transform: translateX(80px); opacity: 0; }
-        3%   { opacity: 1; }
-        50%  { transform: translateX(450px); opacity: 1; }
-        51%  { opacity: 0; }
-        100% { opacity: 0; transform: translateX(450px); }
-      }
-      .top-req-dot-1 {
-        animation: topRequestOut 2s ease-in-out infinite;
-        animation-delay: 0s;
-      }
-
-      /* Phase 2: Teal dot travels CogniMesh → DB (1-2s) */
-      @keyframes topRequestThrough {
-        0%   { transform: translateX(450px); opacity: 0; }
-        3%   { opacity: 1; }
-        50%  { transform: translateX(800px); opacity: 1; }
-        51%  { opacity: 0; }
-        100% { opacity: 0; transform: translateX(800px); }
-      }
-      .top-req-dot-2 {
-        animation: topRequestThrough 2s ease-in-out infinite;
-        animation-delay: 1s;
-      }
-
-      /* Phase 3: Green response dot travels DB → CogniMesh (2-3s) */
-      @keyframes topResponseBack1 {
-        0%   { transform: translateX(800px); opacity: 0; }
-        3%   { opacity: 1; }
-        50%  { transform: translateX(450px); opacity: 1; }
-        51%  { opacity: 0; }
-        100% { opacity: 0; transform: translateX(450px); }
-      }
-      .top-resp-dot-1 {
-        animation: topResponseBack1 2s ease-in-out infinite;
-        animation-delay: 2s;
-      }
-
-      /* Phase 4: Green response dot travels CogniMesh → Agent (3-4s) */
-      @keyframes topResponseBack2 {
-        0%   { transform: translateX(450px); opacity: 0; }
-        3%   { opacity: 1; }
-        50%  { transform: translateX(80px); opacity: 1; }
-        51%  { opacity: 0; }
-        100% { opacity: 0; transform: translateX(80px); }
-      }
-      .top-resp-dot-2 {
-        animation: topResponseBack2 2s ease-in-out infinite;
-        animation-delay: 3s;
-      }
-
-      /* Success label "200 OK" fade in at 3-4s, hold, fade out */
-      @keyframes topSuccessLabel {
+      /* Text A: "Customer health?" — visible Act 1, hidden Act 2 */
+      @keyframes textA {
         0%   { opacity: 0; }
-        50%  { opacity: 0; }
-        58%  { opacity: 1; }
-        83%  { opacity: 1; }
+        2%   { opacity: 1; }
+        40%  { opacity: 1; }   /* 5/12 ~ 41% */
+        43%  { opacity: 0; }
         100% { opacity: 0; }
       }
-      .top-success-label {
-        animation: topSuccessLabel 6s ease-in-out infinite;
-      }
+      .text-a { animation: textA 12s ease infinite; }
 
-      /* Lineage label fade in at 3-4s */
-      @keyframes topLineageLabel {
+      /* Text B: "Revenue by region?" — hidden Act 1, visible Act 2 */
+      @keyframes textB {
         0%   { opacity: 0; }
-        50%  { opacity: 0; }
-        58%  { opacity: 0.7; }
-        83%  { opacity: 0.7; }
+        48%  { opacity: 0; }   /* 6/12 = 50% */
+        51%  { opacity: 1; }
+        90%  { opacity: 1; }   /* 11/12 ~ 91% */
+        93%  { opacity: 0; }
         100% { opacity: 0; }
       }
-      .top-lineage-label {
-        animation: topLineageLabel 6s ease-in-out infinite;
-      }
+      .text-b { animation: textB 12s ease infinite; }
 
-      /* CogniMesh hub pulse when request passes through (1-2s) */
+      /* Bottom row text with 0.2s offset = 1.67% */
+      .text-a-bot { animation: textA 12s ease infinite; animation-delay: 0.2s; }
+      .text-b-bot { animation: textB 12s ease infinite; animation-delay: 0.2s; }
+
+      /* --- ACT 1: Top row dots (0s-5s) --- */
+
+      /* Top request dot: agent(120) -> hub(450), starts at 0.5s */
+      @keyframes topReq1 {
+        0%    { cx: 120; opacity: 0; }
+        4%    { cx: 120; opacity: 1; }    /* 0.5s */
+        16.6% { cx: 450; opacity: 1; }   /* 2.0s */
+        17.5% { cx: 450; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-req1 { animation: topReq1 12s linear infinite; }
+
+      /* Top pass-through dot: hub(450) -> db(770), starts at 2.0s */
+      @keyframes topPass1 {
+        0%    { cx: 450; opacity: 0; }
+        16.6% { cx: 450; opacity: 0; }   /* 2.0s */
+        17%   { cx: 450; opacity: 1; }
+        21%   { cx: 770; opacity: 1; }    /* 2.5s */
+        22%   { cx: 770; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-pass1 { animation: topPass1 12s linear infinite; }
+
+      /* Top response dot: db(770) -> agent(120), starts at 2.5s */
+      @keyframes topResp1 {
+        0%    { cx: 770; opacity: 0; }
+        21%   { cx: 770; opacity: 0; }    /* 2.5s */
+        22%   { cx: 770; opacity: 1; }
+        33%   { cx: 120; opacity: 1; }    /* 4.0s */
+        34%   { cx: 120; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-resp1 { animation: topResp1 12s linear infinite; }
+
+      /* Top 200 OK label — Act 1 */
+      @keyframes topOk1 {
+        0%    { opacity: 0; }
+        33%   { opacity: 0; }   /* 4.0s */
+        35%   { opacity: 1; }
+        41%   { opacity: 1; }   /* 5.0s */
+        43%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-ok1 { animation: topOk1 12s ease infinite; }
+
+      /* --- ACT 1: Bottom row dots (offset 0.2s) --- */
+
+      /* Bot request dot: agent(120) -> rest(450), starts at 0.7s */
+      @keyframes botReq1 {
+        0%    { cx: 120; opacity: 0; }
+        5.8%  { cx: 120; opacity: 1; }    /* 0.7s */
+        18.3% { cx: 450; opacity: 1; }    /* 2.2s */
+        19%   { cx: 450; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-req1 { animation: botReq1 12s linear infinite; }
+
+      /* Bot pass-through dot: rest(450) -> db(770), starts at 2.2s */
+      @keyframes botPass1 {
+        0%    { cx: 450; opacity: 0; }
+        18.3% { cx: 450; opacity: 0; }    /* 2.2s */
+        19%   { cx: 450; opacity: 1; }
+        23%   { cx: 770; opacity: 1; }    /* 2.7s */
+        24%   { cx: 770; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-pass1 { animation: botPass1 12s linear infinite; }
+
+      /* Bot response dot: db(770) -> agent(120), starts at 2.7s */
+      @keyframes botResp1 {
+        0%    { cx: 770; opacity: 0; }
+        22.5% { cx: 770; opacity: 0; }    /* 2.7s */
+        23%   { cx: 770; opacity: 1; }
+        35%   { cx: 120; opacity: 1; }    /* 4.2s */
+        36%   { cx: 120; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-resp1 { animation: botResp1 12s linear infinite; }
+
+      /* Bot 200 OK label — Act 1 */
+      @keyframes botOk1 {
+        0%    { opacity: 0; }
+        35%   { opacity: 0; }   /* 4.2s */
+        37%   { opacity: 1; }
+        41%   { opacity: 1; }   /* 5.0s */
+        43%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-ok1 { animation: botOk1 12s ease infinite; }
+
+      /* --- ACT 2: Top row dots (6s-11s) --- */
+
+      /* Top request dot: agent(120) -> hub(450), starts at 6.5s */
+      @keyframes topReq2 {
+        0%    { cx: 120; opacity: 0; }
+        54%   { cx: 120; opacity: 0; }    /* 6.5s */
+        55%   { cx: 120; opacity: 1; }
+        62.5% { cx: 450; opacity: 1; }    /* 7.5s */
+        63.5% { cx: 450; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-req2 { animation: topReq2 12s linear infinite; }
+
+      /* Top composed query dot: hub(450) -> db(770), starts at 8.0s */
+      @keyframes topComposed2 {
+        0%    { cx: 450; opacity: 0; }
+        66.6% { cx: 450; opacity: 0; }    /* 8.0s */
+        67%   { cx: 450; opacity: 1; }
+        71%   { cx: 770; opacity: 1; }    /* 8.5s */
+        72%   { cx: 770; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-composed2 { animation: topComposed2 12s linear infinite; }
+
+      /* Top response dot: db(770) -> agent(120), starts at 8.5s */
+      @keyframes topResp2 {
+        0%    { cx: 770; opacity: 0; }
+        71%   { cx: 770; opacity: 0; }    /* 8.5s */
+        72%   { cx: 770; opacity: 1; }
+        79%   { cx: 120; opacity: 1; }    /* 9.5s */
+        80%   { cx: 120; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-resp2 { animation: topResp2 12s linear infinite; }
+
+      /* Top 200 OK + "composed from Silver" label — Act 2 */
+      @keyframes topOk2 {
+        0%    { opacity: 0; }
+        79%   { opacity: 0; }   /* 9.5s */
+        81%   { opacity: 1; }
+        91%   { opacity: 1; }   /* 11s */
+        93%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .top-ok2 { animation: topOk2 12s ease infinite; }
+
+      /* "composing..." label near hub during Act 2 */
+      @keyframes composingLabel {
+        0%    { opacity: 0; }
+        62.5% { opacity: 0; }   /* 7.5s */
+        64%   { opacity: 1; }
+        66.6% { opacity: 1; }   /* 8.0s */
+        68%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .composing-label { animation: composingLabel 12s ease infinite; }
+
+      /* Hub glow brighter during Act 2 composing (7.5s-8.0s) */
+      @keyframes hubGlowAct2 {
+        0%    { opacity: 0; }
+        62.5% { opacity: 0; }
+        64%   { opacity: 1; }
+        68%   { opacity: 1; }
+        70%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .hub-glow-bright { animation: hubGlowAct2 12s ease infinite; }
+
+      /* --- ACT 2: Bottom row dots — FAILURE --- */
+
+      /* Bot request dot: agent(120) -> rest(450), starts at 6.7s */
+      @keyframes botReq2 {
+        0%    { cx: 120; opacity: 0; }
+        55.8% { cx: 120; opacity: 0; }    /* 6.7s */
+        56.5% { cx: 120; opacity: 1; }
+        64%   { cx: 450; opacity: 1; }    /* 7.7s */
+        65%   { cx: 450; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-req2 { animation: botReq2 12s linear infinite; }
+
+      /* Bot RED bounce dot: rest(450) -> agent(120), starts at 7.7s */
+      @keyframes botBounce2 {
+        0%    { cx: 450; opacity: 0; }
+        64%   { cx: 450; opacity: 0; }    /* 7.7s */
+        65%   { cx: 460; opacity: 1; }    /* slight overshoot */
+        66%   { cx: 450; opacity: 1; }    /* bounce */
+        71%   { cx: 120; opacity: 0.5; }  /* 8.5s */
+        72%   { cx: 120; opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-bounce2 { animation: botBounce2 12s linear infinite; }
+
+      /* Bot 404 label — Act 2 */
+      @keyframes bot404Act2 {
+        0%    { opacity: 0; }
+        71%   { opacity: 0; }   /* 8.5s */
+        73%   { opacity: 1; }
+        91%   { opacity: 1; }   /* 11s */
+        93%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-404-2 { animation: bot404Act2 12s ease infinite; }
+
+      /* Red X at REST box — Act 2 */
+      @keyframes redXAct2 {
+        0%    { opacity: 0; }
+        64%   { opacity: 0; }   /* 7.7s */
+        66%   { opacity: 1; }
+        91%   { opacity: 1; }
+        93%   { opacity: 0; }
+        100%  { opacity: 0; }
+      }
+      .bot-red-x2 { animation: redXAct2 12s ease infinite; }
+
+      /* --- AMBIENT ANIMATIONS --- */
+
+      /* Hub subtle pulse */
       @keyframes hubPulse {
-        0%   { transform: translate(450px, 120px) scale(1); }
-        12%  { transform: translate(450px, 120px) scale(1); }
-        20%  { transform: translate(450px, 120px) scale(1.08); }
-        30%  { transform: translate(450px, 120px) scale(1); }
-        45%  { transform: translate(450px, 120px) scale(1.06); }
-        55%  { transform: translate(450px, 120px) scale(1); }
-        100% { transform: translate(450px, 120px) scale(1); }
+        0%    { transform: scale(1); }
+        50%   { transform: scale(1.03); }
+        100%  { transform: scale(1); }
       }
       .hub-group {
-        transform-origin: 0 0;
-        animation: hubPulse 6s ease-in-out infinite;
+        transform-origin: 450px 140px;
+        animation: hubPulse 4s ease-in-out infinite;
       }
 
-      /* Hub glow pulse */
-      @keyframes hubGlowPulse {
-        0%   { opacity: 0.3; }
-        15%  { opacity: 0.3; }
-        22%  { opacity: 0.8; }
-        35%  { opacity: 0.3; }
-        100% { opacity: 0.3; }
-      }
-      .hub-glow {
-        animation: hubGlowPulse 6s ease-in-out infinite;
-      }
-
-      /* Green checkmark fade */
-      @keyframes checkFade {
-        0%   { opacity: 0; }
-        55%  { opacity: 0; }
-        62%  { opacity: 1; }
-        83%  { opacity: 1; }
-        100% { opacity: 0; }
-      }
-      .top-check {
-        animation: checkFade 6s ease-in-out infinite;
-      }
-
-      /* ============================================
-         BOTTOM ROW — "Without CogniMesh" animations
-         ============================================ */
-
-      /* Request dot: Agent (80) → gap (450), turns red, bounces back */
-      @keyframes botRequestOut {
-        0%   { transform: translateX(80px); opacity: 0; }
-        3%   { opacity: 1; }
-        50%  { transform: translateX(420px); opacity: 1; }
-        51%  { opacity: 0; }
-        100% { opacity: 0; transform: translateX(420px); }
-      }
-      .bot-req-dot {
-        animation: botRequestOut 2s ease-in-out infinite;
-        animation-delay: 0.3s;
-      }
-
-      /* Red bounce dot: reaches gap, turns red, bounces back */
-      @keyframes botBounce {
-        0%   { transform: translateX(420px); opacity: 0; }
-        5%   { opacity: 1; }
-        15%  { transform: translateX(440px); }
-        50%  { transform: translateX(420px); opacity: 1; }
-        100% { transform: translateX(80px); opacity: 0.3; }
-      }
-      .bot-bounce-dot {
-        animation: botBounce 2.5s ease-in-out infinite;
-        animation-delay: 2.3s;
-      }
-
-      /* Red X at gap */
-      @keyframes redXFade {
-        0%   { opacity: 0; }
-        35%  { opacity: 0; }
-        42%  { opacity: 1; }
-        70%  { opacity: 1; }
-        85%  { opacity: 0; }
-        100% { opacity: 0; }
-      }
-      .bot-red-x {
-        animation: redXFade 6s ease-in-out infinite;
-        animation-delay: 0.3s;
-      }
-
-      /* "404" label fade */
-      @keyframes bot404Label {
-        0%   { opacity: 0; }
-        55%  { opacity: 0; }
-        62%  { opacity: 1; }
-        83%  { opacity: 1; }
-        100% { opacity: 0; }
-      }
-      .bot-404-label {
-        animation: bot404Label 6s ease-in-out infinite;
-        animation-delay: 0.3s;
-      }
-
-      /* "no endpoint" label */
-      .bot-noep-label {
-        animation: bot404Label 6s ease-in-out infinite;
-        animation-delay: 0.3s;
-      }
-
-      /* Agent speech bubble subtle pulse */
-      @keyframes bubblePulse {
-        0%   { opacity: 0.85; }
-        50%  { opacity: 1; }
-        100% { opacity: 0.85; }
-      }
-      .speech-bubble {
-        animation: bubblePulse 3s ease-in-out infinite;
-      }
-
-      /* Dashed line drawing for top row */
+      /* Dashed line flow */
       @keyframes dashFlow {
         0%   { stroke-dashoffset: 20; }
         100% { stroke-dashoffset: 0; }
       }
-      .flow-line-top {
+      .flow-line {
         stroke-dasharray: 8 4;
         animation: dashFlow 1.5s linear infinite;
       }
-      .flow-line-bot {
+      .flow-line-dim {
         stroke-dasharray: 8 4;
         animation: dashFlow 2s linear infinite;
       }
+
+      /* Speech bubble gentle pulse */
+      @keyframes bubblePulse {
+        0%   { opacity: 0.9; }
+        50%  { opacity: 1; }
+        100% { opacity: 0.9; }
+      }
+      .speech-bubble { animation: bubblePulse 3s ease-in-out infinite; }
+
+      /* Hub glow idle pulse */
+      @keyframes hubGlowIdle {
+        0%   { opacity: 0.25; }
+        50%  { opacity: 0.4; }
+        100% { opacity: 0.25; }
+      }
+      .hub-glow-idle { animation: hubGlowIdle 3s ease-in-out infinite; }
     </style>
   </defs>
 
   <!-- Dark background -->
-  <rect width="900" height="400" fill="#0d0f12" rx="12"/>
+  <rect width="900" height="420" fill="#0d0f12" rx="12"/>
 
-  <!-- ============================================
+  <!-- =============================================
        TITLE
-       ============================================ -->
-  <text x="450" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="700" fill="white" text-anchor="middle">CogniMesh</text>
-  <text x="450" y="48" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">The governed data layer for AI agents</text>
+       ============================================= -->
+  <text x="450" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">CogniMesh</text>
 
-  <!-- Divider line -->
-  <line x1="30" y1="210" x2="870" y2="210" stroke="#1f2937" stroke-width="1" stroke-dasharray="4 4"/>
+  <!-- Divider line between rows -->
+  <line x1="30" y1="215" x2="870" y2="215" stroke="#1f2937" stroke-width="1" stroke-dasharray="4 4"/>
 
-  <!-- ============================================
+  <!-- =============================================
        TOP ROW — "With CogniMesh"
-       ============================================ -->
+       ============================================= -->
 
   <!-- Section label -->
-  <text x="40" y="76" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#4ade80">With CogniMesh</text>
+  <text x="40" y="75" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#8b7cf8">With CogniMesh</text>
 
-  <!-- === AGENT (top row, centered at x=80, y=120) === -->
-  <!-- Agent circle body -->
-  <circle cx="80" cy="108" r="7" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
-  <path d="M68,130 a12,8 0 0,1 24,0" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/>
-  <text x="80" y="148" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Agent</text>
+  <!-- === AGENT (top row, centered at x=90, y=140) === -->
+  <circle cx="90" cy="125" r="8" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+  <path d="M77,150 a13,9 0 0,1 26,0" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="90" y="168" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Agent</text>
 
   <!-- Speech bubble (top row) -->
   <g class="speech-bubble">
-    <rect x="30" y="155" width="100" height="22" rx="6" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
-    <polygon points="65,155 72,148 79,155" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
-    <!-- Cover the bottom edge of triangle inside bubble -->
-    <line x1="66" y1="155.5" x2="78" y2="155.5" stroke="#1e293b" stroke-width="1.5"/>
-    <text x="80" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" fill="#d1d5db" text-anchor="middle">Revenue by region?</text>
+    <rect x="35" y="175" width="115" height="24" rx="7" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
+    <polygon points="75,175 82,167 89,175" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
+    <line x1="76" y1="175.5" x2="88" y2="175.5" stroke="#1e293b" stroke-width="1.5"/>
+    <!-- Text A: Customer health? -->
+    <text x="92" y="191" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#93c5fd" text-anchor="middle" class="text-a">Customer health?</text>
+    <!-- Text B: Revenue by region? -->
+    <text x="92" y="191" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#fcd34d" text-anchor="middle" class="text-b">Revenue by region?</text>
   </g>
 
   <!-- === CONNECTION LINES (top row) === -->
-  <!-- Agent → CogniMesh -->
-  <line x1="110" y1="120" x2="390" y2="120" stroke="#4b5563" stroke-width="1" class="flow-line-top"/>
-  <!-- CogniMesh → DB -->
-  <line x1="510" y1="120" x2="760" y2="120" stroke="#4b5563" stroke-width="1" class="flow-line-top"/>
+  <line x1="120" y1="140" x2="400" y2="140" stroke="#4b5563" stroke-width="1" class="flow-line"/>
+  <line x1="500" y1="140" x2="750" y2="140" stroke="#4b5563" stroke-width="1" class="flow-line"/>
 
-  <!-- Arrow labels -->
-  <text x="250" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">request</text>
-  <text x="635" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">query</text>
-
-  <!-- === COGNIMESH HUB (top row, centered at x=450, y=120) === -->
+  <!-- === COGNIMESH HUB (centered at x=450, y=140) === -->
   <g class="hub-group">
-    <!-- Glow -->
-    <circle cx="0" cy="0" r="42" fill="url(#glowPurple)" class="hub-glow"/>
+    <!-- Idle glow -->
+    <circle cx="450" cy="140" r="42" fill="url(#glowPurple)" class="hub-glow-idle"/>
+    <!-- Bright glow for composing in Act 2 -->
+    <circle cx="450" cy="140" r="50" fill="url(#glowPurpleBright)" class="hub-glow-bright"/>
     <!-- Rounded rect background -->
-    <rect x="-38" y="-30" width="76" height="60" rx="14" fill="#1a1430" stroke="#8b7cf8" stroke-width="1.5" stroke-opacity="0.6"/>
-    <!-- Mesh network inside: central node + 6 surrounding -->
-    <circle cx="0" cy="0" r="4" fill="#8b7cf8"/>
-    <!-- Surrounding nodes -->
-    <circle cx="-14" cy="-12" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <circle cx="14" cy="-12" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <circle cx="-18" cy="4" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <circle cx="18" cy="4" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <circle cx="-8" cy="16" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <circle cx="8" cy="16" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
-    <!-- Connection lines inside mesh -->
+    <rect x="412" y="110" width="76" height="60" rx="14" fill="#1a1430" stroke="#8b7cf8" stroke-width="1.5" stroke-opacity="0.6"/>
+    <!-- Mesh: central node + 6 surrounding -->
+    <circle cx="450" cy="140" r="4" fill="#8b7cf8"/>
+    <circle cx="436" cy="128" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <circle cx="464" cy="128" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <circle cx="432" cy="144" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <circle cx="468" cy="144" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <circle cx="442" cy="156" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <circle cx="458" cy="156" r="2.5" fill="#8b7cf8" fill-opacity="0.7"/>
+    <!-- Inner connection lines -->
     <g stroke="#8b7cf8" stroke-width="0.8" stroke-opacity="0.4">
-      <line x1="0" y1="0" x2="-14" y2="-12"/>
-      <line x1="0" y1="0" x2="14" y2="-12"/>
-      <line x1="0" y1="0" x2="-18" y2="4"/>
-      <line x1="0" y1="0" x2="18" y2="4"/>
-      <line x1="0" y1="0" x2="-8" y2="16"/>
-      <line x1="0" y1="0" x2="8" y2="16"/>
+      <line x1="450" y1="140" x2="436" y2="128"/>
+      <line x1="450" y1="140" x2="464" y2="128"/>
+      <line x1="450" y1="140" x2="432" y2="144"/>
+      <line x1="450" y1="140" x2="468" y2="144"/>
+      <line x1="450" y1="140" x2="442" y2="156"/>
+      <line x1="450" y1="140" x2="458" y2="156"/>
       <!-- Outer ring -->
-      <line x1="-14" y1="-12" x2="14" y2="-12"/>
-      <line x1="14" y1="-12" x2="18" y2="4"/>
-      <line x1="18" y1="4" x2="8" y2="16"/>
-      <line x1="8" y1="16" x2="-8" y2="16"/>
-      <line x1="-8" y1="16" x2="-18" y2="4"/>
-      <line x1="-18" y1="4" x2="-14" y2="-12"/>
+      <line x1="436" y1="128" x2="464" y2="128"/>
+      <line x1="464" y1="128" x2="468" y2="144"/>
+      <line x1="468" y1="144" x2="458" y2="156"/>
+      <line x1="458" y1="156" x2="442" y2="156"/>
+      <line x1="442" y1="156" x2="432" y2="144"/>
+      <line x1="432" y1="144" x2="436" y2="128"/>
     </g>
   </g>
-  <text x="450" y="164" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle" font-weight="600">CogniMesh</text>
+  <text x="450" y="182" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle" font-weight="600">CogniMesh</text>
 
-  <!-- === DATABASE (top row, centered at x=800, y=120) === -->
-  <!-- Cylinder top -->
-  <ellipse cx="800" cy="106" rx="22" ry="9" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
-  <!-- Cylinder body -->
-  <rect x="778" y="106" width="44" height="28" fill="#2dd4bf" fill-opacity="0.08" stroke="none"/>
-  <!-- Cylinder bottom -->
-  <ellipse cx="800" cy="134" rx="22" ry="9" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
-  <!-- Cylinder sides -->
-  <line x1="778" y1="106" x2="778" y2="134" stroke="#2dd4bf" stroke-width="1.2"/>
-  <line x1="822" y1="106" x2="822" y2="134" stroke="#2dd4bf" stroke-width="1.2"/>
-  <!-- Middle ellipse line -->
-  <ellipse cx="800" cy="118" rx="22" ry="9" fill="none" stroke="#2dd4bf" stroke-width="0.5" stroke-opacity="0.3"/>
-  <text x="800" y="156" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Gold (DWH)</text>
+  <!-- "composing..." label near hub (Act 2 only) -->
+  <text x="450" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#c4b5fd" text-anchor="middle" font-style="italic" class="composing-label">composing...</text>
 
-  <!-- === ANIMATED DOTS (top row) === -->
-  <!-- Phase 1: Blue dot Agent→CogniMesh -->
-  <circle cx="0" cy="120" r="5" fill="#60a5fa" class="top-req-dot-1"/>
-  <!-- Phase 2: Teal dot CogniMesh→DB -->
-  <circle cx="0" cy="120" r="5" fill="#2dd4bf" class="top-req-dot-2"/>
-  <!-- Phase 3: Green dot DB→CogniMesh -->
-  <circle cx="0" cy="120" r="5" fill="#4ade80" class="top-resp-dot-1"/>
-  <!-- Phase 4: Green dot CogniMesh→Agent -->
-  <circle cx="0" cy="120" r="5" fill="#4ade80" class="top-resp-dot-2"/>
+  <!-- === DATABASE (top row, centered at x=790, y=140) === -->
+  <ellipse cx="790" cy="124" rx="24" ry="10" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
+  <rect x="766" y="124" width="48" height="30" fill="#2dd4bf" fill-opacity="0.08" stroke="none"/>
+  <ellipse cx="790" cy="154" rx="24" ry="10" fill="#2dd4bf" fill-opacity="0.15" stroke="#2dd4bf" stroke-width="1.2"/>
+  <line x1="766" y1="124" x2="766" y2="154" stroke="#2dd4bf" stroke-width="1.2"/>
+  <line x1="814" y1="124" x2="814" y2="154" stroke="#2dd4bf" stroke-width="1.2"/>
+  <ellipse cx="790" cy="138" rx="24" ry="10" fill="none" stroke="#2dd4bf" stroke-width="0.5" stroke-opacity="0.3"/>
+  <text x="790" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Gold</text>
 
-  <!-- Success labels -->
-  <g class="top-success-label">
-    <rect x="40" y="86" width="50" height="16" rx="4" fill="#065f46" fill-opacity="0.7"/>
-    <text x="65" y="97" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#4ade80" text-anchor="middle" font-weight="600">200 OK</text>
+  <!-- === ANIMATED DOTS — ACT 1 TOP === -->
+  <!-- Blue request: agent -> hub -->
+  <circle cy="140" r="5" fill="#60a5fa" class="top-req1"/>
+  <!-- Teal pass-through: hub -> db -->
+  <circle cy="140" r="5" fill="#2dd4bf" class="top-pass1"/>
+  <!-- Green response: db -> agent -->
+  <circle cy="140" r="5" fill="#4ade80" class="top-resp1"/>
+
+  <!-- 200 OK label (Act 1) -->
+  <g class="top-ok1">
+    <rect x="40" y="90" width="52" height="18" rx="5" fill="#065f46" fill-opacity="0.8"/>
+    <text x="66" y="103" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4ade80" text-anchor="middle" font-weight="700">200 OK</text>
   </g>
 
-  <!-- Green checkmark near agent -->
-  <g class="top-check">
-    <circle cx="108" cy="100" r="8" fill="#065f46" fill-opacity="0.6"/>
-    <path d="M104,100 L107,103 L113,97" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- === ANIMATED DOTS — ACT 2 TOP === -->
+  <!-- Blue request: agent -> hub -->
+  <circle cy="140" r="5" fill="#fcd34d" class="top-req2"/>
+  <!-- Teal composed query: hub -> db -->
+  <circle cy="140" r="5" fill="#2dd4bf" class="top-composed2"/>
+  <!-- Green response: db -> agent -->
+  <circle cy="140" r="5" fill="#4ade80" class="top-resp2"/>
+
+  <!-- 200 OK + "composed from Silver" label (Act 2) -->
+  <g class="top-ok2">
+    <rect x="25" y="90" width="130" height="18" rx="5" fill="#065f46" fill-opacity="0.8"/>
+    <text x="90" y="103" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4ade80" text-anchor="middle" font-weight="700">200 OK</text>
+    <text x="90" y="118" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#6ee7b7" text-anchor="middle">composed from Silver</text>
   </g>
 
-  <!-- Lineage label near CogniMesh -->
-  <text x="450" y="186" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle" class="top-lineage-label">lineage + freshness + audit</text>
 
-  <!-- Data label near agent after success -->
-  <g class="top-success-label">
-    <text x="65" y="192" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#4ade80" text-anchor="middle">[revenue data]</text>
-  </g>
-
-  <!-- ============================================
-       BOTTOM ROW — "Without CogniMesh"
-       ============================================ -->
+  <!-- =============================================
+       BOTTOM ROW — "REST endpoints"
+       ============================================= -->
 
   <!-- Section label -->
-  <text x="40" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#f87171">Without CogniMesh</text>
+  <text x="40" y="245" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#9ca3af">REST endpoints</text>
 
-  <!-- === AGENT (bottom row, centered at x=80, y=300) === -->
-  <circle cx="80" cy="288" r="7" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
-  <path d="M68,310 a12,8 0 0,1 24,0" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/>
-  <text x="80" y="328" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Agent</text>
+  <!-- === AGENT (bottom row, centered at x=90, y=310) === -->
+  <circle cx="90" cy="295" r="8" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+  <path d="M77,320 a13,9 0 0,1 26,0" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="90" y="338" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">Agent</text>
 
   <!-- Speech bubble (bottom row) -->
   <g class="speech-bubble" style="animation-delay: 0.5s">
-    <rect x="30" y="335" width="100" height="22" rx="6" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
-    <polygon points="65,335 72,328 79,335" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
-    <line x1="66" y1="335.5" x2="78" y2="335.5" stroke="#1e293b" stroke-width="1.5"/>
-    <text x="80" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" fill="#d1d5db" text-anchor="middle">Revenue by region?</text>
+    <rect x="35" y="345" width="115" height="24" rx="7" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
+    <polygon points="75,345 82,337 89,345" fill="#1e293b" stroke="#374151" stroke-width="0.8"/>
+    <line x1="76" y1="345.5" x2="88" y2="345.5" stroke="#1e293b" stroke-width="1.5"/>
+    <!-- Text A: Customer health? -->
+    <text x="92" y="361" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#93c5fd" text-anchor="middle" class="text-a-bot">Customer health?</text>
+    <!-- Text B: Revenue by region? -->
+    <text x="92" y="361" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#fcd34d" text-anchor="middle" class="text-b-bot">Revenue by region?</text>
   </g>
 
-  <!-- === CONNECTION LINE (bottom row) === -->
-  <!-- Agent → gap (dim) -->
-  <line x1="110" y1="300" x2="400" y2="300" stroke="#374151" stroke-width="1" class="flow-line-bot"/>
-  <!-- gap → DB (very dim, broken) -->
-  <line x1="500" y1="300" x2="760" y2="300" stroke="#1f2937" stroke-width="1" stroke-dasharray="3 6"/>
+  <!-- === CONNECTION LINES (bottom row) === -->
+  <line x1="120" y1="310" x2="400" y2="310" stroke="#374151" stroke-width="1" class="flow-line-dim"/>
+  <line x1="500" y1="310" x2="750" y2="310" stroke="#1f2937" stroke-width="1" stroke-dasharray="3 6"/>
 
-  <!-- Arrow labels -->
-  <text x="250" y="292" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#4b5563" text-anchor="middle">request</text>
+  <!-- === REST API BOX (centered at x=450, y=310) === -->
+  <rect x="412" y="280" width="76" height="60" rx="10" fill="#1a1c22" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="450" y="315" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9ca3af" text-anchor="middle" font-weight="600">REST API</text>
 
-  <!-- === GAP / NO SERVING LAYER (bottom row, centered at x=450, y=300) === -->
-  <rect x="412" y="270" width="76" height="60" rx="14" fill="#111318" stroke="#374151" stroke-width="1" stroke-dasharray="4 4"/>
-  <!-- Question mark -->
-  <text x="450" y="308" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#374151" text-anchor="middle" font-weight="300">?</text>
-  <text x="450" y="344" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#4b5563" text-anchor="middle">No serving layer</text>
-
-  <!-- === DATABASE (bottom row, centered at x=800, y=300) — dim === -->
-  <ellipse cx="800" cy="286" rx="22" ry="9" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <rect x="778" y="286" width="44" height="28" fill="#4b5563" fill-opacity="0.05" stroke="none"/>
-  <ellipse cx="800" cy="314" rx="22" ry="9" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <line x1="778" y1="286" x2="778" y2="314" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <line x1="822" y1="286" x2="822" y2="314" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
-  <ellipse cx="800" cy="298" rx="22" ry="9" fill="none" stroke="#4b5563" stroke-width="0.5" stroke-opacity="0.2"/>
-  <text x="800" y="336" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4b5563" text-anchor="middle">Gold (DWH)</text>
-
-  <!-- === ANIMATED DOTS (bottom row) === -->
-  <!-- Request dot: Agent → gap -->
-  <circle cx="0" cy="300" r="5" fill="#60a5fa" class="bot-req-dot"/>
-  <!-- Bounce-back dot (red): gap → Agent -->
-  <circle cx="0" cy="300" r="5" fill="#f87171" class="bot-bounce-dot"/>
-
-  <!-- Red X at gap -->
-  <g class="bot-red-x">
-    <circle cx="450" cy="300" r="10" fill="#7f1d1d" fill-opacity="0.5"/>
-    <path d="M445,295 L455,305" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
-    <path d="M455,295 L445,305" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+  <!-- Red X at REST box (Act 2 only) -->
+  <g class="bot-red-x2">
+    <circle cx="450" cy="310" r="11" fill="#7f1d1d" fill-opacity="0.6"/>
+    <path d="M444,304 L456,316" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M456,304 L444,316" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/>
   </g>
 
-  <!-- 404 label -->
-  <g class="bot-404-label">
-    <rect x="44" y="265" width="36" height="16" rx="4" fill="#7f1d1d" fill-opacity="0.7"/>
-    <text x="62" y="276" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#f87171" text-anchor="middle" font-weight="700">404</text>
+  <!-- "no endpoint" label (Act 2 only) -->
+  <text x="450" y="356" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#6b7280" text-anchor="middle" class="bot-404-2">no endpoint</text>
+
+  <!-- === DATABASE (bottom row, dim) === -->
+  <ellipse cx="790" cy="294" rx="24" ry="10" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
+  <rect x="766" y="294" width="48" height="30" fill="#4b5563" fill-opacity="0.05" stroke="none"/>
+  <ellipse cx="790" cy="324" rx="24" ry="10" fill="#4b5563" fill-opacity="0.1" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
+  <line x1="766" y1="294" x2="766" y2="324" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
+  <line x1="814" y1="294" x2="814" y2="324" stroke="#4b5563" stroke-width="1" stroke-opacity="0.4"/>
+  <ellipse cx="790" cy="308" rx="24" ry="10" fill="none" stroke="#4b5563" stroke-width="0.5" stroke-opacity="0.2"/>
+  <text x="790" y="346" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4b5563" text-anchor="middle">Gold</text>
+
+  <!-- === ANIMATED DOTS — ACT 1 BOTTOM === -->
+  <!-- Blue request: agent -> REST -->
+  <circle cy="310" r="5" fill="#60a5fa" class="bot-req1"/>
+  <!-- Blue pass-through: REST -> db -->
+  <circle cy="310" r="5" fill="#60a5fa" class="bot-pass1"/>
+  <!-- Green response: db -> agent -->
+  <circle cy="310" r="5" fill="#4ade80" class="bot-resp1"/>
+
+  <!-- 200 OK label (Act 1, bottom) -->
+  <g class="bot-ok1">
+    <rect x="40" y="260" width="52" height="18" rx="5" fill="#065f46" fill-opacity="0.8"/>
+    <text x="66" y="273" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#4ade80" text-anchor="middle" font-weight="700">200 OK</text>
   </g>
 
-  <!-- "no endpoint" label -->
-  <text x="450" y="365" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#6b7280" text-anchor="middle" class="bot-noep-label">no endpoint exposed</text>
+  <!-- === ANIMATED DOTS — ACT 2 BOTTOM === -->
+  <!-- Blue request: agent -> REST -->
+  <circle cy="310" r="5" fill="#fcd34d" class="bot-req2"/>
+  <!-- Red bounce-back: REST -> agent -->
+  <circle cy="310" r="5" fill="#f87171" class="bot-bounce2"/>
 
-  <!-- Red error label near agent -->
-  <g class="bot-404-label">
-    <text x="62" y="372" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#f87171" text-anchor="middle">[no data]</text>
+  <!-- 404 label (Act 2, bottom) -->
+  <g class="bot-404-2">
+    <rect x="44" y="260" width="44" height="18" rx="5" fill="#7f1d1d" fill-opacity="0.8"/>
+    <text x="66" y="273" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#f87171" text-anchor="middle" font-weight="700">404</text>
   </g>
 
-  <!-- ============================================
+  <!-- =============================================
        FOOTER
-       ============================================ -->
-  <text x="450" y="394" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#374151" text-anchor="middle">cognimesh.dev</text>
+       ============================================= -->
+  <text x="450" y="412" font-family="system-ui, -apple-system, sans-serif" font-size="8" fill="#374151" text-anchor="middle">cognimesh.dev</text>
+
 </svg>
